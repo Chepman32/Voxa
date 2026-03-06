@@ -103,9 +103,27 @@ export function HomeScreen({
           <Text style={styles.heading}>Projects</Text>
         </View>
 
-        <Pressable onPress={onOpenSettings} style={styles.settingsButton}>
-          <Feather color={palette.textPrimary} name="settings" size={18} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityHint="Create a new project"
+            accessibilityLabel="Create project"
+            disabled={processingVisible}
+            onPress={onCreateProject}
+            style={[
+              styles.createButton,
+              processingVisible ? styles.actionButtonDisabled : undefined,
+            ]}>
+            <Feather color={palette.canvas} name="plus" size={20} />
+          </Pressable>
+
+          <Pressable
+            accessibilityHint="Open app settings"
+            accessibilityLabel="Open settings"
+            onPress={onOpenSettings}
+            style={styles.settingsButton}>
+            <Feather color={palette.textPrimary} name="settings" size={18} />
+          </Pressable>
+        </View>
       </Animated.View>
 
       <FlatList
@@ -159,9 +177,10 @@ export function HomeScreen({
               }}
               width={Math.min(cardWidth * 2 + 12, width - 40)}
             />
-            <Text style={styles.emptyTitle}>Pull down to create.</Text>
+            <Text style={styles.emptyTitle}>Tap + to create.</Text>
             <Text style={styles.emptyText}>
-              Import a local video and Voxa will build the subtitle timeline offline.
+              Import a local video and Voxa will build the subtitle timeline offline. You
+              can still pull down for a quick create gesture.
             </Text>
           </View>
         }
@@ -204,6 +223,19 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '900',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  createButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.cyan,
+  },
   settingsButton: {
     width: 42,
     height: 42,
@@ -211,6 +243,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  actionButtonDisabled: {
+    opacity: 0.45,
   },
   content: {
     paddingHorizontal: 20,

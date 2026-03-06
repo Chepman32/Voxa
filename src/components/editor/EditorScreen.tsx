@@ -13,7 +13,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Canvas, Rect } from '@shopify/react-native-skia';
 import {
   useAtom,
   useAtomValue,
@@ -75,6 +74,8 @@ import type {
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { GlassPanel } from '../common/GlassPanel';
 import { ExportSheet } from './ExportSheet';
+
+const MAX_TIMELINE_SURFACE_WIDTH = 8192;
 
 interface EditorScreenProps {
   project: Project;
@@ -140,9 +141,16 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const topBarOffset = insets.top + 8;
   const bottomInset = Math.max(insets.bottom, 12);
 
-  const pixelsPerSecond = 82 * timelineZoom;
-  const pixelsPerMs = pixelsPerSecond / 1000;
-  const contentWidth = Math.max(width, (project?.duration ?? 0) * pixelsPerMs + width);
+  const durationMs = Math.max(0, project?.duration ?? 0);
+  const basePixelsPerSecond = 82 * timelineZoom;
+  const basePixelsPerMs = basePixelsPerSecond / 1000;
+  const rawContentWidth = Math.max(width, durationMs * basePixelsPerMs);
+  const timelineScale =
+    rawContentWidth > MAX_TIMELINE_SURFACE_WIDTH
+      ? MAX_TIMELINE_SURFACE_WIDTH / rawContentWidth
+      : 1;
+  const pixelsPerMs = basePixelsPerMs * timelineScale;
+  const contentWidth = Math.max(width, durationMs * pixelsPerMs);
 
   const displaySubtitle = isTextEditing ? selectedSubtitle ?? activeSubtitle : activeSubtitle;
 
@@ -482,6 +490,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         onTrimSubtitle={trimSubtitle}
         pixelsPerMs={pixelsPerMs}
         playhead={playbackPosition}
+        timelineZoom={timelineZoom}
         selectedSubtitleId={selectedSubtitleId}
         setTimelineZoom={setTimelineZoom}
         subtitles={subtitles}
@@ -535,6 +544,7 @@ function TimelineSection({
   width,
   zoneHeight,
   playhead,
+  timelineZoom,
   pixelsPerMs,
   contentWidth,
   waveform,
@@ -552,6 +562,7 @@ function TimelineSection({
   width: number;
   zoneHeight: number;
   playhead: number;
+  timelineZoom: number;
   pixelsPerMs: number;
   contentWidth: number;
   waveform: number[];
@@ -570,7 +581,7 @@ function TimelineSection({
 
   const pinchGesture = Gesture.Pinch()
     .onBegin(() => {
-      pinchStartZoom.current = pixelsPerMs / 0.082;
+      pinchStartZoom.current = timelineZoom;
     })
     .onUpdate(event => {
       runOnJS(setTimelineZoom)(clamp(pinchStartZoom.current * event.scale, 0.75, 2.4));
@@ -594,28 +605,34 @@ function TimelineSection({
             scrollEventThrottle={16}
             showsHorizontalScrollIndicator={false}>
             <View style={{ width: contentWidth, height: zoneHeight }}>
-              <Canvas style={{ width: contentWidth, height: zoneHeight }}>
+              <View pointerEvents="none" style={styles.waveformLayer}>
                 {waveform.map((value, index) => {
                   const barWidth = contentWidth / Math.max(1, waveform.length);
                   const amplitude = Math.max(12, value * (zoneHeight * 0.48));
                   const x = index * barWidth;
                   const y = zoneHeight / 2 - amplitude / 2;
+                  const barColor =
+                    Math.abs((x / pixelsPerMs) - playhead) < 1300
+                      ? 'rgba(0, 240, 255, 0.5)'
+                      : 'rgba(255, 255, 255, 0.16)';
+
                   return (
-                    <Rect
-                      color={
-                        Math.abs((x / pixelsPerMs) - playhead) < 1300
-                          ? 'rgba(0, 240, 255, 0.5)'
-                          : 'rgba(255, 255, 255, 0.16)'
-                      }
-                      height={amplitude}
+                    <View
                       key={`wave-${index}`}
-                      width={Math.max(2, barWidth * 0.68)}
-                      x={x}
-                      y={y}
+                      style={[
+                        styles.waveformBar,
+                        {
+                          left: x,
+                          top: y,
+                          width: Math.max(2, barWidth * 0.68),
+                          height: amplitude,
+                          backgroundColor: barColor,
+                        },
+                      ]}
                     />
                   );
                 })}
-              </Canvas>
+              </View>
 
               <View style={styles.blocksLayer}>
                 {subtitles.map(subtitle => (
@@ -1093,6 +1110,13 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     overflow: 'hidden',
     backgroundColor: 'rgba(16, 18, 21, 0.74)',
+  },
+  waveformLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  waveformBar: {
+    position: 'absolute',
+    borderRadius: 999,
   },
   blocksLayer: {
     ...StyleSheet.absoluteFillObject,
