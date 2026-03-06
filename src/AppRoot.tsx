@@ -108,6 +108,7 @@ export function AppRoot() {
       {!hasCompletedOnboarding ? (
         <OnboardingCarousel
           onGrantAccess={handleGrantAccess}
+          onSkip={completeOnboarding}
           pending={permissionsPending}
           permissionSummary={permissionSummary}
         />

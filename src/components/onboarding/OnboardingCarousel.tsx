@@ -13,6 +13,7 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -29,30 +30,43 @@ interface OnboardingCarouselProps {
   pending: boolean;
   permissionSummary: PermissionSummary | null;
   onGrantAccess: () => Promise<void>;
+  onSkip: () => void;
 }
 
 export function OnboardingCarousel({
   pending,
   permissionSummary,
   onGrantAccess,
+  onSkip,
 }: OnboardingCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { width } = useWindowDimensions();
   const lift = useSharedValue(0);
+  const lastCardIndex = onboardingCards.length - 1;
+
+  const triggerGrantAccess = () => {
+    if (pending || currentIndex !== lastCardIndex) {
+      return;
+    }
+
+    haptics.medium();
+    onGrantAccess();
+  };
 
   const swipeUpGesture = Gesture.Pan()
-    .enabled(currentIndex === onboardingCards.length - 1 && !pending)
+    .enabled(currentIndex === lastCardIndex && !pending)
+    .activeOffsetY(-12)
+    .failOffsetX([-8, 8])
     .onUpdate(event => {
       lift.value = Math.max(0, -event.translationY);
     })
-    .onEnd(async event => {
+    .onEnd(event => {
       const shouldTrigger = event.translationY < -72;
       lift.value = withSpring(0, springConfig);
       if (!shouldTrigger) {
         return;
       }
-      haptics.medium();
-      await onGrantAccess();
+      runOnJS(triggerGrantAccess)();
     });
 
   const promptStyle = useAnimatedStyle(() => ({
@@ -72,76 +86,89 @@ export function OnboardingCarousel({
           setCurrentIndex(nextIndex);
         }}
         pagingEnabled
-        renderItem={({ item, index }: ListRenderItemInfo<(typeof onboardingCards)[number]>) => (
-          <View style={[styles.page, { width }]}>
-            <ImageBackground
-              blurRadius={index === onboardingCards.length - 1 ? 16 : 12}
-              source={{ uri: item.image }}
-              style={styles.image}>
-              <View style={styles.imageOverlay} />
+        renderItem={({ item, index }: ListRenderItemInfo<(typeof onboardingCards)[number]>) => {
+          const isPermissionCard = index === lastCardIndex;
 
-              <GlassPanel style={styles.card}>
-                <Text style={styles.eyebrow}>{item.eyebrow}</Text>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.description}>{item.description}</Text>
+          const cardBody = (
+            <>
+              <Text style={styles.eyebrow}>{item.eyebrow}</Text>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.description}>{item.description}</Text>
 
-                {index === onboardingCards.length - 1 ? (
-                  <GestureDetector gesture={swipeUpGesture}>
-                    <Animated.View style={[styles.permissionPanel, promptStyle]}>
-                      <View style={styles.permissionHeader}>
-                        <Feather color={palette.cyan} name="shield" size={18} />
-                        <Text style={styles.permissionTitle}>
-                          Swipe up to grant access
+              {isPermissionCard ? (
+                <GestureDetector gesture={swipeUpGesture}>
+                  <Animated.View style={[styles.permissionPanel, promptStyle]}>
+                    <View style={styles.permissionHeader}>
+                      <Feather color={palette.cyan} name="shield" size={18} />
+                      <Text style={styles.permissionTitle}>
+                        Swipe up to grant access
+                      </Text>
+                    </View>
+
+                    {pending ? (
+                      <View style={styles.permissionLoading}>
+                        <ActivityIndicator color={palette.cyan} />
+                        <Text style={styles.permissionBody}>
+                          Requesting iOS permissions...
                         </Text>
                       </View>
+                    ) : (
+                      <Text style={styles.permissionBody}>
+                        Pull this card upward to request Photos and Speech permissions.
+                      </Text>
+                    )}
 
-                      {pending ? (
-                        <View style={styles.permissionLoading}>
-                          <ActivityIndicator color={palette.cyan} />
-                          <Text style={styles.permissionBody}>
-                            Requesting iOS permissions...
-                          </Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.permissionBody}>
-                          Pull this card upward to request Photos and Speech permissions.
-                        </Text>
-                      )}
+                    {permissionSummary ? (
+                      <View style={styles.permissionSummary}>
+                        <PermissionRow label="Library" value={permissionSummary.photoLibrary} />
+                        <PermissionRow label="Speech" value={permissionSummary.speech} />
+                      </View>
+                    ) : null}
+                  </Animated.View>
+                </GestureDetector>
+              ) : (
+                <Pressable
+                  onPress={() => {}}
+                  style={styles.progressHint}
+                  testID={`onboarding-card-${index}`}>
+                  <Feather color={palette.textSecondary} name="arrow-right" size={16} />
+                  <Text style={styles.progressText}>Swipe to continue</Text>
+                </Pressable>
+              )}
+            </>
+          );
 
-                      {permissionSummary ? (
-                        <View style={styles.permissionSummary}>
-                          <PermissionRow label="Library" value={permissionSummary.photoLibrary} />
-                          <PermissionRow label="Speech" value={permissionSummary.speech} />
-                        </View>
-                      ) : null}
-                    </Animated.View>
-                  </GestureDetector>
-                ) : (
-                  <Pressable
-                    onPress={() => {}}
-                    style={styles.progressHint}
-                    testID={`onboarding-card-${index}`}>
-                    <Feather color={palette.textSecondary} name="arrow-right" size={16} />
-                    <Text style={styles.progressText}>Swipe to continue</Text>
-                  </Pressable>
-                )}
-              </GlassPanel>
-            </ImageBackground>
-          </View>
-        )}
+          return (
+            <View style={[styles.page, { width }]}>
+              <ImageBackground
+                blurRadius={isPermissionCard ? 16 : 12}
+                source={{ uri: item.image }}
+                style={styles.image}>
+                <View style={styles.imageOverlay} />
+
+                <GlassPanel style={styles.card}>{cardBody}</GlassPanel>
+              </ImageBackground>
+            </View>
+          );
+        }}
         showsHorizontalScrollIndicator={false}
       />
 
-      <View style={styles.pagination}>
-        {onboardingCards.map((item, index) => (
-          <View
-            key={item.id}
-            style={[
-              styles.dot,
-              index === currentIndex ? styles.dotActive : undefined,
-            ]}
-          />
-        ))}
+      <View style={styles.footer}>
+        <View style={styles.pagination}>
+          {onboardingCards.map((item, index) => (
+            <View
+              key={item.id}
+              style={[
+                styles.dot,
+                index === currentIndex ? styles.dotActive : undefined,
+              ]}
+            />
+          ))}
+        </View>
+        <Pressable onPress={onSkip} style={styles.skipButton}>
+          <Text style={styles.skipText}>Skip</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -258,14 +285,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'capitalize',
   },
-  pagination: {
+  footer: {
     position: 'absolute',
     bottom: 16,
     left: 0,
     right: 0,
+    alignItems: 'center',
+    gap: 14,
+  },
+  pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,
+  },
+  skipButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  skipText: {
+    color: palette.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   dot: {
     width: 8,
