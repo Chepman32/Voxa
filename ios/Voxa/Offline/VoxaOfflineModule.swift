@@ -45,6 +45,30 @@ final class VoxaOfflineModule: NSObject {
     }
   }
 
+  @objc(getSpeechAuthorizationStatus:rejecter:)
+  func getSpeechAuthorizationStatus(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    resolve(self.string(from: SFSpeechRecognizer.authorizationStatus()))
+  }
+
+  @objc(requestSpeechAuthorization:rejecter:)
+  func requestSpeechAuthorization(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let currentStatus = SFSpeechRecognizer.authorizationStatus()
+    guard currentStatus == .notDetermined else {
+      resolve(self.string(from: currentStatus))
+      return
+    }
+
+    SFSpeechRecognizer.requestAuthorization { status in
+      resolve(self.string(from: status))
+    }
+  }
+
   @objc(prepareProject:locale:resolver:rejecter:)
   func prepareProject(
     _ videoURI: String,

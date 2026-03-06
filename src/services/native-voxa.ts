@@ -32,6 +32,8 @@ interface SaveResponse {
 
 interface VoxaNativeModule {
   requestAuthorizations(): Promise<PermissionSummary>;
+  getSpeechAuthorizationStatus(): Promise<PermissionSummary['speech']>;
+  requestSpeechAuthorization(): Promise<PermissionSummary['speech']>;
   prepareProject(videoURI: string, locale: string): Promise<PrepareProjectResponse>;
   exportProject(payload: {
     videoURI: string;
@@ -43,6 +45,14 @@ interface VoxaNativeModule {
 }
 
 const nativeModule = NativeModules.VoxaOfflineModule as VoxaNativeModule | undefined;
+
+function requireNativeMethod<K extends keyof VoxaNativeModule>(methodName: K) {
+  if (!nativeModule?.[methodName]) {
+    throw new Error(`VoxaOfflineModule.${String(methodName)} is unavailable.`);
+  }
+
+  return nativeModule[methodName];
+}
 
 function createMockWaveform(count = 160) {
   return Array.from({ length: count }, (_, index) => {
@@ -77,19 +87,35 @@ function createMockSubtitles(duration = 12000): NativeSubtitleSegment[] {
 }
 
 export async function requestAuthorizations() {
-  if (Platform.OS !== 'ios' || !nativeModule?.requestAuthorizations) {
+  if (Platform.OS !== 'ios') {
     return {
-      photoLibrary: 'granted',
-      photoAddOnly: 'granted',
-      speech: 'granted',
+      photoLibrary: 'authorized',
+      photoAddOnly: 'authorized',
+      speech: 'authorized',
     } satisfies PermissionSummary;
   }
 
-  return nativeModule.requestAuthorizations();
+  return requireNativeMethod('requestAuthorizations')();
+}
+
+export async function getSpeechAuthorizationStatus() {
+  if (Platform.OS !== 'ios') {
+    return 'authorized' satisfies PermissionSummary['speech'];
+  }
+
+  return requireNativeMethod('getSpeechAuthorizationStatus')();
+}
+
+export async function requestSpeechAuthorization() {
+  if (Platform.OS !== 'ios') {
+    return 'authorized' satisfies PermissionSummary['speech'];
+  }
+
+  return requireNativeMethod('requestSpeechAuthorization')();
 }
 
 export async function prepareProject(videoURI: string, locale: string, fallbackDuration = 12000) {
-  if (Platform.OS !== 'ios' || !nativeModule?.prepareProject) {
+  if (Platform.OS !== 'ios') {
     return {
       duration: fallbackDuration,
       width: 1080,
@@ -100,7 +126,7 @@ export async function prepareProject(videoURI: string, locale: string, fallbackD
     } satisfies PrepareProjectResponse;
   }
 
-  return nativeModule.prepareProject(videoURI, locale);
+  return requireNativeMethod('prepareProject')(videoURI, locale);
 }
 
 export async function exportProject(payload: {
@@ -109,21 +135,21 @@ export async function exportProject(payload: {
   style: SubtitleStyle;
   resolution: ExportResolution;
 }) {
-  if (Platform.OS !== 'ios' || !nativeModule?.exportProject) {
+  if (Platform.OS !== 'ios') {
     return {
       outputUri: payload.videoURI,
     } satisfies ExportResponse;
   }
 
-  return nativeModule.exportProject(payload);
+  return requireNativeMethod('exportProject')(payload);
 }
 
 export async function saveVideoToPhotos(videoURI: string) {
-  if (Platform.OS !== 'ios' || !nativeModule?.saveVideoToPhotos) {
+  if (Platform.OS !== 'ios') {
     return {
       localIdentifier: videoURI,
     } satisfies SaveResponse;
   }
 
-  return nativeModule.saveVideoToPhotos(videoURI);
+  return requireNativeMethod('saveVideoToPhotos')(videoURI);
 }

@@ -2,6 +2,13 @@ import { createId } from './id';
 import { defaultSubtitleStyle } from '../theme/tokens';
 import type { Project, SubtitleBlock, SubtitleStyle } from '../types/models';
 
+export const PLACEHOLDER_SUBTITLE_TEXT = 'Tap to add your first subtitle.';
+
+const LEGACY_PLACEHOLDER_SUBTITLE_TEXTS = new Set([
+  PLACEHOLDER_SUBTITLE_TEXT,
+  'Tap to rewrite this subtitle.',
+]);
+
 export function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -44,13 +51,32 @@ export function normalizeVideoUri(uri: string) {
   return `file://${uri}`;
 }
 
-export function createPlaceholderSubtitle(duration: number, text = 'Tap to rewrite this subtitle.') {
+export function isPlaceholderSubtitle(subtitle?: Pick<SubtitleBlock, 'text' | 'isPlaceholder'> | null) {
+  if (!subtitle) {
+    return false;
+  }
+
+  return (
+    subtitle.isPlaceholder === true ||
+    LEGACY_PLACEHOLDER_SUBTITLE_TEXTS.has(subtitle.text.trim())
+  );
+}
+
+export function countRenderableSubtitles(subtitles: SubtitleBlock[]) {
+  return subtitles.filter(subtitle => !isPlaceholderSubtitle(subtitle)).length;
+}
+
+export function createPlaceholderSubtitle(
+  duration: number,
+  text = PLACEHOLDER_SUBTITLE_TEXT,
+) {
   return {
     id: createId('subtitle'),
     startTime: 0,
     endTime: Math.min(Math.max(duration, 1800), 3200),
     text,
     isGenerated: false,
+    isPlaceholder: true,
   } satisfies SubtitleBlock;
 }
 

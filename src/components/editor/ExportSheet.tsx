@@ -19,7 +19,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import Video from 'react-native-video';
 
-import { applySubtitleCasing, findActiveSubtitle } from '../../lib/project';
+import {
+  applySubtitleCasing,
+  findActiveSubtitle,
+  isPlaceholderSubtitle,
+} from '../../lib/project';
 import { haptics } from '../../services/haptics';
 import { exportResolutions, palette, springConfig } from '../../theme/tokens';
 import type { ExportResolution, Project, SubtitleStyle } from '../../types/models';
@@ -140,8 +144,11 @@ export function ExportSheet({
     return null;
   }
 
-  const activeSubtitle =
+  const activeSubtitleCandidate =
     findActiveSubtitle(project.subtitles, previewTime) ?? project.subtitles[0] ?? null;
+  const activeSubtitle = isPlaceholderSubtitle(activeSubtitleCandidate)
+    ? null
+    : activeSubtitleCandidate;
 
   return (
     <View pointerEvents={visible ? 'auto' : 'none'} style={styles.root}>

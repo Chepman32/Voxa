@@ -24,6 +24,7 @@ export interface SubtitleBlock {
   text: string;
   confidence?: number;
   isGenerated?: boolean;
+  isPlaceholder?: boolean;
 }
 
 export interface ProjectMetrics {

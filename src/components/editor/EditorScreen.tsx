@@ -35,6 +35,7 @@ import {
   applySubtitleCasing,
   clamp,
   formatDuration,
+  isPlaceholderSubtitle,
   snapSubtitleRange,
 } from '../../lib/project';
 import {
@@ -152,7 +153,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const pixelsPerMs = basePixelsPerMs * timelineScale;
   const contentWidth = Math.max(width, durationMs * pixelsPerMs);
 
-  const displaySubtitle = isTextEditing ? selectedSubtitle ?? activeSubtitle : activeSubtitle;
+  const activeDisplaySubtitle =
+    isTextEditing ? selectedSubtitle ?? activeSubtitle : activeSubtitle;
+  const displaySubtitle = isPlaceholderSubtitle(activeDisplaySubtitle)
+    ? null
+    : activeDisplaySubtitle;
 
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
     if (!timelineRef.current) {
@@ -190,7 +195,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     updateProjectSubtitles(current =>
       current.map(subtitle =>
         subtitle.id === selectedSubtitleId
-          ? { ...subtitle, text, isGenerated: false }
+          ? { ...subtitle, text, isGenerated: false, isPlaceholder: false }
           : subtitle,
       ),
     );
@@ -353,13 +358,15 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         videoURI: project.videoLocalURI,
         resolution: resolution as ExportResolution,
         style: stylePreset,
-        subtitles: project.subtitles.map(subtitle => ({
-          id: subtitle.id,
-          startTime: subtitle.startTime,
-          endTime: subtitle.endTime,
-          text: subtitle.text,
-          confidence: subtitle.confidence,
-        })) satisfies NativeSubtitleSegment[],
+        subtitles: project.subtitles
+          .filter(subtitle => !isPlaceholderSubtitle(subtitle))
+          .map(subtitle => ({
+            id: subtitle.id,
+            startTime: subtitle.startTime,
+            endTime: subtitle.endTime,
+            text: subtitle.text,
+            confidence: subtitle.confidence,
+          })) satisfies NativeSubtitleSegment[],
       });
       await saveVideoToPhotos(response.outputUri);
     } finally {

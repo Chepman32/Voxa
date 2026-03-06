@@ -8,6 +8,16 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+  getSpeechAuthorizationStatus:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+  requestSpeechAuthorization:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
   prepareProject:(NSString *)videoURI
   locale:(NSString *)locale
   resolver:(RCTPromiseResolveBlock)resolve

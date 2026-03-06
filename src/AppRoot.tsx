@@ -1,11 +1,29 @@
-import React, { startTransition, useEffect, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import React, {
+  startTransition,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+import {
+  AppState,
+  Alert,
+  Image,
+  Linking,
+  StyleSheet,
+  View,
+} from 'react-native';
+import type { Asset } from 'react-native-image-picker';
 
 import { buildManualFallbackProject, buildProjectFromAsset } from './services/project-processor';
-import { requestAuthorizations } from './services/native-voxa';
+import {
+  getSpeechAuthorizationStatus,
+  requestAuthorizations,
+  requestSpeechAuthorization,
+} from './services/native-voxa';
 import { pickVideoAsset } from './services/media-picker';
 import { haptics } from './services/haptics';
 import { useAppStore } from './store/app-store';
+import { SpeechAccessSheet } from './components/permissions/SpeechAccessSheet';
 import { emptyStateImage, onboardingCards, palette } from './theme/tokens';
 import { EditorScreen } from './components/editor/EditorScreen';
 import { HomeScreen } from './components/home/HomeScreen';
@@ -44,6 +62,19 @@ export function AppRoot() {
   const [permissionSummary, setPermissionSummary] =
     useState<PermissionSummary | null>(null);
   const [permissionsPending, setPermissionsPending] = useState(false);
+  const [pendingSpeechAsset, setPendingSpeechAsset] = useState<Asset | null>(null);
+  const [speechAccessStatus, setSpeechAccessStatus] =
+    useState<PermissionSummary['speech'] | null>(null);
+  const [speechAccessPending, setSpeechAccessPending] = useState(false);
+
+  const showSpeechAccessError = useCallback((error: unknown) => {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : 'Unable to request Speech Recognition access right now.';
+
+    Alert.alert('Speech Access Failed', message);
+  }, []);
 
   useEffect(() => {
     const remoteImages = [
@@ -58,6 +89,12 @@ export function AppRoot() {
   const activeProject =
     projects.find(project => project.id === activeProjectId) ?? null;
 
+  const closeSpeechAccessSheet = useCallback(() => {
+    setPendingSpeechAsset(null);
+    setSpeechAccessStatus(null);
+    setSpeechAccessPending(false);
+  }, []);
+
   const handleGrantAccess = async () => {
     setPermissionsPending(true);
     try {
@@ -69,12 +106,7 @@ export function AppRoot() {
     }
   };
 
-  const handleCreateProject = async () => {
-    const asset = await pickVideoAsset();
-    if (!asset) {
-      return;
-    }
-
+  const processAsset = useCallback(async (asset: Asset) => {
     beginProcessing(asset.uri);
 
     try {
@@ -97,7 +129,116 @@ export function AppRoot() {
     } finally {
       finishProcessing();
     }
+  }, [
+    addProject,
+    beginProcessing,
+    finishProcessing,
+    openProject,
+    setProcessingPhase,
+    settings.speechLocale,
+  ]);
+
+  const continueWithManualSubtitles = useCallback(() => {
+    if (!pendingSpeechAsset) {
+      return;
+    }
+
+    const asset = pendingSpeechAsset;
+    const error =
+      speechAccessStatus === 'restricted'
+        ? new Error('Speech recognition is restricted on this device.')
+        : new Error('Speech recognition permission has not been granted.');
+
+    closeSpeechAccessSheet();
+    const fallbackProject = buildManualFallbackProject(asset, error);
+    addProject(fallbackProject);
+    startTransition(() => {
+      openProject(fallbackProject.id);
+    });
+  }, [
+    addProject,
+    closeSpeechAccessSheet,
+    openProject,
+    pendingSpeechAsset,
+    speechAccessStatus,
+  ]);
+
+  const refreshSpeechAccess = useCallback(async () => {
+    if (!pendingSpeechAsset) {
+      return;
+    }
+
+    const nextStatus = await getSpeechAuthorizationStatus();
+    setSpeechAccessStatus(nextStatus);
+
+    if (nextStatus !== 'authorized') {
+      return;
+    }
+
+    const asset = pendingSpeechAsset;
+    closeSpeechAccessSheet();
+    await processAsset(asset);
+  }, [closeSpeechAccessSheet, pendingSpeechAsset, processAsset]);
+
+  useEffect(() => {
+    if (!pendingSpeechAsset) {
+      return;
+    }
+
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState !== 'active') {
+        return;
+      }
+
+      refreshSpeechAccess().catch(() => {});
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [pendingSpeechAsset, refreshSpeechAccess]);
+
+  const handleCreateProject = async () => {
+    const asset = await pickVideoAsset();
+    if (!asset) {
+      return;
+    }
+
+    const speechStatus = await getSpeechAuthorizationStatus();
+    if (speechStatus !== 'authorized') {
+      setPendingSpeechAsset(asset);
+      setSpeechAccessStatus(speechStatus);
+      return;
+    }
+
+    await processAsset(asset);
   };
+
+  const handleGrantSpeechAccess = useCallback(async () => {
+    if (!pendingSpeechAsset) {
+      return;
+    }
+
+    setSpeechAccessPending(true);
+    try {
+      const nextStatus = await requestSpeechAuthorization();
+      setSpeechAccessStatus(nextStatus);
+
+      if (nextStatus !== 'authorized') {
+        return;
+      }
+
+      const asset = pendingSpeechAsset;
+      closeSpeechAccessSheet();
+      await processAsset(asset);
+    } finally {
+      setSpeechAccessPending(false);
+    }
+  }, [closeSpeechAccessSheet, pendingSpeechAsset, processAsset]);
+
+  const handleOpenSpeechSettings = useCallback(async () => {
+    await Linking.openSettings();
+  }, []);
 
   if (!hydrated) {
     return <View style={styles.root} />;
@@ -120,7 +261,7 @@ export function AppRoot() {
       ) : (
         <HomeScreen
           onCreateProject={() => {
-            handleCreateProject().catch(() => {});
+            handleCreateProject().catch(showSpeechAccessError);
           }}
           onDeleteProject={deleteProject}
           onOpenProject={projectId => {
@@ -145,6 +286,21 @@ export function AppRoot() {
         preferredExportResolution={settings.preferredExportResolution}
         speechLocale={settings.speechLocale}
         visible={settingsOpen}
+      />
+
+      <SpeechAccessSheet
+        assetName={pendingSpeechAsset?.fileName ?? 'Selected video'}
+        onClose={closeSpeechAccessSheet}
+        onContinueManually={continueWithManualSubtitles}
+        onGrantAccess={() => {
+          handleGrantSpeechAccess().catch(showSpeechAccessError);
+        }}
+        onOpenSettings={() => {
+          handleOpenSpeechSettings().catch(showSpeechAccessError);
+        }}
+        pending={speechAccessPending}
+        speechStatus={speechAccessStatus}
+        visible={pendingSpeechAsset !== null && speechAccessStatus !== 'authorized'}
       />
 
       <ProcessingOverlay processing={processing} />

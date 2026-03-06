@@ -18,7 +18,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { haptics } from '../../services/haptics';
 import { emptyStateImage, palette, springConfig } from '../../theme/tokens';
 import type { Project } from '../../types/models';
-import { formatDuration } from '../../lib/project';
+import { countRenderableSubtitles, formatDuration } from '../../lib/project';
 import { GlassPanel } from '../common/GlassPanel';
 
 interface ProjectCardProps {
@@ -37,6 +37,7 @@ export function ProjectCard({
   onOpen,
 }: ProjectCardProps) {
   const translateX = useSharedValue(0);
+  const subtitleCount = countRenderableSubtitles(project.subtitles);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-12, 12])
@@ -108,7 +109,7 @@ export function ProjectCard({
                 {project.title}
               </Text>
               <Text style={styles.subtitleMeta}>
-                {project.subtitles.length} subtitle blocks
+                {subtitleCount} subtitle blocks
               </Text>
             </View>
           </GlassPanel>
