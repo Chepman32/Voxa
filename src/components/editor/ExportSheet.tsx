@@ -15,6 +15,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import Video from 'react-native-video';
 
@@ -43,6 +44,7 @@ export function ExportSheet({
   onChangeResolution,
   onExport,
 }: ExportSheetProps) {
+  const insets = useSafeAreaInsets();
   const [previewTime, setPreviewTime] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Press and hold to export');
   const [working, setWorking] = useState(false);
@@ -148,7 +150,12 @@ export function ExportSheet({
       </Animated.View>
 
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.sheetWrap, sheetStyle]}>
+        <Animated.View
+          style={[
+            styles.sheetWrap,
+            { paddingBottom: Math.max(insets.bottom, 12) },
+            sheetStyle,
+          ]}>
           <GlassPanel style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.header}>

@@ -28,6 +28,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import Video, { type OnLoadData, type VideoRef } from 'react-native-video';
 
@@ -90,6 +91,7 @@ export function EditorScreen({ project, onClose }: EditorScreenProps) {
 
 function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const videoRef = useRef<VideoRef>(null);
   const timelineRef = useRef<ScrollView>(null);
   const lastSeekMs = useRef(0);
@@ -135,6 +137,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     timeline: height * 0.4,
     text: height * 0.22,
   };
+  const topBarOffset = insets.top + 8;
+  const bottomInset = Math.max(insets.bottom, 12);
 
   const pixelsPerSecond = 82 * timelineZoom;
   const pixelsPerMs = pixelsPerSecond / 1000;
@@ -377,7 +381,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       exiting={FadeOut.duration(180)}
       style={styles.root}>
       <AtmosphereCanvas intensity={1.1} />
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { marginTop: topBarOffset }]}>
         <Pressable onPress={closeEditor} style={styles.topBarButton}>
           <Feather color={palette.textPrimary} name="chevron-down" size={18} />
         </Pressable>
@@ -488,6 +492,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       />
 
       <TextEditorSection
+        bottomInset={bottomInset}
         currentStyle={stylePreset}
         isEditing={isTextEditing}
         isStylePanelOpen={isStylePanelOpen}
@@ -508,7 +513,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       />
 
       <GestureDetector gesture={bottomEdgeGesture}>
-        <View style={styles.bottomHandleArea}>
+        <View style={[styles.bottomHandleArea, { height: bottomInset + 16 }]}>
           <View style={styles.bottomHandle} />
         </View>
       </GestureDetector>
@@ -743,6 +748,7 @@ function TimelineSubtitleBlock({
 }
 
 function TextEditorSection({
+  bottomInset,
   selectedSubtitle,
   currentStyle,
   isEditing,
@@ -756,6 +762,7 @@ function TextEditorSection({
   onChangeStyle,
   onOpenExport,
 }: {
+  bottomInset: number;
   selectedSubtitle: SubtitleBlock | null;
   currentStyle: Project['globalStyle'];
   isEditing: boolean;
@@ -791,7 +798,11 @@ function TextEditorSection({
 
   return (
     <GestureDetector gesture={swipeGesture}>
-      <View style={[styles.textZone, { minHeight: panelHeight }]}>
+      <View
+        style={[
+          styles.textZone,
+          { minHeight: panelHeight, marginBottom: bottomInset + 10 },
+        ]}>
         <GlassPanel style={styles.textPanel}>
           <Pressable onPress={onSelectText} style={styles.textPanelHeader}>
             <View>
@@ -977,7 +988,6 @@ const styles = StyleSheet.create({
     backgroundColor: palette.canvas,
   },
   topBar: {
-    marginTop: 18,
     marginHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1147,7 +1157,6 @@ const styles = StyleSheet.create({
   textZone: {
     marginHorizontal: 12,
     marginTop: 12,
-    marginBottom: 22,
   },
   textPanel: {
     paddingHorizontal: 18,
@@ -1259,7 +1268,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },

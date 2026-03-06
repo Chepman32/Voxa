@@ -14,6 +14,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import {
@@ -44,6 +45,7 @@ export function SettingsSheet({
   onResolutionChange,
   onResetOnboarding,
 }: SettingsSheetProps) {
+  const insets = useSafeAreaInsets();
   const progress = useSharedValue(0);
   const dragY = useSharedValue(0);
 
@@ -92,7 +94,12 @@ export function SettingsSheet({
       </Animated.View>
 
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.sheetWrap, sheetStyle]}>
+        <Animated.View
+          style={[
+            styles.sheetWrap,
+            { paddingBottom: Math.max(insets.bottom, 12) },
+            sheetStyle,
+          ]}>
           <GlassPanel style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.header}>

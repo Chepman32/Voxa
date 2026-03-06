@@ -14,6 +14,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { getGreeting, sortProjects } from '../../lib/project';
@@ -41,12 +42,16 @@ export function HomeScreen({
   onOpenSettings,
 }: HomeScreenProps) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
   const pullDistance = useSharedValue(0);
   const armedRef = useRef(false);
 
   const deferredProjects = useDeferredValue(sortProjects(projects));
   const cardWidth = (width - 52) / 2;
+  const headerTop = insets.top + 8;
+  const contentTop = headerTop + 100;
+  const pullIndicatorTop = insets.top + 12;
 
   const headerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(scrollY.value, [0, 90], [1, 0.84]) }],
@@ -86,11 +91,13 @@ export function HomeScreen({
     <View style={styles.root}>
       <AtmosphereCanvas intensity={1.08} />
 
-      <Animated.View style={[styles.pullIndicator, pullIconStyle]}>
+      <Animated.View
+        style={[styles.pullIndicator, { top: pullIndicatorTop }, pullIconStyle]}
+      >
         <Feather color={palette.cyan} name="plus-circle" size={56} />
       </Animated.View>
 
-      <Animated.View style={[styles.header, headerStyle]}>
+      <Animated.View style={[styles.header, { top: headerTop }, headerStyle]}>
         <View>
           <Text style={styles.greeting}>{getGreeting()}</Text>
           <Text style={styles.heading}>Projects</Text>
@@ -102,7 +109,7 @@ export function HomeScreen({
       </Animated.View>
 
       <FlatList
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: contentTop }]}
         data={deferredProjects}
         keyExtractor={item => item.id}
         numColumns={2}
@@ -172,13 +179,11 @@ const styles = StyleSheet.create({
   },
   pullIndicator: {
     position: 'absolute',
-    top: 22,
     alignSelf: 'center',
     zIndex: 2,
   },
   header: {
     position: 'absolute',
-    top: 18,
     left: 20,
     right: 20,
     zIndex: 2,
@@ -208,7 +213,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   content: {
-    paddingTop: 118,
     paddingHorizontal: 20,
     paddingBottom: 40,
     gap: 12,

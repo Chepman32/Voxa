@@ -18,6 +18,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { haptics } from '../../services/haptics';
@@ -41,6 +42,7 @@ export function OnboardingCarousel({
 }: OnboardingCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const lift = useSharedValue(0);
   const lastCardIndex = onboardingCards.length - 1;
 
@@ -146,7 +148,13 @@ export function OnboardingCarousel({
                 style={styles.image}>
                 <View style={styles.imageOverlay} />
 
-                <GlassPanel style={styles.card}>{cardBody}</GlassPanel>
+                <GlassPanel
+                  style={[
+                    styles.card,
+                    { marginBottom: insets.bottom + 28 },
+                  ]}>
+                  {cardBody}
+                </GlassPanel>
               </ImageBackground>
             </View>
           );
@@ -154,7 +162,7 @@ export function OnboardingCarousel({
         showsHorizontalScrollIndicator={false}
       />
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { bottom: insets.bottom + 16 }]}>
         <View style={styles.pagination}>
           {onboardingCards.map((item, index) => (
             <View
@@ -202,7 +210,6 @@ const styles = StyleSheet.create({
   },
   card: {
     marginHorizontal: 20,
-    marginBottom: 44,
     paddingHorizontal: 24,
     paddingTop: 26,
     paddingBottom: 28,
@@ -287,7 +294,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: 'absolute',
-    bottom: 16,
     left: 0,
     right: 0,
     alignItems: 'center',
