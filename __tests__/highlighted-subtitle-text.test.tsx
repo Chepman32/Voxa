@@ -51,6 +51,50 @@ describe('HighlightedSubtitleText', () => {
     expect(wordZero.props.style).toBeUndefined();
   });
 
+  it('renders plain text when word highlighting is disabled', () => {
+    const renderer = renderSubtitle(
+      {
+        id: 'subtitle-3',
+        startTime: 0,
+        endTime: 2200,
+        text: 'hello bright world',
+        words: [
+          { text: 'hello', startTime: 0, endTime: 500 },
+          { text: 'bright', startTime: 600, endTime: 1200 },
+          { text: 'world', startTime: 1300, endTime: 1900 },
+        ],
+      },
+      900,
+    );
+
+    ReactTestRenderer.act(() => {
+      renderer.update(
+        <HighlightedSubtitleText
+          playheadPosition={900}
+          style={{ color: defaultSubtitleStyle.textColor }}
+          stylePreset={{ ...defaultSubtitleStyle, wordHighlightEnabled: false }}
+          subtitle={{
+            id: 'subtitle-3',
+            startTime: 0,
+            endTime: 2200,
+            text: 'hello bright world',
+            words: [
+              { text: 'hello', startTime: 0, endTime: 500 },
+              { text: 'bright', startTime: 600, endTime: 1200 },
+              { text: 'world', startTime: 1300, endTime: 1900 },
+            ],
+          }}
+          wordTestIDPrefix="subtitle-word"
+        />,
+      );
+    });
+
+    const textNodes = renderer.root.findAllByType(Text);
+
+    expect(textNodes).toHaveLength(1);
+    expect(textNodes[0]?.props.children).toBe('hello bright world');
+  });
+
   it('keeps the plain subtitle style when no word timings exist', () => {
     const renderer = renderSubtitle(
       {

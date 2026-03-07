@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  type LayoutChangeEvent,
   Pressable,
   StyleSheet,
   Text,
@@ -21,6 +22,7 @@ import Video from 'react-native-video';
 
 import {
   findActiveSubtitle,
+  getSubtitleVerticalOrigin,
   isPlaceholderSubtitle,
 } from '../../lib/project';
 import { haptics } from '../../services/haptics';
@@ -28,6 +30,8 @@ import { exportResolutions, palette, springConfig } from '../../theme/tokens';
 import type { ExportResolution, Project, SubtitleStyle } from '../../types/models';
 import { GlassPanel } from '../common/GlassPanel';
 import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
+
+const EXPORT_PREVIEW_HEIGHT = 236;
 
 interface ExportSheetProps {
   visible: boolean;
@@ -52,6 +56,7 @@ export function ExportSheet({
   const [previewTime, setPreviewTime] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Press and hold to export');
   const [working, setWorking] = useState(false);
+  const [previewSubtitleHeight, setPreviewSubtitleHeight] = useState(0);
 
   const sheetProgress = useSharedValue(0);
   const dragOffset = useSharedValue(0);
@@ -149,6 +154,17 @@ export function ExportSheet({
   const activeSubtitle = isPlaceholderSubtitle(activeSubtitleCandidate)
     ? null
     : activeSubtitleCandidate;
+  const effectivePreviewSubtitleHeight = Math.max(
+    previewSubtitleHeight,
+    stylePreset.fontSize * 0.55 + 18,
+  );
+  const previewSubtitleTop = activeSubtitle
+    ? getSubtitleVerticalOrigin(
+        stylePreset,
+        EXPORT_PREVIEW_HEIGHT,
+        effectivePreviewSubtitleHeight,
+      )
+    : 0;
 
   return (
     <View pointerEvents={visible ? 'auto' : 'none'} style={styles.root}>
@@ -187,13 +203,15 @@ export function ExportSheet({
                 <View
                   style={[
                     styles.previewSubtitleWrap,
-                    stylePreset.position === 'top'
-                      ? styles.previewTop
-                      : stylePreset.position === 'middle'
-                      ? styles.previewMiddle
-                      : styles.previewBottom,
+                    { top: previewSubtitleTop },
                   ]}>
                   <HighlightedSubtitleText
+                    onLayout={(event: LayoutChangeEvent) => {
+                      const nextHeight = event.nativeEvent.layout.height;
+                      if (nextHeight !== previewSubtitleHeight) {
+                        setPreviewSubtitleHeight(nextHeight);
+                      }
+                    }}
                     playheadPosition={previewTime}
                     style={[
                       styles.previewSubtitleText,
@@ -300,7 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   preview: {
-    height: 236,
+    height: EXPORT_PREVIEW_HEIGHT,
     borderRadius: 24,
     overflow: 'hidden',
     backgroundColor: '#101216',
@@ -314,15 +332,6 @@ const styles = StyleSheet.create({
     left: 18,
     right: 18,
     alignItems: 'center',
-  },
-  previewTop: {
-    top: 18,
-  },
-  previewMiddle: {
-    top: '42%',
-  },
-  previewBottom: {
-    bottom: 18,
   },
   previewSubtitleText: {
     overflow: 'hidden',

@@ -3,10 +3,15 @@ import {
   clampSubtitleWordsToRange,
   createPlaceholderSubtitle,
   ensureSubtitles,
+  getSubtitleVerticalOrigin,
   mergeSegmentsIntoBlocks,
+  normalizeSubtitleStyle,
   offsetSubtitleWords,
+  resolveSubtitleStyleFromVerticalOrigin,
+  setSubtitlePositionPreset,
   snapSubtitleRange,
 } from '../src/lib/project';
+import { defaultSubtitleStyle } from '../src/theme/tokens';
 
 describe('project helpers', () => {
   it('merges tightly grouped transcript segments into readable subtitle blocks', () => {
@@ -178,6 +183,62 @@ describe('project helpers', () => {
       isPlaceholder: false,
     });
     expect(subtitle.words).toBeUndefined();
+  });
+
+  it('fills missing subtitle style fields with defaults', () => {
+    const style = normalizeSubtitleStyle({
+      position: 'top',
+      accentColor: '#123456',
+    });
+
+    expect(style).toMatchObject({
+      position: 'top',
+      accentColor: '#123456',
+      wordHighlightEnabled: true,
+      positionOffsetYRatio: 0,
+    });
+  });
+
+  it('resets the drag offset when applying a position preset', () => {
+    const style = setSubtitlePositionPreset(
+      {
+        ...defaultSubtitleStyle,
+        position: 'middle',
+        positionOffsetYRatio: 0.14,
+      },
+      'top',
+    );
+
+    expect(style).toMatchObject({
+      position: 'top',
+      positionOffsetYRatio: 0,
+    });
+  });
+
+  it('resolves a dragged subtitle origin into the nearest preset and residual offset', () => {
+    const style = resolveSubtitleStyleFromVerticalOrigin(
+      defaultSubtitleStyle,
+      30,
+      320,
+      60,
+    );
+
+    expect(style.position).toBe('top');
+    expect(style.positionOffsetYRatio).toBeCloseTo((30 - 20) / 320);
+  });
+
+  it('computes subtitle vertical origin from preset and offset ratio', () => {
+    const top = getSubtitleVerticalOrigin(
+      {
+        ...defaultSubtitleStyle,
+        position: 'bottom',
+        positionOffsetYRatio: -0.1,
+      },
+      300,
+      50,
+    );
+
+    expect(top).toBe(202);
   });
 
   it('snaps subtitle edges to nearby neighbours', () => {

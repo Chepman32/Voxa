@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  type LayoutChangeEvent,
   Text,
   type StyleProp,
   type TextStyle,
@@ -17,6 +18,7 @@ interface HighlightedSubtitleTextProps {
   stylePreset: SubtitleStyle;
   style?: StyleProp<TextStyle>;
   wordTestIDPrefix?: string;
+  onLayout?: (event: LayoutChangeEvent) => void;
 }
 
 export function HighlightedSubtitleText({
@@ -25,11 +27,12 @@ export function HighlightedSubtitleText({
   stylePreset,
   style,
   wordTestIDPrefix,
+  onLayout,
 }: HighlightedSubtitleTextProps) {
   const words = subtitle.words;
-  if (!words || words.length === 0) {
+  if (!words || words.length === 0 || !stylePreset.wordHighlightEnabled) {
     return (
-      <Text style={style}>
+      <Text onLayout={onLayout} style={style}>
         {applySubtitleCasing(subtitle.text, stylePreset)}
       </Text>
     );
@@ -38,7 +41,7 @@ export function HighlightedSubtitleText({
   const activeWordIndex = findActiveSubtitleWordIndex(subtitle, playheadPosition);
 
   return (
-    <Text style={style}>
+    <Text onLayout={onLayout} style={style}>
       {words.map((word, index) => (
         <Text
           key={`${subtitle.id}-word-${index}-${word.startTime}`}

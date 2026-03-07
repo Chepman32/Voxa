@@ -8,7 +8,7 @@ import type {
   Project,
   UserSettings,
 } from '../types/models';
-import { ensureSubtitles } from '../lib/project';
+import { ensureSubtitles, normalizeSubtitleStyle } from '../lib/project';
 import { zustandStorage } from './storage';
 
 interface AppState {
@@ -60,7 +60,7 @@ function normalizeStoredProject(project: Project): Project {
 
   return {
     ...project,
-    globalStyle: project.globalStyle ?? defaultSubtitleStyle,
+    globalStyle: normalizeSubtitleStyle(project.globalStyle ?? defaultSubtitleStyle),
     subtitles,
     lastEditedSubtitleId: hasSelectedSubtitle ? project.lastEditedSubtitleId : undefined,
   };
@@ -163,7 +163,7 @@ export const useAppStore = create<AppState>()(
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 2,
+      version: 3,
     },
   ),
 );

@@ -13,7 +13,9 @@ export interface SubtitleStyle {
   textColor: string;
   backgroundColor: string;
   accentColor: string;
+  wordHighlightEnabled: boolean;
   position: SubtitlePosition;
+  positionOffsetYRatio: number;
   casing: SubtitleCasing;
 }
 

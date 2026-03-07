@@ -9,6 +9,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   useWindowDimensions,
@@ -37,8 +38,12 @@ import {
   clampSubtitleWordsToRange,
   clamp,
   formatDuration,
+  getSubtitleVerticalBounds,
+  getSubtitleVerticalOrigin,
   isPlaceholderSubtitle,
   offsetSubtitleWords,
+  resolveSubtitleStyleFromVerticalOrigin,
+  setSubtitlePositionPreset,
   snapSubtitleRange,
 } from '../../lib/project';
 import {
@@ -81,6 +86,7 @@ import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
 import { ExportSheet } from './ExportSheet';
 
 const MAX_TIMELINE_SURFACE_WIDTH = 8192;
+const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
 
 interface EditorScreenProps {
   project: Project;
@@ -104,6 +110,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const isScrubbing = useRef(false);
   const [skipFlash, setSkipFlash] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
+  const subtitleCanvasDragOffsetY = useSharedValue(0);
 
   const [project, setProject] = useAtom(editorProjectAtom);
   const [playbackPosition, setPlaybackPosition] = useAtom(playbackPositionAtom);
@@ -196,6 +204,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const displaySubtitle = isPlaceholderSubtitle(activeDisplaySubtitle)
     ? null
     : activeDisplaySubtitle;
+  const wordHighlightAvailable = subtitles.some(
+    subtitle => !isPlaceholderSubtitle(subtitle) && (subtitle.words?.length ?? 0) > 0,
+  );
 
 
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
@@ -221,6 +232,41 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     if (subtitle) {
       seekTo(subtitle.startTime);
     }
+  };
+
+  const updateWordHighlightEnabled = (value: boolean) => {
+    if (!stylePreset) {
+      return;
+    }
+    setStylePreset({
+      ...stylePreset,
+      wordHighlightEnabled: value,
+    });
+  };
+
+  const applyPositionPreset = (position: Project['globalStyle']['position']) => {
+    if (!stylePreset) {
+      return;
+    }
+    setStylePreset(setSubtitlePositionPreset(stylePreset, position));
+  };
+
+  const commitSubtitleVerticalPosition = (nextTop: number) => {
+    if (!stylePreset) {
+      return;
+    }
+    const nextSubtitleBubbleHeight = Math.max(
+      subtitleBubbleHeight,
+      stylePreset.fontSize + 24,
+    );
+    setStylePreset(
+      resolveSubtitleStyleFromVerticalOrigin(
+        stylePreset,
+        nextTop,
+        zoneHeights.video,
+        nextSubtitleBubbleHeight,
+      ),
+    );
   };
 
   const updateProjectSubtitles = (updater: (current: SubtitleBlock[]) => SubtitleBlock[]) => {
@@ -444,6 +490,61 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
   });
 
+  const effectiveSubtitleBubbleHeight =
+    stylePreset ? Math.max(subtitleBubbleHeight, stylePreset.fontSize + 24) : subtitleBubbleHeight;
+  const videoSubtitleBounds = getSubtitleVerticalBounds(
+    zoneHeights.video,
+    effectiveSubtitleBubbleHeight,
+  );
+  const videoSubtitleTop = stylePreset && displaySubtitle
+    ? getSubtitleVerticalOrigin(stylePreset, zoneHeights.video, effectiveSubtitleBubbleHeight)
+    : 0;
+
+  const subtitleBubbleAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: subtitleCanvasDragOffsetY.value }],
+  }));
+
+  useEffect(() => {
+    subtitleCanvasDragOffsetY.value = 0;
+  }, [
+    displaySubtitle?.id,
+    stylePreset?.position,
+    stylePreset?.positionOffsetYRatio,
+    subtitleBubbleHeight,
+  ]);
+
+  const subtitleDragGesture = Gesture.Pan()
+    .activeOffsetY([-4, 4])
+    .failOffsetX([-28, 28])
+    .onBegin(() => {
+      runOnJS(haptics.light)();
+    })
+    .onUpdate(event => {
+      const nextTop = Math.min(
+        Math.max(videoSubtitleTop + event.translationY, videoSubtitleBounds.minTop),
+        videoSubtitleBounds.maxTop,
+      );
+      subtitleCanvasDragOffsetY.value = nextTop - videoSubtitleTop;
+    })
+    .onEnd(event => {
+      const nextTop = Math.min(
+        Math.max(videoSubtitleTop + event.translationY, videoSubtitleBounds.minTop),
+        videoSubtitleBounds.maxTop,
+      );
+      subtitleCanvasDragOffsetY.value = withSpring(0, springConfig);
+      runOnJS(commitSubtitleVerticalPosition)(nextTop);
+    })
+    .onFinalize(() => {
+      subtitleCanvasDragOffsetY.value = withSpring(0, springConfig);
+    });
+
+  const subtitleTapGesture = Gesture.Tap().onEnd((_event, success) => {
+    if (!success) {
+      return;
+    }
+    runOnJS(handleVideoTap)();
+  });
+
   if (!project || !stylePreset) {
     return null;
   }
@@ -528,31 +629,38 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           ) : null}
 
           {displaySubtitle ? (
-            <View
-              style={[
-                styles.overlaySubtitleWrap,
-                stylePreset.position === 'top'
-                  ? styles.overlaySubtitleTop
-                  : stylePreset.position === 'middle'
-                  ? styles.overlaySubtitleMiddle
-                  : styles.overlaySubtitleBottom,
-              ]}>
-              <HighlightedSubtitleText
-                playheadPosition={playbackPosition}
-                style={[
-                  styles.overlaySubtitleText,
-                  {
-                    color: stylePreset.textColor,
-                    backgroundColor: stylePreset.backgroundColor,
-                    fontFamily: stylePreset.fontFamily,
-                    fontWeight: stylePreset.fontWeight,
-                    letterSpacing: stylePreset.letterSpacing,
-                    fontSize: stylePreset.fontSize,
-                  },
-                ]}
-                stylePreset={stylePreset}
-                subtitle={displaySubtitle}
-              />
+            <View pointerEvents="box-none" style={styles.overlaySubtitleWrap}>
+              <GestureDetector gesture={Gesture.Race(subtitleDragGesture, subtitleTapGesture)}>
+                <Animated.View
+                  onLayout={event => {
+                    const nextHeight = event.nativeEvent.layout.height;
+                    if (nextHeight !== subtitleBubbleHeight) {
+                      setSubtitleBubbleHeight(nextHeight);
+                    }
+                  }}
+                  style={[
+                    styles.overlaySubtitleBubble,
+                    { top: videoSubtitleTop },
+                    subtitleBubbleAnimatedStyle,
+                  ]}>
+                  <HighlightedSubtitleText
+                    playheadPosition={playbackPosition}
+                    style={[
+                      styles.overlaySubtitleText,
+                      {
+                        color: stylePreset.textColor,
+                        backgroundColor: stylePreset.backgroundColor,
+                        fontFamily: stylePreset.fontFamily,
+                        fontWeight: stylePreset.fontWeight,
+                        letterSpacing: stylePreset.letterSpacing,
+                        fontSize: stylePreset.fontSize,
+                      },
+                    ]}
+                    stylePreset={stylePreset}
+                    subtitle={displaySubtitle}
+                  />
+                </Animated.View>
+              </GestureDetector>
             </View>
           ) : null}
         </View>
@@ -579,6 +687,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         subtitles={subtitles}
         timelineRef={timelineRef}
         waveform={project.waveform}
+        wordHighlightAvailable={wordHighlightAvailable}
+        wordHighlightEnabled={stylePreset.wordHighlightEnabled}
+        onToggleWordHighlight={updateWordHighlightEnabled}
         width={width}
         zoneHeight={zoneHeights.timeline}
       />
@@ -600,6 +711,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         onSetEditing={setIsTextEditing}
         onToggleStylePanel={setIsStylePanelOpen}
         onUpdateText={updateSelectedSubtitleText}
+        onUpdatePositionPreset={applyPositionPreset}
         selectedSubtitle={selectedSubtitle}
         zoneHeight={zoneHeights.text}
       />
@@ -632,10 +744,13 @@ function TimelineSection({
   contentWidth,
   waveform,
   subtitles,
+  wordHighlightEnabled,
+  wordHighlightAvailable,
   selectedSubtitleId,
   onSelectSubtitle,
   onMoveSubtitle,
   onTrimSubtitle,
+  onToggleWordHighlight,
   onScroll,
   onScrubStart,
   onScrubEnd,
@@ -650,10 +765,13 @@ function TimelineSection({
   contentWidth: number;
   waveform: number[];
   subtitles: SubtitleBlock[];
+  wordHighlightEnabled: boolean;
+  wordHighlightAvailable: boolean;
   selectedSubtitleId: string | null;
   onSelectSubtitle: (subtitleId: string) => void;
   onMoveSubtitle: (subtitleId: string, nextStart: number, nextEnd: number) => void;
   onTrimSubtitle: (subtitleId: string, edge: 'start' | 'end', deltaMs: number) => void;
+  onToggleWordHighlight: (value: boolean) => void;
   onScroll: (offsetX: number) => void;
   onScrubStart: () => void;
   onScrubEnd: () => void;
@@ -735,6 +853,33 @@ function TimelineSection({
 
           <View pointerEvents="none" style={styles.playhead}>
             <View style={styles.playheadGlow} />
+          </View>
+
+          <View style={styles.timelineControlDock}>
+            <View style={styles.timelineControlRow}>
+              <View style={styles.timelineControlCopy}>
+                <Text style={styles.timelineControlLabel}>Word Highlight</Text>
+                <Text style={styles.timelineControlHint}>
+                  {wordHighlightAvailable
+                    ? 'Accent the currently spoken word.'
+                    : 'Word timing unavailable'}
+                </Text>
+              </View>
+              <Switch
+                disabled={!wordHighlightAvailable}
+                ios_backgroundColor="rgba(255, 255, 255, 0.12)"
+                onValueChange={onToggleWordHighlight}
+                testID={WORD_HIGHLIGHT_SWITCH_ID}
+                thumbColor={
+                  wordHighlightAvailable ? palette.textPrimary : 'rgba(255, 255, 255, 0.32)'
+                }
+                trackColor={{
+                  false: 'rgba(255, 255, 255, 0.16)',
+                  true: 'rgba(0, 240, 255, 0.42)',
+                }}
+                value={wordHighlightEnabled && wordHighlightAvailable}
+              />
+            </View>
           </View>
         </View>
       </GestureDetector>
@@ -857,6 +1002,7 @@ function TextEditorSection({
   onSelectText,
   onSetEditing,
   onUpdateText,
+  onUpdatePositionPreset,
   onNavigate,
   onToggleStylePanel,
   onChangeStyle,
@@ -871,6 +1017,7 @@ function TextEditorSection({
   onSelectText: () => void;
   onSetEditing: (value: boolean) => void;
   onUpdateText: (text: string) => void;
+  onUpdatePositionPreset: (position: Project['globalStyle']['position']) => void;
   onNavigate: (direction: -1 | 1) => void;
   onToggleStylePanel: (value: boolean) => void;
   onChangeStyle: (style: Project['globalStyle']) => void;
@@ -992,11 +1139,7 @@ function TextEditorSection({
                   id: option.value,
                   label: option.label,
                   active: currentStyle.position === option.value,
-                  onPress: () =>
-                    onChangeStyle({
-                      ...currentStyle,
-                      position: option.value,
-                    }),
+                  onPress: () => onUpdatePositionPreset(option.value),
                 }))}
               />
 
@@ -1176,19 +1319,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   overlaySubtitleWrap: {
-    position: 'absolute',
+    ...StyleSheet.absoluteFillObject,
     left: 18,
     right: 18,
-    alignItems: 'center',
   },
-  overlaySubtitleTop: {
-    top: 20,
-  },
-  overlaySubtitleMiddle: {
-    top: '42%',
-  },
-  overlaySubtitleBottom: {
-    bottom: 18,
+  overlaySubtitleBubble: {
+    position: 'absolute',
+    alignSelf: 'center',
   },
   overlaySubtitleText: {
     overflow: 'hidden',
@@ -1233,6 +1370,41 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.9,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 0 },
+  },
+  timelineControlDock: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: 16,
+    alignItems: 'center',
+  },
+  timelineControlRow: {
+    width: '100%',
+    maxWidth: 420,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(10, 12, 17, 0.72)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  timelineControlCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  timelineControlLabel: {
+    color: palette.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  timelineControlHint: {
+    color: palette.textSecondary,
+    fontSize: 12,
+    lineHeight: 16,
   },
   subtitleBlockWrap: {
     position: 'absolute',

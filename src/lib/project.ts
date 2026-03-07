@@ -14,6 +14,10 @@ const LEGACY_OFFSET_START_RATIO = 0.75;
 const LEGACY_OFFSET_END_TOLERANCE_MS = 1500;
 const KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS = 1000;
 const KNOWN_OFFSET_MIN_COVERAGE_RATIO = 0.4;
+const SUBTITLE_TOP_INSET_PX = 20;
+const SUBTITLE_BOTTOM_INSET_PX = 18;
+const SUBTITLE_SAFE_VERTICAL_INSET_PX = 16;
+const SUBTITLE_MIDDLE_TOP_RATIO = 0.42;
 
 const LEGACY_PLACEHOLDER_SUBTITLE_TEXTS = new Set([
   PLACEHOLDER_SUBTITLE_TEXT,
@@ -22,6 +26,15 @@ const LEGACY_PLACEHOLDER_SUBTITLE_TEXTS = new Set([
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+export function normalizeSubtitleStyle(
+  style?: Partial<SubtitleStyle> | null,
+): SubtitleStyle {
+  return {
+    ...defaultSubtitleStyle,
+    ...style,
+  };
 }
 
 export function formatDuration(durationMs: number) {
@@ -405,6 +418,110 @@ export function sortProjects(projects: Project[]) {
 
 export function applySubtitleCasing(text: string, style: SubtitleStyle) {
   return style.casing === 'uppercase' ? text.toUpperCase() : text;
+}
+
+function subtitleAnchorTop(
+  position: SubtitleStyle['position'],
+  videoHeight: number,
+  subtitleHeight: number,
+) {
+  switch (position) {
+    case 'top':
+      return SUBTITLE_TOP_INSET_PX;
+    case 'middle':
+      return videoHeight * SUBTITLE_MIDDLE_TOP_RATIO;
+    default:
+      return videoHeight - subtitleHeight - SUBTITLE_BOTTOM_INSET_PX;
+  }
+}
+
+export function clampSubtitleVerticalOrigin(
+  top: number,
+  videoHeight: number,
+  subtitleHeight: number,
+) {
+  const { maxTop, minTop } = getSubtitleVerticalBounds(videoHeight, subtitleHeight);
+
+  return clamp(top, minTop, maxTop);
+}
+
+export function getSubtitleVerticalBounds(
+  videoHeight: number,
+  subtitleHeight: number,
+) {
+  return {
+    minTop: SUBTITLE_SAFE_VERTICAL_INSET_PX,
+    maxTop: Math.max(
+      SUBTITLE_SAFE_VERTICAL_INSET_PX,
+      videoHeight - subtitleHeight - SUBTITLE_SAFE_VERTICAL_INSET_PX,
+    ),
+  };
+}
+
+export function getSubtitleVerticalOrigin(
+  style: Pick<SubtitleStyle, 'position' | 'positionOffsetYRatio'>,
+  videoHeight: number,
+  subtitleHeight: number,
+) {
+  const normalizedStyle = normalizeSubtitleStyle(style);
+  const anchorTop = subtitleAnchorTop(
+    normalizedStyle.position,
+    videoHeight,
+    subtitleHeight,
+  );
+
+  return clampSubtitleVerticalOrigin(
+    anchorTop + normalizedStyle.positionOffsetYRatio * videoHeight,
+    videoHeight,
+    subtitleHeight,
+  );
+}
+
+export function setSubtitlePositionPreset(
+  style: SubtitleStyle,
+  position: SubtitleStyle['position'],
+) {
+  return {
+    ...style,
+    position,
+    positionOffsetYRatio: 0,
+  } satisfies SubtitleStyle;
+}
+
+export function resolveSubtitleStyleFromVerticalOrigin(
+  style: SubtitleStyle,
+  targetTop: number,
+  videoHeight: number,
+  subtitleHeight: number,
+) {
+  const clampedTop = clampSubtitleVerticalOrigin(
+    targetTop,
+    videoHeight,
+    subtitleHeight,
+  );
+  const candidatePositions: SubtitleStyle['position'][] = ['top', 'middle', 'bottom'];
+
+  let nearestPosition = style.position;
+  let nearestAnchorTop = subtitleAnchorTop(
+    nearestPosition,
+    videoHeight,
+    subtitleHeight,
+  );
+
+  for (const position of candidatePositions) {
+    const anchorTop = subtitleAnchorTop(position, videoHeight, subtitleHeight);
+    if (Math.abs(anchorTop - clampedTop) < Math.abs(nearestAnchorTop - clampedTop)) {
+      nearestPosition = position;
+      nearestAnchorTop = anchorTop;
+    }
+  }
+
+  return {
+    ...style,
+    position: nearestPosition,
+    positionOffsetYRatio:
+      videoHeight > 0 ? (clampedTop - nearestAnchorTop) / videoHeight : 0,
+  } satisfies SubtitleStyle;
 }
 
 export function applyManualSubtitleTextEdit(subtitle: SubtitleBlock, text: string) {

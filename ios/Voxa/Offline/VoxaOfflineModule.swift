@@ -321,11 +321,15 @@ private extension VoxaOfflineModule {
     )
     let textColor = color(from: style["textColor"] as? String ?? "#FFFFFF")
     let accentColor = color(from: style["accentColor"] as? String ?? "#12E5FF")
+    let wordHighlightEnabled = (style["wordHighlightEnabled"] as? NSNumber)?.boolValue ?? true
     let backgroundColor = color(
       from: style["backgroundColor"] as? String ?? "rgba(10, 10, 12, 0.62)"
     )
     let letterSpacing = CGFloat((style["letterSpacing"] as? NSNumber)?.doubleValue ?? 0.3)
     let position = style["position"] as? String ?? "bottom"
+    let positionOffsetYRatio = CGFloat(
+      (style["positionOffsetYRatio"] as? NSNumber)?.doubleValue ?? 0
+    )
     let uppercase = (style["casing"] as? String) == "uppercase"
 
     return subtitles.compactMap { subtitle in
@@ -360,6 +364,7 @@ private extension VoxaOfflineModule {
       let containerHeight = textBounds.height + verticalPadding * 2
       let originY = subtitleOriginY(
         position: position,
+        positionOffsetYRatio: positionOffsetYRatio,
         videoSize: videoSize,
         layerHeight: containerHeight
       )
@@ -393,17 +398,19 @@ private extension VoxaOfflineModule {
       textLayer.string = attributedText
       containerLayer.addSublayer(textLayer)
 
-      let words = subtitleWords(from: subtitle)
-      makeHighlightedWordLayers(
-        text: text,
-        words: words,
-        font: font,
-        accentColor: accentColor,
-        letterSpacing: letterSpacing,
-        uppercase: uppercase,
-        frame: textFrame,
-        totalDuration: max(totalDuration, 0.1)
-      ).forEach(containerLayer.addSublayer)
+      if wordHighlightEnabled {
+        let words = subtitleWords(from: subtitle)
+        makeHighlightedWordLayers(
+          text: text,
+          words: words,
+          font: font,
+          accentColor: accentColor,
+          letterSpacing: letterSpacing,
+          uppercase: uppercase,
+          frame: textFrame,
+          totalDuration: max(totalDuration, 0.1)
+        ).forEach(containerLayer.addSublayer)
+      }
 
       let animation = opacityAnimation(
         start: startTime / 1000,
@@ -532,15 +539,37 @@ private extension VoxaOfflineModule {
     return animation
   }
 
-  func subtitleOriginY(position: String, videoSize: CGSize, layerHeight: CGFloat) -> CGFloat {
+  func subtitleAnchorY(position: String, videoSize: CGSize, layerHeight: CGFloat) -> CGFloat {
     switch position {
     case "top":
-      return videoSize.height * 0.12
+      return 20
     case "middle":
-      return (videoSize.height - layerHeight) / 2
+      return videoSize.height * 0.42
     default:
-      return max(16, videoSize.height * 0.78 - layerHeight)
+      return videoSize.height - layerHeight - 18
     }
+  }
+
+  func subtitleVerticalBounds(videoSize: CGSize, layerHeight: CGFloat) -> (min: CGFloat, max: CGFloat) {
+    let minOriginY: CGFloat = 16
+    let maxOriginY = max(minOriginY, videoSize.height - layerHeight - 16)
+    return (min: minOriginY, max: maxOriginY)
+  }
+
+  func subtitleOriginY(
+    position: String,
+    positionOffsetYRatio: CGFloat,
+    videoSize: CGSize,
+    layerHeight: CGFloat
+  ) -> CGFloat {
+    let bounds = subtitleVerticalBounds(videoSize: videoSize, layerHeight: layerHeight)
+    let anchorY = subtitleAnchorY(
+      position: position,
+      videoSize: videoSize,
+      layerHeight: layerHeight
+    )
+    let offsetY = positionOffsetYRatio * videoSize.height
+    return min(max(anchorY + offsetY, bounds.min), bounds.max)
   }
 
   func resolvedFont(name: String?, size: CGFloat, weightString: String?) -> UIFont {

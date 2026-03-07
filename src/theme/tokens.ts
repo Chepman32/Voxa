@@ -64,7 +64,9 @@ export const defaultSubtitleStyle: SubtitleStyle = {
   textColor: '#FFFFFF',
   backgroundColor: 'rgba(10, 10, 12, 0.62)',
   accentColor: '#00F0FF',
+  wordHighlightEnabled: true,
   position: 'bottom',
+  positionOffsetYRatio: 0,
   casing: 'sentence',
 };
 
