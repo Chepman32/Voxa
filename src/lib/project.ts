@@ -1,9 +1,15 @@
 import { createId } from './id';
 import { defaultSubtitleStyle } from '../theme/tokens';
-import type { Project, SubtitleBlock, SubtitleStyle } from '../types/models';
+import type {
+  Project,
+  SubtitleBlock,
+  SubtitleStyle,
+  SubtitleWord,
+} from '../types/models';
 
 export const PLACEHOLDER_SUBTITLE_TEXT = 'Tap to add your first subtitle.';
 const MIN_SUBTITLE_DURATION_MS = 160;
+const MIN_SUBTITLE_WORD_DURATION_MS = 1;
 const LEGACY_OFFSET_START_RATIO = 0.75;
 const LEGACY_OFFSET_END_TOLERANCE_MS = 1500;
 const KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS = 1000;
@@ -94,6 +100,100 @@ export function ensureSubtitleOrder(subtitles: SubtitleBlock[]) {
   });
 }
 
+function normalizeSubtitleWords(words?: SubtitleWord[]) {
+  if (!words || words.length === 0) {
+    return undefined;
+  }
+
+  const normalized = words
+    .flatMap(word => {
+      const text = word.text.trim();
+      if (text.length === 0) {
+        return [];
+      }
+
+      const startTime = Math.max(0, Math.round(word.startTime));
+      const endTime = Math.max(
+        startTime + MIN_SUBTITLE_WORD_DURATION_MS,
+        Math.round(word.endTime),
+      );
+
+      return [
+        {
+          ...word,
+          text,
+          startTime,
+          endTime,
+        },
+      ];
+    })
+    .sort((left, right) => {
+      if (left.startTime === right.startTime) {
+        return left.endTime - right.endTime;
+      }
+      return left.startTime - right.startTime;
+    });
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function mergeSubtitleWords(...groups: Array<SubtitleWord[] | undefined>) {
+  return normalizeSubtitleWords(groups.flatMap(group => group ?? []));
+}
+
+export function offsetSubtitleWords(words: SubtitleWord[] | undefined, deltaMs: number) {
+  const normalized = normalizeSubtitleWords(words);
+  if (!normalized || deltaMs === 0) {
+    return normalized;
+  }
+
+  return normalizeSubtitleWords(
+    normalized.map(word => ({
+      ...word,
+      startTime: word.startTime + deltaMs,
+      endTime: word.endTime + deltaMs,
+    })),
+  );
+}
+
+export function clampSubtitleWordsToRange(
+  words: SubtitleWord[] | undefined,
+  startTime: number,
+  endTime: number,
+) {
+  const normalized = normalizeSubtitleWords(words);
+  if (!normalized || endTime <= startTime) {
+    return undefined;
+  }
+
+  const clamped = normalized.flatMap(word => {
+    if (word.endTime <= startTime || word.startTime >= endTime) {
+      return [];
+    }
+
+    const nextStart = clamp(
+      word.startTime,
+      startTime,
+      endTime - MIN_SUBTITLE_WORD_DURATION_MS,
+    );
+    const nextEnd = clamp(
+      word.endTime,
+      nextStart + MIN_SUBTITLE_WORD_DURATION_MS,
+      endTime,
+    );
+
+    return [
+      {
+        ...word,
+        startTime: nextStart,
+        endTime: nextEnd,
+      },
+    ];
+  });
+
+  return clamped.length > 0 ? clamped : undefined;
+}
+
 export function mergeSegmentsIntoBlocks(segments: SubtitleBlock[]) {
   if (segments.length === 0) {
     return [];
@@ -105,7 +205,10 @@ export function mergeSegmentsIntoBlocks(segments: SubtitleBlock[]) {
   for (const segment of ordered) {
     const previous = merged.at(-1);
     if (!previous) {
-      merged.push({ ...segment });
+      merged.push({
+        ...segment,
+        words: normalizeSubtitleWords(segment.words),
+      });
       continue;
     }
 
@@ -119,6 +222,7 @@ export function mergeSegmentsIntoBlocks(segments: SubtitleBlock[]) {
     if (shouldMerge) {
       previous.endTime = segment.endTime;
       previous.text = combinedText;
+      previous.words = mergeSubtitleWords(previous.words, segment.words);
       previous.confidence = Math.min(
         previous.confidence ?? 1,
         segment.confidence ?? 1,
@@ -126,12 +230,16 @@ export function mergeSegmentsIntoBlocks(segments: SubtitleBlock[]) {
       continue;
     }
 
-    merged.push({ ...segment });
+    merged.push({
+      ...segment,
+      words: normalizeSubtitleWords(segment.words),
+    });
   }
 
   return merged.map(block => ({
     ...block,
     text: block.text.replace(/\s+/g, ' ').trim(),
+    words: clampSubtitleWordsToRange(block.words, block.startTime, block.endTime),
   }));
 }
 
@@ -148,6 +256,7 @@ function shiftSubtitleTimes(subtitles: SubtitleBlock[], offsetMs: number) {
     ...block,
     startTime: block.startTime - offsetMs,
     endTime: block.endTime - offsetMs,
+    words: offsetSubtitleWords(block.words, -offsetMs),
   }));
 }
 
@@ -215,15 +324,21 @@ export function ensureSubtitles(
 ) {
   let normalized = ensureSubtitleOrder(
     subtitles
-      .map(block => ({
-        ...block,
-        startTime: Math.max(0, Math.round(block.startTime)),
-        endTime: Math.max(
+      .map(block => {
+        const startTime = Math.max(0, Math.round(block.startTime));
+        const endTime = Math.max(
           Math.round(block.startTime + MIN_SUBTITLE_DURATION_MS),
           Math.round(block.endTime),
-        ),
-        text: block.text.trim(),
-      }))
+        );
+
+        return {
+          ...block,
+          startTime,
+          endTime,
+          text: block.text.trim(),
+          words: clampSubtitleWordsToRange(block.words, startTime, endTime),
+        };
+      })
       .filter(block => block.text.length > 0),
   );
 
@@ -246,14 +361,19 @@ export function ensureSubtitles(
 
   return normalized.map((block, index) => {
     const nextBlock = normalized[index + 1];
-    const maxEnd = nextBlock ? nextBlock.startTime - 40 : duration;
+    const clampedEnd = clamp(
+      block.endTime,
+      block.startTime + MIN_SUBTITLE_DURATION_MS,
+      Math.max(
+        block.startTime + MIN_SUBTITLE_DURATION_MS,
+        nextBlock ? nextBlock.startTime - 40 : duration,
+      ),
+    );
+
     return {
       ...block,
-      endTime: clamp(
-        block.endTime,
-        block.startTime + MIN_SUBTITLE_DURATION_MS,
-        Math.max(block.startTime + MIN_SUBTITLE_DURATION_MS, maxEnd),
-      ),
+      endTime: clampedEnd,
+      words: clampSubtitleWordsToRange(block.words, block.startTime, clampedEnd),
     };
   });
 }
@@ -265,12 +385,36 @@ export function findActiveSubtitle(subtitles: SubtitleBlock[], playheadPosition:
   );
 }
 
+export function findActiveSubtitleWordIndex(
+  subtitle: Pick<SubtitleBlock, 'words'> | null | undefined,
+  playheadPosition: number,
+) {
+  const words = normalizeSubtitleWords(subtitle?.words);
+  if (!words) {
+    return -1;
+  }
+
+  return words.findIndex(
+    word => playheadPosition >= word.startTime && playheadPosition <= word.endTime,
+  );
+}
+
 export function sortProjects(projects: Project[]) {
   return [...projects].sort((left, right) => right.updatedAt - left.updatedAt);
 }
 
 export function applySubtitleCasing(text: string, style: SubtitleStyle) {
   return style.casing === 'uppercase' ? text.toUpperCase() : text;
+}
+
+export function applyManualSubtitleTextEdit(subtitle: SubtitleBlock, text: string) {
+  return {
+    ...subtitle,
+    text,
+    words: undefined,
+    isGenerated: false,
+    isPlaceholder: false,
+  } satisfies SubtitleBlock;
 }
 
 export function snapSubtitleRange(

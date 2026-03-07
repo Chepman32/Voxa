@@ -1,13 +1,21 @@
 import { NativeModules, Platform } from 'react-native';
 
 import { createId } from '../lib/id';
-import type { ExportResolution, PermissionSummary, SubtitleStyle } from '../types/models';
+import type {
+  ExportResolution,
+  PermissionSummary,
+  SubtitleStyle,
+  SubtitleWord,
+} from '../types/models';
+
+export interface NativeSubtitleWord extends SubtitleWord {}
 
 export interface NativeSubtitleSegment {
   id: string;
   startTime: number;
   endTime: number;
   text: string;
+  words?: NativeSubtitleWord[];
   confidence?: number;
 }
 
@@ -82,6 +90,14 @@ function createMockSubtitles(duration = 12000): NativeSubtitleSegment[] {
       startTime,
       endTime: Math.min(duration, startTime + 820),
       text: word,
+      words: [
+        {
+          text: word,
+          startTime,
+          endTime: Math.min(duration, startTime + 820),
+          confidence: 0.95,
+        },
+      ],
       confidence: 0.95,
     };
   });

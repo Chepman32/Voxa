@@ -4,6 +4,12 @@ import React
 import Speech
 import UIKit
 
+private struct ExportSubtitleWord {
+  let text: String
+  let startTime: Double
+  let endTime: Double
+}
+
 @objc(VoxaOfflineModule)
 final class VoxaOfflineModule: NSObject {
   private let recognitionChunkDurationSeconds = 45.0
@@ -314,6 +320,7 @@ private extension VoxaOfflineModule {
       weightString: style["fontWeight"] as? String
     )
     let textColor = color(from: style["textColor"] as? String ?? "#FFFFFF")
+    let accentColor = color(from: style["accentColor"] as? String ?? "#12E5FF")
     let backgroundColor = color(
       from: style["backgroundColor"] as? String ?? "rgba(10, 10, 12, 0.62)"
     )
@@ -376,14 +383,27 @@ private extension VoxaOfflineModule {
       textLayer.contentsScale = UIScreen.main.scale
       textLayer.alignmentMode = .center
       textLayer.isWrapped = true
-      textLayer.frame = CGRect(
+      let textFrame = CGRect(
         x: horizontalPadding,
         y: verticalPadding - 2,
         width: containerWidth - horizontalPadding * 2,
         height: containerHeight - verticalPadding * 2
       )
+      textLayer.frame = textFrame
       textLayer.string = attributedText
       containerLayer.addSublayer(textLayer)
+
+      let words = subtitleWords(from: subtitle)
+      makeHighlightedWordLayers(
+        text: text,
+        words: words,
+        font: font,
+        accentColor: accentColor,
+        letterSpacing: letterSpacing,
+        uppercase: uppercase,
+        frame: textFrame,
+        totalDuration: max(totalDuration, 0.1)
+      ).forEach(containerLayer.addSublayer)
 
       let animation = opacityAnimation(
         start: startTime / 1000,
@@ -392,6 +412,103 @@ private extension VoxaOfflineModule {
       )
       containerLayer.add(animation, forKey: "opacity")
       return containerLayer
+    }
+  }
+
+  func subtitleWords(from subtitle: [String: Any]) -> [ExportSubtitleWord] {
+    guard let rawWords = subtitle["words"] as? [[String: Any]] else {
+      return []
+    }
+
+    return rawWords
+      .compactMap { rawWord in
+        guard let rawText = rawWord["text"] as? String else {
+          return nil
+        }
+
+        let text = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard text.isEmpty == false else {
+          return nil
+        }
+
+        let startTime = (rawWord["startTime"] as? NSNumber)?.doubleValue ?? 0
+        let endTime = (rawWord["endTime"] as? NSNumber)?.doubleValue ?? 0
+        guard endTime > startTime else {
+          return nil
+        }
+
+        return ExportSubtitleWord(text: text, startTime: startTime, endTime: endTime)
+      }
+      .sorted { left, right in
+        if left.startTime == right.startTime {
+          return left.endTime < right.endTime
+        }
+        return left.startTime < right.startTime
+      }
+  }
+
+  func makeHighlightedWordLayers(
+    text: String,
+    words: [ExportSubtitleWord],
+    font: UIFont,
+    accentColor: UIColor,
+    letterSpacing: CGFloat,
+    uppercase: Bool,
+    frame: CGRect,
+    totalDuration: Double
+  ) -> [CATextLayer] {
+    guard words.isEmpty == false else {
+      return []
+    }
+
+    let casedWords = words.map { word in
+      ExportSubtitleWord(
+        text: uppercase ? word.text.uppercased() : word.text,
+        startTime: word.startTime,
+        endTime: word.endTime
+      )
+    }
+
+    let joinedWords = casedWords.map(\.text).joined(separator: " ")
+    guard joinedWords == text else {
+      return []
+    }
+
+    var location = 0
+    return casedWords.enumerated().compactMap { index, word in
+      let wordLength = (word.text as NSString).length
+      let range = NSRange(location: location, length: wordLength)
+      location += wordLength
+      if index < casedWords.count - 1 {
+        location += 1
+      }
+
+      let attributedText = NSMutableAttributedString(
+        string: text,
+        attributes: [
+          .font: font,
+          .foregroundColor: UIColor.clear,
+          .kern: letterSpacing,
+        ]
+      )
+      attributedText.addAttribute(.foregroundColor, value: accentColor, range: range)
+
+      let layer = CATextLayer()
+      layer.contentsScale = UIScreen.main.scale
+      layer.alignmentMode = .center
+      layer.isWrapped = true
+      layer.frame = frame
+      layer.opacity = 0
+      layer.string = attributedText
+      layer.add(
+        opacityAnimation(
+          start: word.startTime / 1000,
+          end: word.endTime / 1000,
+          totalDuration: totalDuration
+        ),
+        forKey: "opacity"
+      )
+      return layer
     }
   }
 
@@ -684,6 +801,12 @@ private extension VoxaOfflineModule {
         "startTime": adjustedStartMs + chunkStartTimeMs,
         "endTime": adjustedEnd,
         "text": segment.substring,
+        "words": [[
+          "text": segment.substring,
+          "startTime": adjustedStartMs + chunkStartTimeMs,
+          "endTime": adjustedEnd,
+          "confidence": Double(segment.confidence),
+        ]],
         "confidence": Double(segment.confidence),
       ]
     }

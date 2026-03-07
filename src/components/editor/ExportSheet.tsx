@@ -20,7 +20,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import Video from 'react-native-video';
 
 import {
-  applySubtitleCasing,
   findActiveSubtitle,
   isPlaceholderSubtitle,
 } from '../../lib/project';
@@ -28,6 +27,7 @@ import { haptics } from '../../services/haptics';
 import { exportResolutions, palette, springConfig } from '../../theme/tokens';
 import type { ExportResolution, Project, SubtitleStyle } from '../../types/models';
 import { GlassPanel } from '../common/GlassPanel';
+import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
 
 interface ExportSheetProps {
   visible: boolean;
@@ -193,7 +193,8 @@ export function ExportSheet({
                       ? styles.previewMiddle
                       : styles.previewBottom,
                   ]}>
-                  <Text
+                  <HighlightedSubtitleText
+                    playheadPosition={previewTime}
                     style={[
                       styles.previewSubtitleText,
                       {
@@ -204,9 +205,10 @@ export function ExportSheet({
                         letterSpacing: stylePreset.letterSpacing,
                         fontSize: stylePreset.fontSize * 0.55,
                       },
-                    ]}>
-                    {applySubtitleCasing(activeSubtitle.text, stylePreset)}
-                  </Text>
+                    ]}
+                    stylePreset={stylePreset}
+                    subtitle={activeSubtitle}
+                  />
                 </View>
               ) : null}
             </View>

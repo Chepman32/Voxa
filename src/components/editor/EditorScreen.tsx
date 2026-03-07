@@ -33,10 +33,12 @@ import Feather from 'react-native-vector-icons/Feather';
 import Video, { type OnLoadData, type VideoRef } from 'react-native-video';
 
 import {
-  applySubtitleCasing,
+  applyManualSubtitleTextEdit,
+  clampSubtitleWordsToRange,
   clamp,
   formatDuration,
   isPlaceholderSubtitle,
+  offsetSubtitleWords,
   snapSubtitleRange,
 } from '../../lib/project';
 import {
@@ -75,6 +77,7 @@ import type {
 } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { GlassPanel } from '../common/GlassPanel';
+import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
 import { ExportSheet } from './ExportSheet';
 
 const MAX_TIMELINE_SURFACE_WIDTH = 8192;
@@ -231,7 +234,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     updateProjectSubtitles(current =>
       current.map(subtitle =>
         subtitle.id === selectedSubtitleId
-          ? { ...subtitle, text, isGenerated: false, isPlaceholder: false }
+          ? applyManualSubtitleTextEdit(subtitle, text)
           : subtitle,
       ),
     );
@@ -282,10 +285,16 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           nextEnd,
           project.duration,
         );
+        const deltaMs = snapped.startTime - subtitle.startTime;
         return {
           ...subtitle,
           startTime: snapped.startTime,
           endTime: snapped.endTime,
+          words: clampSubtitleWordsToRange(
+            offsetSubtitleWords(subtitle.words, deltaMs),
+            snapped.startTime,
+            snapped.endTime,
+          ),
           isGenerated: false,
         };
       }),
@@ -317,6 +326,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           ...subtitle,
           startTime: snapped.startTime,
           endTime: snapped.endTime,
+          words: clampSubtitleWordsToRange(
+            subtitle.words,
+            snapped.startTime,
+            snapped.endTime,
+          ),
           isGenerated: false,
         };
       }),
@@ -408,6 +422,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             startTime: subtitle.startTime,
             endTime: subtitle.endTime,
             text: subtitle.text,
+            words: subtitle.words,
             confidence: subtitle.confidence,
           })) satisfies NativeSubtitleSegment[],
       });
@@ -522,7 +537,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                   ? styles.overlaySubtitleMiddle
                   : styles.overlaySubtitleBottom,
               ]}>
-              <Text
+              <HighlightedSubtitleText
+                playheadPosition={playbackPosition}
                 style={[
                   styles.overlaySubtitleText,
                   {
@@ -533,9 +549,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                     letterSpacing: stylePreset.letterSpacing,
                     fontSize: stylePreset.fontSize,
                   },
-                ]}>
-                {applySubtitleCasing(displaySubtitle.text, stylePreset)}
-              </Text>
+                ]}
+                stylePreset={stylePreset}
+                subtitle={displaySubtitle}
+              />
             </View>
           ) : null}
         </View>

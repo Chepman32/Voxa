@@ -17,11 +17,19 @@ export interface SubtitleStyle {
   casing: SubtitleCasing;
 }
 
+export interface SubtitleWord {
+  text: string;
+  startTime: number;
+  endTime: number;
+  confidence?: number;
+}
+
 export interface SubtitleBlock {
   id: string;
   startTime: number;
   endTime: number;
   text: string;
+  words?: SubtitleWord[];
   confidence?: number;
   isGenerated?: boolean;
   isPlaceholder?: boolean;

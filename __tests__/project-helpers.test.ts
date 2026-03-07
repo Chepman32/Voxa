@@ -1,20 +1,39 @@
 import {
+  applyManualSubtitleTextEdit,
+  clampSubtitleWordsToRange,
   createPlaceholderSubtitle,
   ensureSubtitles,
   mergeSegmentsIntoBlocks,
+  offsetSubtitleWords,
   snapSubtitleRange,
 } from '../src/lib/project';
 
 describe('project helpers', () => {
   it('merges tightly grouped transcript segments into readable subtitle blocks', () => {
     const blocks = mergeSegmentsIntoBlocks([
-      { id: '1', startTime: 0, endTime: 420, text: 'offline' },
-      { id: '2', startTime: 470, endTime: 840, text: 'editing' },
+      {
+        id: '1',
+        startTime: 0,
+        endTime: 420,
+        text: 'offline',
+        words: [{ text: 'offline', startTime: 0, endTime: 420 }],
+      },
+      {
+        id: '2',
+        startTime: 470,
+        endTime: 840,
+        text: 'editing',
+        words: [{ text: 'editing', startTime: 470, endTime: 840 }],
+      },
       { id: '3', startTime: 1800, endTime: 2300, text: 'starts' },
     ]);
 
     expect(blocks).toHaveLength(2);
     expect(blocks[0]?.text).toBe('offline editing');
+    expect(blocks[0]?.words).toEqual([
+      { text: 'offline', startTime: 0, endTime: 420 },
+      { text: 'editing', startTime: 470, endTime: 840 },
+    ]);
   });
 
   it('creates a placeholder subtitle when no blocks are available', () => {
@@ -27,8 +46,20 @@ describe('project helpers', () => {
   it('applies a known transcript offset before clamping subtitle timings', () => {
     const subtitles = ensureSubtitles(
       [
-        { id: 'late-1', startTime: 6080, endTime: 6760, text: 'hello' },
-        { id: 'late-2', startTime: 11200, endTime: 12120, text: 'world' },
+        {
+          id: 'late-1',
+          startTime: 6080,
+          endTime: 6760,
+          text: 'hello',
+          words: [{ text: 'hello', startTime: 6080, endTime: 6760 }],
+        },
+        {
+          id: 'late-2',
+          startTime: 11200,
+          endTime: 12120,
+          text: 'world',
+          words: [{ text: 'world', startTime: 11200, endTime: 12120 }],
+        },
       ],
       14000,
       { knownOffsetMs: 6080 },
@@ -46,6 +77,16 @@ describe('project helpers', () => {
       endTime: 6040,
       text: 'world',
     });
+    expect(subtitles[0]).toEqual(
+      expect.objectContaining({
+        words: [{ text: 'hello', startTime: 0, endTime: 680 }],
+      }),
+    );
+    expect(subtitles[1]).toEqual(
+      expect.objectContaining({
+        words: [{ text: 'world', startTime: 5120, endTime: 6040 }],
+      }),
+    );
   });
 
   it('does not relocate a short late transcript window to the start of the video', () => {
@@ -96,6 +137,47 @@ describe('project helpers', () => {
 
     expect(subtitles[0]?.startTime).toBe(1800);
     expect(subtitles[1]?.startTime).toBe(2920);
+  });
+
+  it('moves and trims word timings with the subtitle range', () => {
+    const movedWords = clampSubtitleWordsToRange(
+      offsetSubtitleWords(
+        [
+          { text: 'hello', startTime: 1000, endTime: 1300 },
+          { text: 'world', startTime: 1340, endTime: 1680 },
+        ],
+        700,
+      ),
+      1700,
+      2150,
+    );
+
+    expect(movedWords).toEqual([
+      { text: 'hello', startTime: 1700, endTime: 2000 },
+      { text: 'world', startTime: 2040, endTime: 2150 },
+    ]);
+  });
+
+  it('clears word timings after a manual subtitle text edit', () => {
+    const subtitle = applyManualSubtitleTextEdit(
+      {
+        id: 'generated-1',
+        startTime: 1200,
+        endTime: 2200,
+        text: 'original',
+        words: [{ text: 'original', startTime: 1200, endTime: 2200 }],
+        isGenerated: true,
+      },
+      'rewritten text',
+    );
+
+    expect(subtitle).toMatchObject({
+      id: 'generated-1',
+      text: 'rewritten text',
+      isGenerated: false,
+      isPlaceholder: false,
+    });
+    expect(subtitle.words).toBeUndefined();
   });
 
   it('snaps subtitle edges to nearby neighbours', () => {

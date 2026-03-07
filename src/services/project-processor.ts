@@ -47,6 +47,17 @@ export async function buildProjectFromAsset(
         ...segment,
         id: segment.id || createId('subtitle'),
         isGenerated: true,
+        words:
+          segment.words && segment.words.length > 0
+            ? segment.words
+            : [
+                {
+                  text: segment.text,
+                  startTime: segment.startTime,
+                  endTime: segment.endTime,
+                  confidence: segment.confidence,
+                },
+              ],
       })),
     ),
     result.duration || fallbackDuration,
