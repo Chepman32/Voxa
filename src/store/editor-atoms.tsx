@@ -52,7 +52,7 @@ export const globalStyleAtom = atom(
 export const activeSubtitleAtom = atom(get => {
   const subtitles = get(subtitlesAtom);
   const playhead = get(playbackPositionAtom);
-  return findActiveSubtitle(subtitles, playhead) ?? subtitles[0] ?? null;
+  return findActiveSubtitle(subtitles, playhead) ?? null;
 });
 
 export const selectedSubtitleAtom = atom(get => {

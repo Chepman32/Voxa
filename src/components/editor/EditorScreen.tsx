@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useEffectEvent,
   useRef,
@@ -114,6 +115,40 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const activeSubtitle = useAtomValue(activeSubtitleAtom);
   const selectedSubtitle = useAtomValue(selectedSubtitleAtom);
   const setPlayback = useSetAtom(playbackPositionAtom);
+
+  const [showControls, setShowControls] = useState(true);
+  const hideControlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHideTimer = useCallback(() => {
+    if (hideControlsTimer.current) {
+      clearTimeout(hideControlsTimer.current);
+      hideControlsTimer.current = null;
+    }
+  }, []);
+
+  const scheduleHideControls = useCallback(() => {
+    clearHideTimer();
+    hideControlsTimer.current = setTimeout(() => setShowControls(false), 2000);
+  }, [clearHideTimer]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      scheduleHideControls();
+    } else {
+      clearHideTimer();
+      setShowControls(true);
+    }
+    return clearHideTimer;
+  }, [isPlaying, scheduleHideControls, clearHideTimer]);
+
+  const handleVideoTap = useCallback(() => {
+    if (isPlaying && !showControls) {
+      setShowControls(true);
+      scheduleHideControls();
+    } else {
+      togglePlayback();
+    }
+  }, [isPlaying, showControls, scheduleHideControls]);
 
   const closeProject = useAppStore(state => state.closeProject);
   const upsertProject = useAppStore(state => state.upsertProject);
@@ -310,7 +345,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   };
 
   const handleTimelineScroll = (offsetX: number) => {
-    if (!project) {
+    if (!project || !isScrubbing.current) {
       return;
     }
     const nextPosition = clamp(offsetX / pixelsPerMs, 0, project.duration);
@@ -445,7 +480,23 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             </GestureDetector>
           </View>
 
-          <Pressable onPress={togglePlayback} style={StyleSheet.absoluteFill} />
+          <Pressable onPress={handleVideoTap} style={StyleSheet.absoluteFill} />
+
+          {showControls ? (
+            <Animated.View
+              entering={FadeIn.duration(150)}
+              exiting={FadeOut.duration(150)}
+              pointerEvents="box-none"
+              style={styles.playPauseWrap}>
+              <Pressable onPress={togglePlayback} style={styles.playPauseButton}>
+                <Feather
+                  color={palette.textPrimary}
+                  name={isPlaying ? 'pause' : 'play'}
+                  size={28}
+                />
+              </Pressable>
+            </Animated.View>
+          ) : null}
 
           {skipFlash ? (
             <Animated.View entering={FadeIn.duration(120)} exiting={FadeOut.duration(220)} style={styles.skipFlash}>
@@ -1071,6 +1122,19 @@ const styles = StyleSheet.create({
   },
   videoHalf: {
     flex: 1,
+  },
+  playPauseWrap: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playPauseButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(5, 9, 14, 0.55)',
   },
   skipFlash: {
     position: 'absolute',
