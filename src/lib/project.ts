@@ -7,6 +7,7 @@ const MIN_SUBTITLE_DURATION_MS = 160;
 const LEGACY_OFFSET_START_RATIO = 0.75;
 const LEGACY_OFFSET_END_TOLERANCE_MS = 1500;
 const KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS = 1000;
+const KNOWN_OFFSET_MIN_COVERAGE_RATIO = 0.4;
 
 const LEGACY_PLACEHOLDER_SUBTITLE_TEXTS = new Set([
   PLACEHOLDER_SUBTITLE_TEXT,
@@ -150,7 +151,11 @@ function shiftSubtitleTimes(subtitles: SubtitleBlock[], offsetMs: number) {
   }));
 }
 
-function resolveKnownOffsetToApply(subtitles: SubtitleBlock[], knownOffsetMs?: number) {
+function resolveKnownOffsetToApply(
+  subtitles: SubtitleBlock[],
+  duration: number,
+  knownOffsetMs?: number,
+) {
   if (!knownOffsetMs || knownOffsetMs <= 0 || subtitles.length === 0) {
     return 0;
   }
@@ -162,6 +167,16 @@ function resolveKnownOffsetToApply(subtitles: SubtitleBlock[], knownOffsetMs?: n
 
   const minExpectedStart = Math.max(0, knownOffsetMs - KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS);
   if (firstStart < minExpectedStart) {
+    return 0;
+  }
+
+  const lastEnd = subtitles[subtitles.length - 1]?.endTime ?? firstStart;
+  const coveredDuration = Math.max(0, lastEnd - firstStart);
+  if (
+    duration > 0 &&
+    firstStart > duration * 0.25 &&
+    coveredDuration < duration * KNOWN_OFFSET_MIN_COVERAGE_RATIO
+  ) {
     return 0;
   }
 
@@ -216,7 +231,11 @@ export function ensureSubtitles(
     return [createPlaceholderSubtitle(duration)];
   }
 
-  const knownOffsetMs = resolveKnownOffsetToApply(normalized, options.knownOffsetMs);
+  const knownOffsetMs = resolveKnownOffsetToApply(
+    normalized,
+    duration,
+    options.knownOffsetMs,
+  );
   if (knownOffsetMs > 0) {
     normalized = shiftSubtitleTimes(normalized, knownOffsetMs);
   }

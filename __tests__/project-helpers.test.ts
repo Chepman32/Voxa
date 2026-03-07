@@ -28,9 +28,9 @@ describe('project helpers', () => {
     const subtitles = ensureSubtitles(
       [
         { id: 'late-1', startTime: 6080, endTime: 6760, text: 'hello' },
-        { id: 'late-2', startTime: 7120, endTime: 7920, text: 'world' },
+        { id: 'late-2', startTime: 11200, endTime: 12120, text: 'world' },
       ],
-      9000,
+      14000,
       { knownOffsetMs: 6080 },
     );
 
@@ -42,10 +42,24 @@ describe('project helpers', () => {
     });
     expect(subtitles[1]).toMatchObject({
       id: 'late-2',
-      startTime: 1040,
-      endTime: 1840,
+      startTime: 5120,
+      endTime: 6040,
       text: 'world',
     });
+  });
+
+  it('does not relocate a short late transcript window to the start of the video', () => {
+    const subtitles = ensureSubtitles(
+      [
+        { id: 'late-window-1', startTime: 362000, endTime: 365000, text: 'tail' },
+        { id: 'late-window-2', startTime: 366200, endTime: 368400, text: 'only' },
+      ],
+      375000,
+      { knownOffsetMs: 362000 },
+    );
+
+    expect(subtitles[0]?.startTime).toBe(362000);
+    expect(subtitles[1]?.startTime).toBe(366200);
   });
 
   it('shifts obviously overflowed legacy subtitle timelines back to zero', () => {

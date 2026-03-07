@@ -6,6 +6,8 @@ import UIKit
 
 @objc(VoxaOfflineModule)
 final class VoxaOfflineModule: NSObject {
+  private let recognitionChunkDurationSeconds = 45.0
+
   @objc
   static func requiresMainQueueSetup() -> Bool {
     false
@@ -86,7 +88,6 @@ final class VoxaOfflineModule: NSObject {
 
         var waveform = Array(repeating: 0.16, count: 160)
         var subtitles: [[String: Any]] = []
-        var transcriptTimeOffsetMs = 0
         var recognitionStatus = "manual"
         var errorMessage: String?
 
@@ -97,15 +98,9 @@ final class VoxaOfflineModule: NSObject {
           defer { try? FileManager.default.removeItem(at: audioURL) }
 
           waveform = try self.generateWaveform(from: audioURL, bucketCount: 160)
-          transcriptTimeOffsetMs =
-            (try? self.readTranscriptTimeOffsetMs(from: audioURL)) ?? 0
 
           do {
-            subtitles = try await self.recognizeSpeech(
-              from: audioURL,
-              locale: locale,
-              transcriptTimeOffsetMs: transcriptTimeOffsetMs
-            )
+            subtitles = try await self.recognizeSpeech(from: asset, locale: locale)
             recognitionStatus = subtitles.isEmpty ? "manual" : "ready"
           } catch {
             recognitionStatus = "failed"
@@ -120,7 +115,7 @@ final class VoxaOfflineModule: NSObject {
           "height": Int(videoSize.height),
           "waveform": waveform,
           "subtitles": subtitles,
-          "transcriptTimeOffsetMs": transcriptTimeOffsetMs,
+          "transcriptTimeOffsetMs": 0,
           "recognitionStatus": recognitionStatus,
           "errorMessage": errorMessage as Any,
         ])
@@ -504,25 +499,12 @@ private extension VoxaOfflineModule {
   }
 
   func extractAudio(from asset: AVAsset) async throws -> URL {
-    guard let audioTrack = asset.tracks(withMediaType: .audio).first else {
+    guard asset.tracks(withMediaType: .audio).isEmpty == false else {
       throw VoxaOfflineError.noAudioTrack
     }
 
-    // Use a composition to normalize audio timestamps to start from zero.
-    // Some source files (e.g. trimmed photo-library exports) carry a non-zero
-    // presentation offset that SFSpeechRecognizer echoes back in segment
-    // timestamps. Inserting the track at .zero remaps everything to 0-based.
-    let composition = AVMutableComposition()
-    guard let compositionTrack = composition.addMutableTrack(
-      withMediaType: .audio,
-      preferredTrackID: kCMPersistentTrackID_Invalid
-    ) else {
-      throw VoxaOfflineError.exportFailed("Unable to create audio composition track.")
-    }
-    try compositionTrack.insertTimeRange(audioTrack.timeRange, of: audioTrack, at: .zero)
-
     guard let exportSession = AVAssetExportSession(
-      asset: composition,
+      asset: asset,
       presetName: AVAssetExportPresetAppleM4A
     ) else {
       throw VoxaOfflineError.exportFailed("Unable to create an audio export session.")
@@ -531,6 +513,23 @@ private extension VoxaOfflineModule {
     let outputURL = temporaryURL(extension: "m4a")
     exportSession.outputURL = outputURL
     exportSession.outputFileType = .m4a
+
+    try await export(session: exportSession)
+    return outputURL
+  }
+
+  func exportAudioChunk(from asset: AVAsset, timeRange: CMTimeRange) async throws -> URL {
+    guard let exportSession = AVAssetExportSession(
+      asset: asset,
+      presetName: AVAssetExportPresetAppleM4A
+    ) else {
+      throw VoxaOfflineError.exportFailed("Unable to create a chunked audio export session.")
+    }
+
+    let outputURL = temporaryURL(extension: "m4a")
+    exportSession.outputURL = outputURL
+    exportSession.outputFileType = .m4a
+    exportSession.timeRange = timeRange
 
     try await export(session: exportSession)
     return outputURL
@@ -582,15 +581,61 @@ private extension VoxaOfflineModule {
     }
   }
 
-  func recognizeSpeech(
-    from audioURL: URL,
-    locale: String,
-    transcriptTimeOffsetMs: Int
-  ) async throws -> [[String: Any]] {
+  func recognizeSpeech(from asset: AVAsset, locale: String) async throws -> [[String: Any]] {
     guard string(from: SFSpeechRecognizer.authorizationStatus()) == "authorized" else {
       throw VoxaOfflineError.speechAuthorizationDenied
     }
 
+    guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)) else {
+      throw VoxaOfflineError.speechUnavailable
+    }
+
+    guard recognizer.supportsOnDeviceRecognition else {
+      throw VoxaOfflineError.onDeviceRecognitionUnavailable
+    }
+
+    let totalDurationSeconds = max(0, CMTimeGetSeconds(asset.duration))
+    guard totalDurationSeconds > 0 else {
+      return []
+    }
+
+    var subtitles: [[String: Any]] = []
+    var chunkStartSeconds = 0.0
+
+    // Split long media into smaller audio exports so Speech can cover the full clip.
+    while chunkStartSeconds < totalDurationSeconds {
+      let chunkDurationSeconds = min(
+        recognitionChunkDurationSeconds,
+        totalDurationSeconds - chunkStartSeconds
+      )
+      let timeRange = CMTimeRange(
+        start: CMTime(seconds: chunkStartSeconds, preferredTimescale: 600),
+        duration: CMTime(seconds: chunkDurationSeconds, preferredTimescale: 600)
+      )
+
+      let chunkURL = try await exportAudioChunk(from: asset, timeRange: timeRange)
+      defer { try? FileManager.default.removeItem(at: chunkURL) }
+
+      do {
+        let chunkStartMs = Int(round(chunkStartSeconds * 1000))
+        let chunkSubtitles = try await recognizeSpeechChunk(
+          from: chunkURL,
+          locale: locale,
+          chunkStartTimeMs: chunkStartMs
+        )
+        subtitles.append(contentsOf: chunkSubtitles)
+      }
+      chunkStartSeconds += chunkDurationSeconds
+    }
+
+    return subtitles
+  }
+
+  func recognizeSpeechChunk(
+    from audioURL: URL,
+    locale: String,
+    chunkStartTimeMs: Int
+  ) async throws -> [[String: Any]] {
     guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)) else {
       throw VoxaOfflineError.speechUnavailable
     }
@@ -622,18 +667,22 @@ private extension VoxaOfflineModule {
       }
     }
 
-    let offsetSeconds = Double(transcriptTimeOffsetMs) / 1000
+    let localOffsetMs = (try? readTranscriptTimeOffsetMs(from: audioURL)) ?? 0
 
     return result.bestTranscription.segments.map { segment in
-      let adjustedStart = max(0, segment.timestamp - offsetSeconds)
+      let adjustedStartMs = max(0, Int(segment.timestamp * 1000) - localOffsetMs)
+      let adjustedEndMs = max(
+        adjustedStartMs + 160,
+        Int((segment.timestamp + segment.duration) * 1000) - localOffsetMs
+      )
       let adjustedEnd = max(
-        adjustedStart + 0.16,
-        segment.timestamp + segment.duration - offsetSeconds
+        adjustedStartMs + chunkStartTimeMs + 160,
+        adjustedEndMs + chunkStartTimeMs
       )
       return [
         "id": UUID().uuidString,
-        "startTime": Int(adjustedStart * 1000),
-        "endTime": Int(adjustedEnd * 1000),
+        "startTime": adjustedStartMs + chunkStartTimeMs,
+        "endTime": adjustedEnd,
         "text": segment.substring,
         "confidence": Double(segment.confidence),
       ]
