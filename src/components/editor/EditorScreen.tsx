@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useEffectEvent,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -111,7 +112,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [skipFlash, setSkipFlash] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
-  const subtitleCanvasDragOffsetY = useSharedValue(0);
+  const subtitleCanvasPreviewTopY = useSharedValue(0);
 
   const [project, setProject] = useAtom(editorProjectAtom);
   const [playbackPosition, setPlaybackPosition] = useAtom(playbackPositionAtom);
@@ -185,7 +186,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     timeline: height * 0.4,
     text: height * 0.22,
   };
-  const topBarOffset = insets.top + 8;
+  const topBarOffset = insets.top + 2;
   const bottomInset = Math.max(insets.bottom, 12);
 
   const durationMs = Math.max(0, project?.duration ?? 0);
@@ -207,7 +208,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const wordHighlightAvailable = subtitles.some(
     subtitle => !isPlaceholderSubtitle(subtitle) && (subtitle.words?.length ?? 0) > 0,
   );
-
 
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
     if (!timelineRef.current) {
@@ -501,22 +501,24 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     : 0;
 
   const subtitleBubbleAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: subtitleCanvasDragOffsetY.value }],
+    top: subtitleCanvasPreviewTopY.value,
   }));
 
-  useEffect(() => {
-    subtitleCanvasDragOffsetY.value = 0;
+  useLayoutEffect(() => {
+    subtitleCanvasPreviewTopY.value = videoSubtitleTop;
   }, [
     displaySubtitle?.id,
     stylePreset?.position,
     stylePreset?.positionOffsetYRatio,
     subtitleBubbleHeight,
+    videoSubtitleTop,
   ]);
 
   const subtitleDragGesture = Gesture.Pan()
     .activeOffsetY([-4, 4])
     .failOffsetX([-28, 28])
     .onBegin(() => {
+      subtitleCanvasPreviewTopY.value = videoSubtitleTop;
       runOnJS(haptics.light)();
     })
     .onUpdate(event => {
@@ -524,18 +526,15 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         Math.max(videoSubtitleTop + event.translationY, videoSubtitleBounds.minTop),
         videoSubtitleBounds.maxTop,
       );
-      subtitleCanvasDragOffsetY.value = nextTop - videoSubtitleTop;
+      subtitleCanvasPreviewTopY.value = nextTop;
     })
     .onEnd(event => {
       const nextTop = Math.min(
         Math.max(videoSubtitleTop + event.translationY, videoSubtitleBounds.minTop),
         videoSubtitleBounds.maxTop,
       );
-      subtitleCanvasDragOffsetY.value = withSpring(0, springConfig);
+      subtitleCanvasPreviewTopY.value = nextTop;
       runOnJS(commitSubtitleVerticalPosition)(nextTop);
-    })
-    .onFinalize(() => {
-      subtitleCanvasDragOffsetY.value = withSpring(0, springConfig);
     });
 
   const subtitleTapGesture = Gesture.Tap().onEnd((_event, success) => {
@@ -560,7 +559,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           <Feather color={palette.textPrimary} name="chevron-down" size={18} />
         </Pressable>
         <View style={styles.topBarMeta}>
-          <Text style={styles.topBarTitle}>{project.title}</Text>
           <Text style={styles.topBarSubtitle}>
             {formatDuration(playbackPosition)} / {formatDuration(project.duration)}
           </Text>
@@ -640,7 +638,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                   }}
                   style={[
                     styles.overlaySubtitleBubble,
-                    { top: videoSubtitleTop },
                     subtitleBubbleAnimatedStyle,
                   ]}>
                   <HighlightedSubtitleText
@@ -1237,8 +1234,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   topBarButton: {
-    width: 38,
-    height: 38,
+    width: 34,
+    height: 34,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1246,17 +1243,11 @@ const styles = StyleSheet.create({
   },
   topBarMeta: {
     alignItems: 'center',
-    gap: 2,
-  },
-  topBarTitle: {
-    color: palette.textPrimary,
-    fontSize: 16,
-    fontWeight: '800',
   },
   topBarSubtitle: {
-    color: palette.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+    color: palette.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
   },
   banner: {
     marginTop: 12,
@@ -1274,7 +1265,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   videoZone: {
-    marginTop: 14,
+    marginTop: 8,
     marginHorizontal: 16,
     borderRadius: 30,
     overflow: 'hidden',

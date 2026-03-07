@@ -215,16 +215,34 @@ describe('project helpers', () => {
     });
   });
 
-  it('resolves a dragged subtitle origin into the nearest preset and residual offset', () => {
+  it('resolves a dragged subtitle origin without changing the current preset anchor', () => {
     const style = resolveSubtitleStyleFromVerticalOrigin(
-      defaultSubtitleStyle,
+      {
+        ...defaultSubtitleStyle,
+        position: 'bottom',
+      },
       30,
       320,
       60,
     );
 
-    expect(style.position).toBe('top');
-    expect(style.positionOffsetYRatio).toBeCloseTo((30 - 20) / 320);
+    expect(style.position).toBe('bottom');
+    expect(style.positionOffsetYRatio).toBeCloseTo((30 - (320 - 60 - 18)) / 320);
+  });
+
+  it('clamps dragged subtitle origins to the safe preview bounds', () => {
+    const style = resolveSubtitleStyleFromVerticalOrigin(
+      {
+        ...defaultSubtitleStyle,
+        position: 'middle',
+      },
+      -40,
+      320,
+      60,
+    );
+
+    expect(style.position).toBe('middle');
+    expect(style.positionOffsetYRatio).toBeCloseTo((16 - 134.4) / 320);
   });
 
   it('computes subtitle vertical origin from preset and offset ratio', () => {

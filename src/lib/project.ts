@@ -499,28 +499,17 @@ export function resolveSubtitleStyleFromVerticalOrigin(
     videoHeight,
     subtitleHeight,
   );
-  const candidatePositions: SubtitleStyle['position'][] = ['top', 'middle', 'bottom'];
-
-  let nearestPosition = style.position;
-  let nearestAnchorTop = subtitleAnchorTop(
-    nearestPosition,
+  const currentAnchorTop = subtitleAnchorTop(
+    style.position,
     videoHeight,
     subtitleHeight,
   );
 
-  for (const position of candidatePositions) {
-    const anchorTop = subtitleAnchorTop(position, videoHeight, subtitleHeight);
-    if (Math.abs(anchorTop - clampedTop) < Math.abs(nearestAnchorTop - clampedTop)) {
-      nearestPosition = position;
-      nearestAnchorTop = anchorTop;
-    }
-  }
-
   return {
     ...style,
-    position: nearestPosition,
+    position: style.position,
     positionOffsetYRatio:
-      videoHeight > 0 ? (clampedTop - nearestAnchorTop) / videoHeight : 0,
+      videoHeight > 0 ? (clampedTop - currentAnchorTop) / videoHeight : 0,
   } satisfies SubtitleStyle;
 }
 
