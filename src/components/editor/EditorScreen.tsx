@@ -194,6 +194,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     ? null
     : activeDisplaySubtitle;
 
+
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
     if (!timelineRef.current) {
       return;
@@ -358,6 +359,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   };
 
   const togglePlayback = () => {
+    if (!isPlaying) {
+      videoRef.current?.seek(playbackPosition / 1000);
+    }
     setIsPlaying(current => !current);
   };
 
