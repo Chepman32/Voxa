@@ -37,6 +37,10 @@ interface AppState {
   deleteProject: (projectId: string) => void;
 }
 
+type PersistedAppState = Partial<
+  Pick<AppState, 'hasCompletedOnboarding' | 'projects' | 'settings'>
+>;
+
 const defaultSettings: UserSettings = {
   speechLocale: 'en-US',
   preferredExportResolution: '1080p',
@@ -47,6 +51,20 @@ const defaultProcessing: ProcessingState = {
   phase: 'extracting',
   label: 'Extracting audio...',
 };
+
+function normalizeStoredProject(project: Project): Project {
+  const subtitles = ensureSubtitles(project.subtitles ?? [], project.duration ?? 0);
+  const hasSelectedSubtitle = subtitles.some(
+    subtitle => subtitle.id === project.lastEditedSubtitleId,
+  );
+
+  return {
+    ...project,
+    globalStyle: project.globalStyle ?? defaultSubtitleStyle,
+    subtitles,
+    lastEditedSubtitleId: hasSelectedSubtitle ? project.lastEditedSubtitleId : undefined,
+  };
+}
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -95,14 +113,12 @@ export const useAppStore = create<AppState>()(
         })),
       addProject: project =>
         set(state => ({
-          projects: [project, ...state.projects],
+          projects: [normalizeStoredProject(project), ...state.projects],
         })),
       upsertProject: project =>
         set(state => {
           const nextProject = {
-            ...project,
-            globalStyle: project.globalStyle ?? defaultSubtitleStyle,
-            subtitles: ensureSubtitles(project.subtitles, project.duration),
+            ...normalizeStoredProject(project),
             updatedAt: Date.now(),
           };
           const existingIndex = state.projects.findIndex(item => item.id === project.id);
@@ -132,10 +148,22 @@ export const useAppStore = create<AppState>()(
         settings: state.settings,
         projects: state.projects,
       }),
+      migrate: persistedState => {
+        const state = (persistedState ?? {}) as PersistedAppState;
+
+        return {
+          ...state,
+          settings: {
+            ...defaultSettings,
+            ...state.settings,
+          },
+          projects: (state.projects ?? []).map(normalizeStoredProject),
+        };
+      },
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 1,
+      version: 2,
     },
   ),
 );

@@ -86,6 +86,7 @@ final class VoxaOfflineModule: NSObject {
 
         var waveform = Array(repeating: 0.16, count: 160)
         var subtitles: [[String: Any]] = []
+        var transcriptTimeOffsetMs = 0
         var recognitionStatus = "manual"
         var errorMessage: String?
 
@@ -96,9 +97,15 @@ final class VoxaOfflineModule: NSObject {
           defer { try? FileManager.default.removeItem(at: audioURL) }
 
           waveform = try self.generateWaveform(from: audioURL, bucketCount: 160)
+          transcriptTimeOffsetMs =
+            (try? self.readTranscriptTimeOffsetMs(from: audioURL)) ?? 0
 
           do {
-            subtitles = try await self.recognizeSpeech(from: audioURL, locale: locale)
+            subtitles = try await self.recognizeSpeech(
+              from: audioURL,
+              locale: locale,
+              transcriptTimeOffsetMs: transcriptTimeOffsetMs
+            )
             recognitionStatus = subtitles.isEmpty ? "manual" : "ready"
           } catch {
             recognitionStatus = "failed"
@@ -113,6 +120,7 @@ final class VoxaOfflineModule: NSObject {
           "height": Int(videoSize.height),
           "waveform": waveform,
           "subtitles": subtitles,
+          "transcriptTimeOffsetMs": transcriptTimeOffsetMs,
           "recognitionStatus": recognitionStatus,
           "errorMessage": errorMessage as Any,
         ])
@@ -496,12 +504,25 @@ private extension VoxaOfflineModule {
   }
 
   func extractAudio(from asset: AVAsset) async throws -> URL {
-    guard asset.tracks(withMediaType: .audio).isEmpty == false else {
+    guard let audioTrack = asset.tracks(withMediaType: .audio).first else {
       throw VoxaOfflineError.noAudioTrack
     }
 
+    // Use a composition to normalize audio timestamps to start from zero.
+    // Some source files (e.g. trimmed photo-library exports) carry a non-zero
+    // presentation offset that SFSpeechRecognizer echoes back in segment
+    // timestamps. Inserting the track at .zero remaps everything to 0-based.
+    let composition = AVMutableComposition()
+    guard let compositionTrack = composition.addMutableTrack(
+      withMediaType: .audio,
+      preferredTrackID: kCMPersistentTrackID_Invalid
+    ) else {
+      throw VoxaOfflineError.exportFailed("Unable to create audio composition track.")
+    }
+    try compositionTrack.insertTimeRange(audioTrack.timeRange, of: audioTrack, at: .zero)
+
     guard let exportSession = AVAssetExportSession(
-      asset: asset,
+      asset: composition,
       presetName: AVAssetExportPresetAppleM4A
     ) else {
       throw VoxaOfflineError.exportFailed("Unable to create an audio export session.")
@@ -513,6 +534,33 @@ private extension VoxaOfflineModule {
 
     try await export(session: exportSession)
     return outputURL
+  }
+
+  func readTranscriptTimeOffsetMs(from audioURL: URL) throws -> Int {
+    let asset = AVURLAsset(url: audioURL)
+    guard let track = asset.tracks(withMediaType: .audio).first else {
+      return 0
+    }
+
+    let reader = try AVAssetReader(asset: asset)
+    let output = AVAssetReaderTrackOutput(track: track, outputSettings: nil)
+    guard reader.canAdd(output) else {
+      return 0
+    }
+
+    reader.add(output)
+    reader.startReading()
+
+    guard let sampleBuffer = output.copyNextSampleBuffer() else {
+      return 0
+    }
+
+    let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+    guard presentationTime.isValid, presentationTime.isNumeric else {
+      return 0
+    }
+
+    return max(0, Int(CMTimeGetSeconds(presentationTime) * 1000))
   }
 
   func export(session: AVAssetExportSession) async throws {
@@ -534,7 +582,11 @@ private extension VoxaOfflineModule {
     }
   }
 
-  func recognizeSpeech(from audioURL: URL, locale: String) async throws -> [[String: Any]] {
+  func recognizeSpeech(
+    from audioURL: URL,
+    locale: String,
+    transcriptTimeOffsetMs: Int
+  ) async throws -> [[String: Any]] {
     guard string(from: SFSpeechRecognizer.authorizationStatus()) == "authorized" else {
       throw VoxaOfflineError.speechAuthorizationDenied
     }
@@ -570,11 +622,18 @@ private extension VoxaOfflineModule {
       }
     }
 
+    let offsetSeconds = Double(transcriptTimeOffsetMs) / 1000
+
     return result.bestTranscription.segments.map { segment in
-      [
+      let adjustedStart = max(0, segment.timestamp - offsetSeconds)
+      let adjustedEnd = max(
+        adjustedStart + 0.16,
+        segment.timestamp + segment.duration - offsetSeconds
+      )
+      return [
         "id": UUID().uuidString,
-        "startTime": Int(segment.timestamp * 1000),
-        "endTime": Int((segment.timestamp + segment.duration) * 1000),
+        "startTime": Int(adjustedStart * 1000),
+        "endTime": Int(adjustedEnd * 1000),
         "text": segment.substring,
         "confidence": Double(segment.confidence),
       ]

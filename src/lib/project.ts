@@ -3,6 +3,10 @@ import { defaultSubtitleStyle } from '../theme/tokens';
 import type { Project, SubtitleBlock, SubtitleStyle } from '../types/models';
 
 export const PLACEHOLDER_SUBTITLE_TEXT = 'Tap to add your first subtitle.';
+const MIN_SUBTITLE_DURATION_MS = 160;
+const LEGACY_OFFSET_START_RATIO = 0.75;
+const LEGACY_OFFSET_END_TOLERANCE_MS = 1500;
+const KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS = 1000;
 
 const LEGACY_PLACEHOLDER_SUBTITLE_TEXTS = new Set([
   PLACEHOLDER_SUBTITLE_TEXT,
@@ -130,13 +134,79 @@ export function mergeSegmentsIntoBlocks(segments: SubtitleBlock[]) {
   }));
 }
 
-export function ensureSubtitles(subtitles: SubtitleBlock[], duration: number) {
-  const normalized = ensureSubtitleOrder(
+export interface EnsureSubtitlesOptions {
+  knownOffsetMs?: number;
+}
+
+function shiftSubtitleTimes(subtitles: SubtitleBlock[], offsetMs: number) {
+  if (offsetMs <= 0) {
+    return subtitles;
+  }
+
+  return subtitles.map(block => ({
+    ...block,
+    startTime: block.startTime - offsetMs,
+    endTime: block.endTime - offsetMs,
+  }));
+}
+
+function resolveKnownOffsetToApply(subtitles: SubtitleBlock[], knownOffsetMs?: number) {
+  if (!knownOffsetMs || knownOffsetMs <= 0 || subtitles.length === 0) {
+    return 0;
+  }
+
+  const firstStart = subtitles[0]?.startTime ?? 0;
+  if (firstStart <= 0) {
+    return 0;
+  }
+
+  const minExpectedStart = Math.max(0, knownOffsetMs - KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS);
+  if (firstStart < minExpectedStart) {
+    return 0;
+  }
+
+  return Math.min(knownOffsetMs, firstStart);
+}
+
+function shouldApplyLegacyOffsetShift(subtitles: SubtitleBlock[], duration: number) {
+  if (subtitles.length === 0) {
+    return false;
+  }
+
+  const firstStart = subtitles[0]?.startTime ?? 0;
+  const lastEnd = subtitles[subtitles.length - 1]?.endTime ?? 0;
+  if (firstStart <= 0) {
+    return false;
+  }
+
+  if (lastEnd > duration) {
+    return true;
+  }
+
+  if (duration <= 0) {
+    return false;
+  }
+
+  return (
+    firstStart >= duration * LEGACY_OFFSET_START_RATIO &&
+    lastEnd >= Math.max(0, duration - LEGACY_OFFSET_END_TOLERANCE_MS)
+  );
+}
+
+export function ensureSubtitles(
+  subtitles: SubtitleBlock[],
+  duration: number,
+  options: EnsureSubtitlesOptions = {},
+) {
+  let normalized = ensureSubtitleOrder(
     subtitles
       .map(block => ({
         ...block,
         startTime: Math.max(0, Math.round(block.startTime)),
-        endTime: Math.max(Math.round(block.startTime + 160), Math.round(block.endTime)),
+        endTime: Math.max(
+          Math.round(block.startTime + MIN_SUBTITLE_DURATION_MS),
+          Math.round(block.endTime),
+        ),
         text: block.text.trim(),
       }))
       .filter(block => block.text.length > 0),
@@ -146,12 +216,25 @@ export function ensureSubtitles(subtitles: SubtitleBlock[], duration: number) {
     return [createPlaceholderSubtitle(duration)];
   }
 
+  const knownOffsetMs = resolveKnownOffsetToApply(normalized, options.knownOffsetMs);
+  if (knownOffsetMs > 0) {
+    normalized = shiftSubtitleTimes(normalized, knownOffsetMs);
+  }
+
+  if (shouldApplyLegacyOffsetShift(normalized, duration)) {
+    normalized = shiftSubtitleTimes(normalized, normalized[0]?.startTime ?? 0);
+  }
+
   return normalized.map((block, index) => {
     const nextBlock = normalized[index + 1];
     const maxEnd = nextBlock ? nextBlock.startTime - 40 : duration;
     return {
       ...block,
-      endTime: clamp(block.endTime, block.startTime + 160, Math.max(block.startTime + 160, maxEnd)),
+      endTime: clamp(
+        block.endTime,
+        block.startTime + MIN_SUBTITLE_DURATION_MS,
+        Math.max(block.startTime + MIN_SUBTITLE_DURATION_MS, maxEnd),
+      ),
     };
   });
 }

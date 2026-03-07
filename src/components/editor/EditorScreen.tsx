@@ -335,6 +335,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         height: event.naturalSize.height,
       },
     });
+    // Seek video to initial playhead so it matches the hydrated position
+    if (playbackPosition > 0) {
+      videoRef.current?.seek(playbackPosition / 1000);
+    }
   };
 
   const handleVideoProgress = (currentTimeMs: number) => {

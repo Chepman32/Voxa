@@ -50,6 +50,7 @@ export async function buildProjectFromAsset(
       })),
     ),
     result.duration || fallbackDuration,
+    { knownOffsetMs: result.transcriptTimeOffsetMs },
   );
 
   return {

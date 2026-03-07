@@ -68,8 +68,8 @@ export const selectedSubtitleAtom = atom(get => {
 function HydrateEditorAtoms({ project, children }: React.PropsWithChildren<{ project: Project }>) {
   useHydrateAtoms([
     [editorProjectAtom, project],
-    [selectedSubtitleIdAtom, project.lastEditedSubtitleId ?? project.subtitles[0]?.id ?? null],
-    [playbackPositionAtom, project.subtitles[0]?.startTime ?? 0],
+    [selectedSubtitleIdAtom, null],
+    [playbackPositionAtom, 0],
   ]);
 
   return children;

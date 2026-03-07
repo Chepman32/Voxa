@@ -24,6 +24,66 @@ describe('project helpers', () => {
     expect(subtitles[0]?.text).toBe(createPlaceholderSubtitle(2400).text);
   });
 
+  it('applies a known transcript offset before clamping subtitle timings', () => {
+    const subtitles = ensureSubtitles(
+      [
+        { id: 'late-1', startTime: 6080, endTime: 6760, text: 'hello' },
+        { id: 'late-2', startTime: 7120, endTime: 7920, text: 'world' },
+      ],
+      9000,
+      { knownOffsetMs: 6080 },
+    );
+
+    expect(subtitles[0]).toMatchObject({
+      id: 'late-1',
+      startTime: 0,
+      endTime: 680,
+      text: 'hello',
+    });
+    expect(subtitles[1]).toMatchObject({
+      id: 'late-2',
+      startTime: 1040,
+      endTime: 1840,
+      text: 'world',
+    });
+  });
+
+  it('shifts obviously overflowed legacy subtitle timelines back to zero', () => {
+    const subtitles = ensureSubtitles(
+      [
+        { id: 'legacy-1', startTime: 9800, endTime: 10600, text: 'late' },
+        { id: 'legacy-2', startTime: 10820, endTime: 11480, text: 'timeline' },
+      ],
+      7200,
+    );
+
+    expect(subtitles[0]).toMatchObject({
+      id: 'legacy-1',
+      startTime: 0,
+      endTime: 800,
+      text: 'late',
+    });
+    expect(subtitles[1]).toMatchObject({
+      id: 'legacy-2',
+      startTime: 1020,
+      endTime: 1680,
+      text: 'timeline',
+    });
+  });
+
+  it('keeps ordinary leading silence instead of forcing an offset correction', () => {
+    const subtitles = ensureSubtitles(
+      [
+        { id: 'speech-1', startTime: 1800, endTime: 2600, text: 'real' },
+        { id: 'speech-2', startTime: 2920, endTime: 3620, text: 'speech' },
+      ],
+      12000,
+    );
+
+    expect(subtitles[0]?.startTime).toBe(1800);
+    expect(subtitles[1]?.startTime).toBe(2920);
+  });
+
   it('snaps subtitle edges to nearby neighbours', () => {
     const snapped = snapSubtitleRange(
       [

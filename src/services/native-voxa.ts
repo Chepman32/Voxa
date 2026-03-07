@@ -18,6 +18,7 @@ interface PrepareProjectResponse {
   height: number;
   waveform: number[];
   subtitles: NativeSubtitleSegment[];
+  transcriptTimeOffsetMs: number;
   recognitionStatus: 'ready' | 'manual' | 'failed';
   errorMessage?: string;
 }
@@ -122,6 +123,7 @@ export async function prepareProject(videoURI: string, locale: string, fallbackD
       height: 1920,
       waveform: createMockWaveform(),
       subtitles: createMockSubtitles(fallbackDuration),
+      transcriptTimeOffsetMs: 0,
       recognitionStatus: 'manual',
     } satisfies PrepareProjectResponse;
   }
