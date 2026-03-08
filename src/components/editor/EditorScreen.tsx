@@ -694,6 +694,16 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         wordHighlightAvailable={wordHighlightAvailable}
         wordHighlightEnabled={stylePreset.wordHighlightEnabled}
         onToggleWordHighlight={updateWordHighlightEnabled}
+        currentFontPresetId={stylePreset.fontPresetId}
+        onSelectFont={option =>
+          setStylePreset({
+            ...stylePreset,
+            fontPresetId: option.id,
+            fontFamily: option.fontFamily,
+            fontWeight: option.fontWeight,
+            letterSpacing: option.letterSpacing,
+          })
+        }
         width={width}
         zoneHeight={zoneHeights.timeline}
       />
@@ -751,10 +761,12 @@ function TimelineSection({
   wordHighlightEnabled,
   wordHighlightAvailable,
   selectedSubtitleId,
+  currentFontPresetId,
   onSelectSubtitle,
   onMoveSubtitle,
   onTrimSubtitle,
   onToggleWordHighlight,
+  onSelectFont,
   onScroll,
   onScrubStart,
   onScrubEnd,
@@ -772,10 +784,12 @@ function TimelineSection({
   wordHighlightEnabled: boolean;
   wordHighlightAvailable: boolean;
   selectedSubtitleId: string | null;
+  currentFontPresetId: string;
   onSelectSubtitle: (subtitleId: string) => void;
   onMoveSubtitle: (subtitleId: string, nextStart: number, nextEnd: number) => void;
   onTrimSubtitle: (subtitleId: string, edge: 'start' | 'end', deltaMs: number) => void;
   onToggleWordHighlight: (value: boolean) => void;
+  onSelectFont: (option: (typeof subtitleFontOptions)[number]) => void;
   onScroll: (offsetX: number) => void;
   onScrubStart: () => void;
   onScrubEnd: () => void;
@@ -884,6 +898,34 @@ function TimelineSection({
                 value={wordHighlightEnabled && wordHighlightAvailable}
               />
             </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.fontChipScroll}>
+              {subtitleFontOptions.map(option => {
+                const isActive = currentFontPresetId === option.id;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => onSelectFont(option)}
+                    style={[
+                      styles.fontChip,
+                      isActive && styles.fontChipActive,
+                    ]}>
+                    <Text
+                      style={[
+                        styles.fontChipLabel,
+                        option.fontFamily !== 'System' && {
+                          fontFamily: option.fontFamily,
+                        },
+                        isActive && styles.fontChipLabelActive,
+                      ]}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
           </View>
         </View>
       </GestureDetector>
@@ -1330,7 +1372,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   timelineZone: {
-    marginTop: 12,
+    marginTop: 0,
   },
   timelineViewport: {
     flex: 1,
@@ -1372,6 +1414,7 @@ const styles = StyleSheet.create({
     right: 14,
     bottom: 16,
     alignItems: 'center',
+    gap: 8,
   },
   timelineControlRow: {
     width: '100%',
@@ -1400,6 +1443,29 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 12,
     lineHeight: 16,
+  },
+  fontChipScroll: {
+    gap: 8,
+    paddingHorizontal: 4,
+  },
+  fontChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: 'rgba(10, 12, 17, 0.72)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  fontChipActive: {
+    borderColor: palette.cyan,
+    borderWidth: 1.5,
+  },
+  fontChipLabel: {
+    color: palette.textSecondary,
+    fontSize: 14,
+  },
+  fontChipLabelActive: {
+    color: palette.textPrimary,
   },
   subtitleBlockWrap: {
     position: 'absolute',
@@ -1438,7 +1504,7 @@ const styles = StyleSheet.create({
   },
   textZone: {
     marginHorizontal: 12,
-    marginTop: 12,
+    marginTop: 0,
   },
   textPanel: {
     paddingHorizontal: 18,

@@ -7,7 +7,7 @@ export type AppRoute = 'home' | 'editor';
 export interface SubtitleStyle {
   fontPresetId: string;
   fontFamily: string;
-  fontWeight: '500' | '600' | '700' | '800';
+  fontWeight: '400' | '500' | '600' | '700' | '800';
   fontSize: number;
   letterSpacing: number;
   textColor: string;

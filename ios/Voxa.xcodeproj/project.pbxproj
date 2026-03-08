@@ -9,25 +9,37 @@
 /* Begin PBXBuildFile section */
 		0C80B921A6F3F58F76C31292 /* libPods-Voxa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-Voxa.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		16FBA60B56834F85A40B3AA1 /* Anton-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 17FEA9863F1142A3954A52BD /* Anton-Regular.ttf */; };
+		1D4C12D8967842169C2604C1 /* Oswald-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9E263844F9224300AB214539 /* Oswald-Bold.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7B9CD6AB247DA3A0675A24BD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		822D8DFB73F444C5BE01C787 /* PlayfairDisplay-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0FE918381B0E4047B8DE1C41 /* PlayfairDisplay-Bold.ttf */; };
 		8F3A1C112CA5A00100A10001 /* VoxaOfflineModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F3A1C132CA5A00100A10001 /* VoxaOfflineModule.swift */; };
 		8F3A1C122CA5A00100A10001 /* VoxaOfflineModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 8F3A1C142CA5A00100A10001 /* VoxaOfflineModuleBridge.m */; };
+		922C8462CB184D629CBE63E5 /* Pacifico-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 73B7C87911BC48348564E0C2 /* Pacifico-Regular.ttf */; };
+		B6A1B8C0FC56410AAA885773 /* HomemadeApple-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EC949B3026A947B189B65E75 /* HomemadeApple-Regular.ttf */; };
+		F7E5CBC903884FA4BA2E9DC4 /* FjallaOne-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9358F382B72B4C69BB7F3BA1 /* FjallaOne-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0FE918381B0E4047B8DE1C41 /* PlayfairDisplay-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "PlayfairDisplay-Bold.ttf"; path = "../assets/fonts/PlayfairDisplay-Bold.ttf"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Voxa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Voxa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Voxa/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Voxa/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = Voxa/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		17FEA9863F1142A3954A52BD /* Anton-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Anton-Regular.ttf"; path = "../assets/fonts/Anton-Regular.ttf"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-Voxa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Voxa.debug.xcconfig"; path = "Target Support Files/Pods-Voxa/Pods-Voxa.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-Voxa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Voxa.release.xcconfig"; path = "Target Support Files/Pods-Voxa/Pods-Voxa.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-Voxa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Voxa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		73B7C87911BC48348564E0C2 /* Pacifico-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Pacifico-Regular.ttf"; path = "../assets/fonts/Pacifico-Regular.ttf"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Voxa/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Voxa/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8F3A1C132CA5A00100A10001 /* VoxaOfflineModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoxaOfflineModule.swift; sourceTree = "<group>"; };
 		8F3A1C142CA5A00100A10001 /* VoxaOfflineModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoxaOfflineModuleBridge.m; sourceTree = "<group>"; };
+		9358F382B72B4C69BB7F3BA1 /* FjallaOne-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "FjallaOne-Regular.ttf"; path = "../assets/fonts/FjallaOne-Regular.ttf"; sourceTree = "<group>"; };
+		9E263844F9224300AB214539 /* Oswald-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Oswald-Bold.ttf"; path = "../assets/fonts/Oswald-Bold.ttf"; sourceTree = "<group>"; };
+		EC949B3026A947B189B65E75 /* HomemadeApple-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "HomemadeApple-Regular.ttf"; path = "../assets/fonts/HomemadeApple-Regular.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -80,6 +92,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				DF1C3027E80943EBB891A721 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -110,6 +123,20 @@
 				5709B34CF0A7D63546082F79 /* Pods-Voxa.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		DF1C3027E80943EBB891A721 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9E263844F9224300AB214539 /* Oswald-Bold.ttf */,
+				9358F382B72B4C69BB7F3BA1 /* FjallaOne-Regular.ttf */,
+				0FE918381B0E4047B8DE1C41 /* PlayfairDisplay-Bold.ttf */,
+				17FEA9863F1142A3954A52BD /* Anton-Regular.ttf */,
+				EC949B3026A947B189B65E75 /* HomemadeApple-Regular.ttf */,
+				73B7C87911BC48348564E0C2 /* Pacifico-Regular.ttf */,
+			);
+			name = Resources;
+			path = "";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -175,6 +202,12 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				7B9CD6AB247DA3A0675A24BD /* PrivacyInfo.xcprivacy in Resources */,
+				1D4C12D8967842169C2604C1 /* Oswald-Bold.ttf in Resources */,
+				F7E5CBC903884FA4BA2E9DC4 /* FjallaOne-Regular.ttf in Resources */,
+				822D8DFB73F444C5BE01C787 /* PlayfairDisplay-Bold.ttf in Resources */,
+				16FBA60B56834F85A40B3AA1 /* Anton-Regular.ttf in Resources */,
+				B6A1B8C0FC56410AAA885773 /* HomemadeApple-Regular.ttf in Resources */,
+				922C8462CB184D629CBE63E5 /* Pacifico-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

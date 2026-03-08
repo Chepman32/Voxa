@@ -1,0 +1,29 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/Oswald-Bold.ttf",
+      "sha1": "ad9b3cfc85965c43f35c6f1be746c403164f4887"
+    },
+    {
+      "path": "assets/fonts/FjallaOne-Regular.ttf",
+      "sha1": "2dfd63b14b10ed99b2fe094f37494c2dee5f6f9f"
+    },
+    {
+      "path": "assets/fonts/PlayfairDisplay-Bold.ttf",
+      "sha1": "836c676dc3499efc268c6937de5f5f53f5b50164"
+    },
+    {
+      "path": "assets/fonts/Anton-Regular.ttf",
+      "sha1": "052032168cd9f8ec4a5a514b3a887fb514d82907"
+    },
+    {
+      "path": "assets/fonts/HomemadeApple-Regular.ttf",
+      "sha1": "e3c1b7b24b7137a997e6b828bd24feda52c149ea"
+    },
+    {
+      "path": "assets/fonts/Pacifico-Regular.ttf",
+      "sha1": "3d0b9eb17e645ac34f83c49c3f988372b242173a"
+    }
+  ]
+}
