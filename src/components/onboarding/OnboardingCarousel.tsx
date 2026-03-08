@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -44,19 +44,30 @@ export function OnboardingCarousel({
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const lift = useSharedValue(0);
-  const lastCardIndex = onboardingCards.length - 1;
+  const listRef = useRef<FlatList<(typeof onboardingCards)[number]>>(null);
+  const permissionCardIndex = onboardingCards.findIndex(
+    card => card.kind === 'permissions',
+  );
+  const ctaCardIndex = onboardingCards.findIndex(card => card.kind === 'cta');
 
-  const triggerGrantAccess = () => {
-    if (pending || currentIndex !== lastCardIndex) {
+  const triggerGrantAccess = async () => {
+    if (pending || currentIndex !== permissionCardIndex) {
       return;
     }
 
     haptics.medium();
-    onGrantAccess();
+    await onGrantAccess();
+
+    if (permissionCardIndex < onboardingCards.length - 1) {
+      listRef.current?.scrollToIndex({
+        animated: true,
+        index: permissionCardIndex + 1,
+      });
+    }
   };
 
   const swipeUpGesture = Gesture.Pan()
-    .enabled(currentIndex === lastCardIndex && !pending)
+    .enabled(currentIndex === permissionCardIndex && !pending)
     .activeOffsetY(-12)
     .failOffsetX([-8, 8])
     .onUpdate(event => {
@@ -80,6 +91,7 @@ export function OnboardingCarousel({
     <View style={styles.root}>
       <AtmosphereCanvas intensity={1.06} />
       <FlatList
+        ref={listRef}
         data={onboardingCards}
         horizontal
         keyExtractor={item => item.id}
@@ -89,7 +101,8 @@ export function OnboardingCarousel({
         }}
         pagingEnabled
         renderItem={({ item, index }: ListRenderItemInfo<(typeof onboardingCards)[number]>) => {
-          const isPermissionCard = index === lastCardIndex;
+          const isPermissionCard = item.kind === 'permissions';
+          const isCtaCard = item.kind === 'cta';
 
           const cardBody = (
             <>
@@ -128,6 +141,15 @@ export function OnboardingCarousel({
                     ) : null}
                   </Animated.View>
                 </GestureDetector>
+              ) : isCtaCard ? (
+                <Pressable
+                  onPress={onSkip}
+                  style={styles.primaryButton}
+                  testID="onboarding-get-started-button">
+                  <Text style={styles.primaryButtonText}>
+                    {item.ctaLabel ?? 'Get Started'}
+                  </Text>
+                </Pressable>
               ) : (
                 <Pressable
                   onPress={() => {}}
@@ -162,22 +184,33 @@ export function OnboardingCarousel({
         showsHorizontalScrollIndicator={false}
       />
 
-      <View style={[styles.footer, { bottom: insets.bottom + 16 }]}>
-        <View style={styles.pagination}>
-          {onboardingCards.map((item, index) => (
-            <View
-              key={item.id}
-              style={[
-                styles.dot,
-                index === currentIndex ? styles.dotActive : undefined,
-              ]}
-            />
-          ))}
-        </View>
-        <Pressable onPress={onSkip} style={styles.skipButton}>
+      {currentIndex !== ctaCardIndex ? (
+        <Pressable
+          onPress={onSkip}
+          style={[
+            styles.skipButton,
+            styles.skipButtonFloating,
+            { top: insets.top + 12 },
+          ]}>
           <Text style={styles.skipText}>Skip</Text>
         </Pressable>
-      </View>
+      ) : null}
+
+      {currentIndex !== ctaCardIndex ? (
+        <View style={[styles.footer, { bottom: insets.bottom + 16 }]}>
+          <View style={styles.pagination}>
+            {onboardingCards.map((item, index) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.dot,
+                  index === currentIndex ? styles.dotActive : undefined,
+                ]}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -238,6 +271,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  primaryButton: {
+    minHeight: 54,
+    marginTop: 10,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.textPrimary,
+  },
+  primaryButtonText: {
+    color: palette.canvas,
+    fontSize: 15,
+    fontWeight: '800',
   },
   progressText: {
     color: palette.textSecondary,
@@ -305,13 +351,22 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   skipButton: {
+    position: 'absolute',
+    left: 20,
+    zIndex: 2,
     paddingVertical: 6,
     paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: 'rgba(10, 12, 18, 0.42)',
+  },
+  skipButtonFloating: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   skipText: {
-    color: palette.textSecondary,
+    color: palette.textPrimary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   dot: {
     width: 8,

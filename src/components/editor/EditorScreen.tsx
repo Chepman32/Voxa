@@ -85,9 +85,11 @@ import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { GlassPanel } from '../common/GlassPanel';
 import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
 import { ExportSheet } from './ExportSheet';
+import { calculateEditorVerticalLayout } from './layout';
 
 const MAX_TIMELINE_SURFACE_WIDTH = 8192;
 const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
+export const ACTIVE_SUBTITLE_SECTION_ID = 'active-subtitle-section';
 
 interface EditorScreenProps {
   project: Project;
@@ -112,6 +114,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [skipFlash, setSkipFlash] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
+  const [bannerHeight, setBannerHeight] = useState(0);
   const subtitleCanvasPreviewTopY = useSharedValue(0);
 
   const [project, setProject] = useAtom(editorProjectAtom);
@@ -181,13 +184,14 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     return () => clearTimeout(timer);
   }, [project]);
 
-  const zoneHeights = {
-    video: height * 0.38,
-    timeline: height * 0.32,
-    text: height * 0.30,
-  };
   const topBarOffset = insets.top + 2;
   const bottomInset = Math.max(insets.bottom, 12);
+  const editorLayout = calculateEditorVerticalLayout({
+    screenHeight: height,
+    topInset: insets.top,
+    bottomInset,
+    bannerHeight: project.importError ? Math.max(bannerHeight, 60) : 0,
+  });
 
   const durationMs = Math.max(0, project?.duration ?? 0);
   const basePixelsPerSecond = 82 * timelineZoom;
@@ -263,7 +267,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       resolveSubtitleStyleFromVerticalOrigin(
         stylePreset,
         nextTop,
-        zoneHeights.video,
+        editorLayout.videoHeight,
         nextSubtitleBubbleHeight,
       ),
     );
@@ -499,11 +503,15 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const effectiveSubtitleBubbleHeight =
     stylePreset ? Math.max(subtitleBubbleHeight, stylePreset.fontSize + 24) : subtitleBubbleHeight;
   const videoSubtitleBounds = getSubtitleVerticalBounds(
-    zoneHeights.video,
+    editorLayout.videoHeight,
     effectiveSubtitleBubbleHeight,
   );
   const videoSubtitleTop = stylePreset && displaySubtitle
-    ? getSubtitleVerticalOrigin(stylePreset, zoneHeights.video, effectiveSubtitleBubbleHeight)
+    ? getSubtitleVerticalOrigin(
+        stylePreset,
+        editorLayout.videoHeight,
+        effectiveSubtitleBubbleHeight,
+      )
     : 0;
 
   const subtitleBubbleAnimatedStyle = useAnimatedStyle(() => ({
@@ -575,7 +583,14 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       </View>
 
       {project.importError ? (
-        <GlassPanel style={styles.banner}>
+        <GlassPanel
+          onLayout={event => {
+            const nextHeight = event.nativeEvent.layout.height;
+            if (nextHeight !== bannerHeight) {
+              setBannerHeight(nextHeight);
+            }
+          }}
+          style={styles.banner}>
           <Feather color={palette.amber} name="alert-triangle" size={16} />
           <Text style={styles.bannerText}>
             {project.importError}. Manual subtitle editing remains available.
@@ -583,147 +598,158 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         </GlassPanel>
       ) : null}
 
-      <GestureDetector gesture={videoDismissGesture}>
-        <View style={[styles.videoZone, { height: zoneHeights.video }]}>
-          <Video
-            onEnd={handleVideoEnd}
-            onLoad={handleVideoLoad}
-            onProgress={event => handleVideoProgress(event.currentTime * 1000)}
-            paused={!isPlaying}
-            ref={videoRef}
-            repeat={false}
-            resizeMode="cover"
-            source={{ uri: project.videoLocalURI }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.videoShade} />
+      <View
+        style={[
+          styles.contentStack,
+          {
+            gap: editorLayout.stackGap,
+            paddingBottom: editorLayout.contentPaddingBottom,
+          },
+        ]}>
+        <GestureDetector gesture={videoDismissGesture}>
+          <View style={[styles.videoZone, { height: editorLayout.videoHeight }]}>
+            <Video
+              onEnd={handleVideoEnd}
+              onLoad={handleVideoLoad}
+              onProgress={event => handleVideoProgress(event.currentTime * 1000)}
+              paused={!isPlaying}
+              ref={videoRef}
+              repeat={false}
+              resizeMode="cover"
+              source={{ uri: project.videoLocalURI }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.videoShade} />
 
-          <View style={styles.doubleTapRow}>
-            <GestureDetector
-              gesture={Gesture.Tap().numberOfTaps(2).onEnd(() => runOnJS(seekBy)(-5000))}>
-              <View style={styles.videoHalf} />
-            </GestureDetector>
-            <GestureDetector
-              gesture={Gesture.Tap().numberOfTaps(2).onEnd(() => runOnJS(seekBy)(5000))}>
-              <View style={styles.videoHalf} />
-            </GestureDetector>
-          </View>
-
-          <Pressable onPress={handleVideoTap} style={StyleSheet.absoluteFill} />
-
-          {showControls ? (
-            <Animated.View
-              entering={FadeIn.duration(150)}
-              exiting={FadeOut.duration(150)}
-              pointerEvents="box-none"
-              style={styles.playPauseWrap}>
-              <Pressable onPress={togglePlayback} style={styles.playPauseButton}>
-                <Feather
-                  color={palette.textPrimary}
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={28}
-                />
-              </Pressable>
-            </Animated.View>
-          ) : null}
-
-          {skipFlash ? (
-            <Animated.View entering={FadeIn.duration(120)} exiting={FadeOut.duration(220)} style={styles.skipFlash}>
-              <Text style={styles.skipFlashText}>{skipFlash}</Text>
-            </Animated.View>
-          ) : null}
-
-          {displaySubtitle ? (
-            <View pointerEvents="box-none" style={styles.overlaySubtitleWrap}>
-              <GestureDetector gesture={Gesture.Race(subtitleDragGesture, subtitleTapGesture)}>
-                <Animated.View
-                  onLayout={event => {
-                    const nextHeight = event.nativeEvent.layout.height;
-                    if (nextHeight !== subtitleBubbleHeight) {
-                      setSubtitleBubbleHeight(nextHeight);
-                    }
-                  }}
-                  style={[
-                    styles.overlaySubtitleBubble,
-                    subtitleBubbleAnimatedStyle,
-                  ]}>
-                  <HighlightedSubtitleText
-                    playheadPosition={playbackPosition}
-                    style={[
-                      styles.overlaySubtitleText,
-                      {
-                        color: stylePreset.textColor,
-                        backgroundColor: stylePreset.backgroundColor,
-                        fontFamily: stylePreset.fontFamily,
-                        fontWeight: stylePreset.fontWeight,
-                        letterSpacing: stylePreset.letterSpacing,
-                        fontSize: stylePreset.fontSize,
-                      },
-                    ]}
-                    stylePreset={stylePreset}
-                    subtitle={displaySubtitle}
-                  />
-                </Animated.View>
+            <View style={styles.doubleTapRow}>
+              <GestureDetector
+                gesture={Gesture.Tap().numberOfTaps(2).onEnd(() => runOnJS(seekBy)(-5000))}>
+                <View style={styles.videoHalf} />
+              </GestureDetector>
+              <GestureDetector
+                gesture={Gesture.Tap().numberOfTaps(2).onEnd(() => runOnJS(seekBy)(5000))}>
+                <View style={styles.videoHalf} />
               </GestureDetector>
             </View>
-          ) : null}
-        </View>
-      </GestureDetector>
 
-      <TimelineSection
-        contentWidth={contentWidth}
-        onScrubEnd={() => {
-          isScrubbing.current = false;
-        }}
-        onScrubStart={() => {
-          isScrubbing.current = true;
-          setIsPlaying(false);
-        }}
-        onScroll={handleTimelineScroll}
-        pixelsPerMs={pixelsPerMs}
-        playhead={playbackPosition}
-        timelineZoom={timelineZoom}
-        setTimelineZoom={setTimelineZoom}
-        timelineRef={timelineRef}
-        waveform={project.waveform}
-        wordHighlightAvailable={wordHighlightAvailable}
-        wordHighlightEnabled={stylePreset.wordHighlightEnabled}
-        onToggleWordHighlight={updateWordHighlightEnabled}
-        currentFontPresetId={stylePreset.fontPresetId}
-        onSelectFont={option =>
-          setStylePreset({
-            ...stylePreset,
-            fontPresetId: option.id,
-            fontFamily: option.fontFamily,
-            fontWeight: option.fontWeight,
-            letterSpacing: option.letterSpacing,
-          })
-        }
-        width={width}
-        zoneHeight={zoneHeights.timeline}
-      />
+            <Pressable onPress={handleVideoTap} style={StyleSheet.absoluteFill} />
 
-      <TextEditorSection
-        bottomInset={bottomInset}
-        currentStyle={stylePreset}
-        isEditing={isTextEditing}
-        isStylePanelOpen={isStylePanelOpen}
-        onChangeStyle={setStylePreset}
-        onNavigate={navigateAdjacentSubtitle}
-        onOpenExport={openExportSheet}
-        onSelectText={() => {
-          setIsTextEditing(true);
-          if (selectedSubtitle) {
-            setSelectedSubtitleId(selectedSubtitle.id);
+            {showControls ? (
+              <Animated.View
+                entering={FadeIn.duration(150)}
+                exiting={FadeOut.duration(150)}
+                pointerEvents="box-none"
+                style={styles.playPauseWrap}>
+                <Pressable onPress={togglePlayback} style={styles.playPauseButton}>
+                  <Feather
+                    color={palette.textPrimary}
+                    name={isPlaying ? 'pause' : 'play'}
+                    size={28}
+                  />
+                </Pressable>
+              </Animated.View>
+            ) : null}
+
+            {skipFlash ? (
+              <Animated.View
+                entering={FadeIn.duration(120)}
+                exiting={FadeOut.duration(220)}
+                style={styles.skipFlash}>
+                <Text style={styles.skipFlashText}>{skipFlash}</Text>
+              </Animated.View>
+            ) : null}
+
+            {displaySubtitle ? (
+              <View pointerEvents="box-none" style={styles.overlaySubtitleWrap}>
+                <GestureDetector gesture={Gesture.Race(subtitleDragGesture, subtitleTapGesture)}>
+                  <Animated.View
+                    onLayout={event => {
+                      const nextHeight = event.nativeEvent.layout.height;
+                      if (nextHeight !== subtitleBubbleHeight) {
+                        setSubtitleBubbleHeight(nextHeight);
+                      }
+                    }}
+                    style={[
+                      styles.overlaySubtitleBubble,
+                      subtitleBubbleAnimatedStyle,
+                    ]}>
+                    <HighlightedSubtitleText
+                      playheadPosition={playbackPosition}
+                      style={[
+                        styles.overlaySubtitleText,
+                        {
+                          color: stylePreset.textColor,
+                          backgroundColor: stylePreset.backgroundColor,
+                          fontFamily: stylePreset.fontFamily,
+                          fontWeight: stylePreset.fontWeight,
+                          letterSpacing: stylePreset.letterSpacing,
+                          fontSize: stylePreset.fontSize,
+                        },
+                      ]}
+                      stylePreset={stylePreset}
+                      subtitle={displaySubtitle}
+                    />
+                  </Animated.View>
+                </GestureDetector>
+              </View>
+            ) : null}
+          </View>
+        </GestureDetector>
+
+        <TimelineSection
+          contentWidth={contentWidth}
+          currentFontPresetId={stylePreset.fontPresetId}
+          onScrubEnd={() => {
+            isScrubbing.current = false;
+          }}
+          onScrubStart={() => {
+            isScrubbing.current = true;
+            setIsPlaying(false);
+          }}
+          onScroll={handleTimelineScroll}
+          onSelectFont={option =>
+            setStylePreset({
+              ...stylePreset,
+              fontPresetId: option.id,
+              fontFamily: option.fontFamily,
+              fontWeight: option.fontWeight,
+              letterSpacing: option.letterSpacing,
+            })
           }
-        }}
-        onSetEditing={setIsTextEditing}
-        onToggleStylePanel={setIsStylePanelOpen}
-        onUpdateText={updateSelectedSubtitleText}
-        onUpdatePositionPreset={applyPositionPreset}
-        selectedSubtitle={selectedSubtitle}
-        zoneHeight={zoneHeights.text}
-      />
+          onToggleWordHighlight={updateWordHighlightEnabled}
+          pixelsPerMs={pixelsPerMs}
+          playhead={playbackPosition}
+          timelineRef={timelineRef}
+          timelineTrackHeight={editorLayout.timelineTrackHeight}
+          timelineZoom={timelineZoom}
+          setTimelineZoom={setTimelineZoom}
+          waveform={project.waveform}
+          width={width}
+          wordHighlightAvailable={wordHighlightAvailable}
+          wordHighlightEnabled={stylePreset.wordHighlightEnabled}
+        />
+
+        <TextEditorSection
+          currentStyle={stylePreset}
+          isEditing={isTextEditing}
+          isStylePanelOpen={isStylePanelOpen}
+          onChangeStyle={setStylePreset}
+          onNavigate={navigateAdjacentSubtitle}
+          onOpenExport={openExportSheet}
+          onSelectText={() => {
+            setIsTextEditing(true);
+            if (selectedSubtitle) {
+              setSelectedSubtitleId(selectedSubtitle.id);
+            }
+          }}
+          onSetEditing={setIsTextEditing}
+          onToggleStylePanel={setIsStylePanelOpen}
+          onUpdatePositionPreset={applyPositionPreset}
+          onUpdateText={updateSelectedSubtitleText}
+          selectedSubtitle={selectedSubtitle}
+          textZoneHeight={editorLayout.textHeight}
+        />
+      </View>
 
       <GestureDetector gesture={bottomEdgeGesture}>
         <View style={[styles.bottomHandleArea, { height: bottomInset + 16 }]}>
@@ -746,7 +772,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
 function TimelineSection({
   width,
-  zoneHeight,
+  timelineTrackHeight,
   playhead,
   timelineZoom,
   pixelsPerMs,
@@ -764,7 +790,7 @@ function TimelineSection({
   timelineRef,
 }: {
   width: number;
-  zoneHeight: number;
+  timelineTrackHeight: number;
   playhead: number;
   timelineZoom: number;
   pixelsPerMs: number;
@@ -792,59 +818,58 @@ function TimelineSection({
     });
 
   return (
-    <View style={[styles.timelineZone, { height: zoneHeight }]}>
+    <View style={styles.timelineZone}>
       <GestureDetector gesture={pinchGesture}>
         <View style={styles.timelineViewport}>
-          <ScrollView
-            contentContainerStyle={{
-              paddingHorizontal: width / 2,
-              height: zoneHeight,
-            }}
-            horizontal
-            onMomentumScrollEnd={onScrubEnd}
-            onScroll={event => onScroll(event.nativeEvent.contentOffset.x)}
-            onScrollBeginDrag={onScrubStart}
-            onScrollEndDrag={onScrubEnd}
-            ref={timelineRef}
-            scrollEventThrottle={16}
-            showsHorizontalScrollIndicator={false}>
-            <View style={{ width: contentWidth, height: zoneHeight }}>
-              <View pointerEvents="none" style={styles.waveformLayer}>
-                {waveform.map((value, index) => {
-                  const barWidth = contentWidth / Math.max(1, waveform.length);
-                  const amplitude = Math.max(12, value * (zoneHeight * 0.48));
-                  const x = index * barWidth;
-                  const y = zoneHeight * 0.3 - amplitude / 2;
-                  const barColor =
-                    Math.abs((x / pixelsPerMs) - playhead) < 1300
-                      ? 'rgba(0, 240, 255, 0.5)'
-                      : 'rgba(255, 255, 255, 0.16)';
+          <View style={[styles.timelineTrack, { height: timelineTrackHeight }]}>
+            <ScrollView
+              contentContainerStyle={{
+                paddingHorizontal: width / 2,
+                height: timelineTrackHeight,
+              }}
+              horizontal
+              onMomentumScrollEnd={onScrubEnd}
+              onScroll={event => onScroll(event.nativeEvent.contentOffset.x)}
+              onScrollBeginDrag={onScrubStart}
+              onScrollEndDrag={onScrubEnd}
+              ref={timelineRef}
+              scrollEventThrottle={16}
+              showsHorizontalScrollIndicator={false}>
+              <View style={{ width: contentWidth, height: timelineTrackHeight }}>
+                <View pointerEvents="none" style={styles.waveformLayer}>
+                  {waveform.map((value, index) => {
+                    const barWidth = contentWidth / Math.max(1, waveform.length);
+                    const amplitude = Math.max(12, value * (timelineTrackHeight * 0.5));
+                    const x = index * barWidth;
+                    const y = timelineTrackHeight * 0.5 - amplitude / 2;
+                    const barColor =
+                      Math.abs((x / pixelsPerMs) - playhead) < 1300
+                        ? 'rgba(0, 240, 255, 0.5)'
+                        : 'rgba(255, 255, 255, 0.16)';
 
-                  return (
-                    <View
-                      key={`wave-${index}`}
-                      style={[
-                        styles.waveformBar,
-                        {
-                          left: x,
-                          top: y,
-                          width: Math.max(2, barWidth * 0.68),
-                          height: amplitude,
-                          backgroundColor: barColor,
-                        },
-                      ]}
-                    />
-                  );
-                })}
+                    return (
+                      <View
+                        key={`wave-${index}`}
+                        style={[
+                          styles.waveformBar,
+                          {
+                            left: x,
+                            top: y,
+                            width: Math.max(2, barWidth * 0.68),
+                            height: amplitude,
+                            backgroundColor: barColor,
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
               </View>
+            </ScrollView>
 
-
-
+            <View pointerEvents="none" style={styles.playhead}>
+              <View style={styles.playheadGlow} />
             </View>
-          </ScrollView>
-
-          <View pointerEvents="none" style={styles.playhead}>
-            <View style={styles.playheadGlow} />
           </View>
 
           <View style={styles.timelineControlDock}>
@@ -908,12 +933,11 @@ function TimelineSection({
 }
 
 function TextEditorSection({
-  bottomInset,
   selectedSubtitle,
   currentStyle,
   isEditing,
   isStylePanelOpen,
-  zoneHeight,
+  textZoneHeight,
   onSelectText,
   onSetEditing,
   onUpdateText,
@@ -923,12 +947,11 @@ function TextEditorSection({
   onChangeStyle,
   onOpenExport,
 }: {
-  bottomInset: number;
   selectedSubtitle: SubtitleBlock | null;
   currentStyle: Project['globalStyle'];
   isEditing: boolean;
   isStylePanelOpen: boolean;
-  zoneHeight: number;
+  textZoneHeight: number;
   onSelectText: () => void;
   onSetEditing: (value: boolean) => void;
   onUpdateText: (text: string) => void;
@@ -944,7 +967,6 @@ function TextEditorSection({
     setDraftText(selectedSubtitle?.text ?? '');
   }, [selectedSubtitle?.id, selectedSubtitle?.text]);
 
-  const panelHeight = isStylePanelOpen ? zoneHeight + 112 : zoneHeight;
   const swipeGesture = Gesture.Pan().onEnd(event => {
     if (Math.abs(event.translationX) > 58 && isEditing) {
       onUpdateText(draftText);
@@ -961,9 +983,10 @@ function TextEditorSection({
   return (
     <GestureDetector gesture={swipeGesture}>
       <View
+        testID={ACTIVE_SUBTITLE_SECTION_ID}
         style={[
           styles.textZone,
-          { minHeight: panelHeight, marginBottom: bottomInset + 10 },
+          { height: textZoneHeight },
         ]}>
         <GlassPanel style={styles.textPanel}>
           <Pressable onPress={onSelectText} style={styles.textPanelHeader}>
@@ -980,111 +1003,118 @@ function TextEditorSection({
               <Text style={styles.exportChipText}>Export</Text>
             </Pressable>
           </Pressable>
-
-          {selectedSubtitle ? (
-            isEditing ? (
-              <TextInput
-                defaultValue={selectedSubtitle.text}
-                key={selectedSubtitle.id}
-                multiline
-                onBlur={() => {
-                  onUpdateText(draftText);
-                  onSetEditing(false);
-                }}
-                onChangeText={text => {
-                  setDraftText(text);
-                }}
-                placeholder="Rewrite subtitle text"
-                placeholderTextColor={palette.textSecondary}
-                style={styles.textInput}
-              />
+          <ScrollView
+            bounces={isStylePanelOpen}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={isStylePanelOpen}
+            showsVerticalScrollIndicator={false}
+            style={styles.textPanelBody}
+            contentContainerStyle={styles.textPanelBodyContent}>
+            {selectedSubtitle ? (
+              isEditing ? (
+                <TextInput
+                  defaultValue={selectedSubtitle.text}
+                  key={selectedSubtitle.id}
+                  multiline
+                  onBlur={() => {
+                    onUpdateText(draftText);
+                    onSetEditing(false);
+                  }}
+                  onChangeText={text => {
+                    setDraftText(text);
+                  }}
+                  placeholder="Rewrite subtitle text"
+                  placeholderTextColor={palette.textSecondary}
+                  style={styles.textInput}
+                />
+              ) : (
+                <Pressable onPress={onSelectText}>
+                  <Text style={styles.subtitlePreview}>{selectedSubtitle.text}</Text>
+                </Pressable>
+              )
             ) : (
-              <Pressable onPress={onSelectText}>
-                <Text style={styles.subtitlePreview}>{selectedSubtitle.text}</Text>
-              </Pressable>
-            )
-          ) : (
-            <Text style={styles.subtitlePreview}>Select a subtitle block to edit.</Text>
-          )}
+              <Text style={styles.subtitlePreview}>Select a subtitle block to edit.</Text>
+            )}
 
-          <View style={styles.panelHintRow}>
-            <Text style={styles.panelHint}>Swipe left or right to move between blocks.</Text>
-            <Text style={styles.panelHint}>Swipe up for style controls.</Text>
-          </View>
-
-          {isStylePanelOpen ? (
-            <View style={styles.stylePanel}>
-              <StyleRow
-                label="Fonts"
-                options={subtitleFontOptions.map(option => ({
-                  id: option.id,
-                  label: option.label,
-                  active: currentStyle.fontPresetId === option.id,
-                  onPress: () =>
-                    onChangeStyle({
-                      ...currentStyle,
-                      fontPresetId: option.id,
-                      fontFamily: option.fontFamily,
-                      fontWeight: option.fontWeight,
-                      letterSpacing: option.letterSpacing,
-                    }),
-                }))}
-              />
-
-              <StyleRow
-                label="Colors"
-                options={subtitleColorOptions.map(option => ({
-                  id: option.id,
-                  label: option.label,
-                  active: currentStyle.accentColor === option.accentColor,
-                  swatch: option.accentColor,
-                  onPress: () =>
-                    onChangeStyle({
-                      ...currentStyle,
-                      textColor: option.textColor,
-                      accentColor: option.accentColor,
-                      backgroundColor: option.backgroundColor,
-                    }),
-                }))}
-              />
-
-              <StyleRow
-                label="Positions"
-                options={subtitlePositionOptions.map(option => ({
-                  id: option.value,
-                  label: option.label,
-                  active: currentStyle.position === option.value,
-                  onPress: () => onUpdatePositionPreset(option.value),
-                }))}
-              />
-
-              <StyleRow
-                label="Casing"
-                options={[
-                  {
-                    id: 'sentence',
-                    label: 'Sentence',
-                    active: currentStyle.casing === 'sentence',
-                    onPress: () =>
-                      onChangeStyle({
-                        ...currentStyle,
-                        casing: 'sentence',
-                      }),
-                  },
-                  {
-                    id: 'uppercase',
-                    label: 'Uppercase',
-                    active: currentStyle.casing === 'uppercase',
-                    onPress: () =>
-                      onChangeStyle({
-                        ...currentStyle,
-                        casing: 'uppercase',
-                      }),
-                  },
-                ]}
-              />
+            <View style={styles.panelHintRow}>
+              <Text style={styles.panelHint}>Swipe left or right to move between blocks.</Text>
+              <Text style={styles.panelHint}>Swipe up for style controls.</Text>
             </View>
-          ) : null}
+
+            {isStylePanelOpen ? (
+              <View style={styles.stylePanel}>
+                <StyleRow
+                  label="Fonts"
+                  options={subtitleFontOptions.map(option => ({
+                    id: option.id,
+                    label: option.label,
+                    active: currentStyle.fontPresetId === option.id,
+                    onPress: () =>
+                      onChangeStyle({
+                        ...currentStyle,
+                        fontPresetId: option.id,
+                        fontFamily: option.fontFamily,
+                        fontWeight: option.fontWeight,
+                        letterSpacing: option.letterSpacing,
+                      }),
+                  }))}
+                />
+
+                <StyleRow
+                  label="Colors"
+                  options={subtitleColorOptions.map(option => ({
+                    id: option.id,
+                    label: option.label,
+                    active: currentStyle.accentColor === option.accentColor,
+                    swatch: option.accentColor,
+                    onPress: () =>
+                      onChangeStyle({
+                        ...currentStyle,
+                        textColor: option.textColor,
+                        accentColor: option.accentColor,
+                        backgroundColor: option.backgroundColor,
+                      }),
+                  }))}
+                />
+
+                <StyleRow
+                  label="Positions"
+                  options={subtitlePositionOptions.map(option => ({
+                    id: option.value,
+                    label: option.label,
+                    active: currentStyle.position === option.value,
+                    onPress: () => onUpdatePositionPreset(option.value),
+                  }))}
+                />
+
+                <StyleRow
+                  label="Casing"
+                  options={[
+                    {
+                      id: 'sentence',
+                      label: 'Sentence',
+                      active: currentStyle.casing === 'sentence',
+                      onPress: () =>
+                        onChangeStyle({
+                          ...currentStyle,
+                          casing: 'sentence',
+                        }),
+                    },
+                    {
+                      id: 'uppercase',
+                      label: 'Uppercase',
+                      active: currentStyle.casing === 'uppercase',
+                      onPress: () =>
+                        onChangeStyle({
+                          ...currentStyle,
+                          casing: 'uppercase',
+                        }),
+                    },
+                  ]}
+                />
+              </View>
+            ) : null}
+          </ScrollView>
         </GlassPanel>
       </View>
     </GestureDetector>
@@ -1182,8 +1212,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  contentStack: {
+    flex: 1,
+    paddingTop: 8,
+  },
   videoZone: {
-    marginTop: 8,
     marginHorizontal: 16,
     borderRadius: 30,
     overflow: 'hidden',
@@ -1247,11 +1280,13 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   timelineViewport: {
-    flex: 1,
     marginHorizontal: 12,
     borderRadius: 32,
     overflow: 'hidden',
     backgroundColor: 'rgba(16, 18, 21, 0.74)',
+  },
+  timelineTrack: {
+    overflow: 'hidden',
   },
   waveformLayer: {
     ...StyleSheet.absoluteFillObject,
@@ -1277,10 +1312,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   timelineControlDock: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 16,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 12,
     alignItems: 'center',
     gap: 8,
   },
@@ -1337,13 +1371,13 @@ const styles = StyleSheet.create({
   },
   textZone: {
     marginHorizontal: 12,
-    marginTop: 0,
   },
   textPanel: {
+    flex: 1,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 18,
-    gap: 16,
+    gap: 14,
   },
   textPanelHeader: {
     flexDirection: 'row',
@@ -1376,6 +1410,13 @@ const styles = StyleSheet.create({
     color: palette.cyan,
     fontSize: 13,
     fontWeight: '700',
+  },
+  textPanelBody: {
+    flex: 1,
+  },
+  textPanelBodyContent: {
+    gap: 16,
+    paddingBottom: 2,
   },
   subtitlePreview: {
     color: palette.textPrimary,

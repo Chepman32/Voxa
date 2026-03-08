@@ -22,7 +22,20 @@ export const springConfig = {
   stiffness: 120,
 };
 
-export const onboardingCards = [
+export const emptyStateImage =
+  'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1200&auto=format&fit=crop';
+
+export interface OnboardingCard {
+  id: string;
+  image: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  kind: 'default' | 'permissions' | 'cta';
+  ctaLabel?: string;
+}
+
+export const onboardingCards: OnboardingCard[] = [
   {
     id: 'privacy',
     image:
@@ -31,6 +44,7 @@ export const onboardingCards = [
     title: 'Your footage never leaves the device.',
     description:
       'Audio extraction, speech recognition, editing, and export stay on the phone. No uploads, no cloud queue, no third-party processing.',
+    kind: 'default',
   },
   {
     id: 'gestures',
@@ -40,6 +54,7 @@ export const onboardingCards = [
     title: 'Scrub, pinch, trim, and snap subtitles with your hands.',
     description:
       'Voxa keeps controls out of the way. Pull to create, drag blocks to retime, and swipe through edits without breaking focus.',
+    kind: 'default',
   },
   {
     id: 'permissions',
@@ -49,11 +64,19 @@ export const onboardingCards = [
     title: 'Grant library and speech access to unlock local subtitle generation.',
     description:
       'Swipe up on this card to request permissions. You can still edit manually if on-device recognition is unavailable for a selected language.',
+    kind: 'permissions',
+  },
+  {
+    id: 'start',
+    image: emptyStateImage,
+    eyebrow: 'All Set',
+    title: 'You are ready to start building subtitles.',
+    description:
+      'Import a clip, refine timing with gestures, and export polished captions without sending your footage anywhere.',
+    kind: 'cta',
+    ctaLabel: 'Get Started',
   },
 ];
-
-export const emptyStateImage =
-  'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1200&auto=format&fit=crop';
 
 export const defaultSubtitleStyle: SubtitleStyle = {
   fontPresetId: 'display',

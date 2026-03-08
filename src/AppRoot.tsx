@@ -102,7 +102,6 @@ export function AppRoot() {
       setPermissionSummary(summary);
     } finally {
       setPermissionsPending(false);
-      completeOnboarding();
     }
   };
 
