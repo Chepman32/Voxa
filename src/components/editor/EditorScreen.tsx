@@ -183,8 +183,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
   const zoneHeights = {
     video: height * 0.38,
-    timeline: height * 0.4,
-    text: height * 0.22,
+    timeline: height * 0.32,
+    text: height * 0.30,
   };
   const topBarOffset = insets.top + 2;
   const bottomInset = Math.max(insets.bottom, 12);
@@ -814,7 +814,7 @@ function TimelineSection({
                   const barWidth = contentWidth / Math.max(1, waveform.length);
                   const amplitude = Math.max(12, value * (zoneHeight * 0.48));
                   const x = index * barWidth;
-                  const y = zoneHeight / 2 - amplitude / 2;
+                  const y = zoneHeight * 0.3 - amplitude / 2;
                   const barColor =
                     Math.abs((x / pixelsPerMs) - playhead) < 1300
                       ? 'rgba(0, 240, 255, 0.5)'
