@@ -160,7 +160,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     } else {
       togglePlayback();
     }
-  }, [isPlaying, showControls, scheduleHideControls]);
+  }, [isPlaying, showControls, scheduleHideControls, togglePlayback]);
 
   const closeProject = useAppStore(state => state.closeProject);
   const upsertProject = useAppStore(state => state.upsertProject);
@@ -409,6 +409,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     syncTimelineToPosition(currentTimeMs);
   };
 
+  const handleVideoEnd = () => {
+    setIsPlaying(false);
+    setPlaybackPosition(0);
+    videoRef.current?.seek(0);
+  };
+
   const handleTimelineScroll = (offsetX: number) => {
     if (!project || !isScrubbing.current) {
       return;
@@ -422,12 +428,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const togglePlayback = () => {
+  const togglePlayback = useCallback(() => {
     if (!isPlaying) {
       videoRef.current?.seek(playbackPosition / 1000);
     }
     setIsPlaying(current => !current);
-  };
+  }, [isPlaying, playbackPosition]);
 
   const flashSkip = (label: string) => {
     setSkipFlash(label);
@@ -580,6 +586,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       <GestureDetector gesture={videoDismissGesture}>
         <View style={[styles.videoZone, { height: zoneHeights.video }]}>
           <Video
+            onEnd={handleVideoEnd}
             onLoad={handleVideoLoad}
             onProgress={event => handleVideoProgress(event.currentTime * 1000)}
             paused={!isPlaying}
