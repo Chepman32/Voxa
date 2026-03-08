@@ -1,5 +1,8 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import {
+  Keyboard,
+  StyleSheet,
+} from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
 jest.mock('../src/components/common/AtmosphereCanvas', () => ({
@@ -11,7 +14,6 @@ jest.mock('../src/components/editor/ExportSheet', () => ({
 }));
 
 jest.mock('@react-native-community/blur', () => {
-  const React = require('react');
   const { View } = require('react-native');
 
   return {
@@ -31,20 +33,19 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 jest.mock('react-native-vector-icons/Feather', () => {
-  const React = require('react');
   const { Text } = require('react-native');
 
   return ({ name }: { name: string }) => <Text>{name}</Text>;
 });
 
 jest.mock('react-native-video', () => {
-  const React = require('react');
+  const ReactModule = require('react');
   const { View } = require('react-native');
 
   return {
     __esModule: true,
-    default: React.forwardRef((props: object, ref: React.Ref<any>) => {
-      React.useImperativeHandle(ref, () => ({
+    default: ReactModule.forwardRef((props: object, ref: React.Ref<any>) => {
+      ReactModule.useImperativeHandle(ref, () => ({
         seek: () => undefined,
       }));
 
@@ -54,8 +55,6 @@ jest.mock('react-native-video', () => {
 });
 
 jest.mock('react-native-gesture-handler', () => {
-  const React = require('react');
-
   const createGesture = () => {
     const gesture = {
       activeOffsetY: () => gesture,
@@ -81,7 +80,7 @@ jest.mock('react-native-gesture-handler', () => {
 });
 
 jest.mock('react-native-reanimated', () => {
-  const React = require('react');
+  const ReactModule = require('react');
   const { View } = require('react-native');
 
   const animation = {
@@ -90,7 +89,7 @@ jest.mock('react-native-reanimated', () => {
     springify: () => animation,
   };
 
-  const AnimatedView = React.forwardRef(
+  const AnimatedView = ReactModule.forwardRef(
     (
       {
         children,
@@ -117,6 +116,7 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: (updater: () => object) => updater(),
     useSharedValue: <T,>(value: T) => ({ value }),
     withSpring: <T,>(value: T) => value,
+    withTiming: <T,>(value: T) => value,
   };
 });
 
@@ -139,7 +139,12 @@ jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
 
-import { ACTIVE_SUBTITLE_SECTION_ID, EditorScreen } from '../src/components/editor/EditorScreen';
+import {
+  ACTIVE_SUBTITLE_HEADER_ID,
+  ACTIVE_SUBTITLE_SECTION_ID,
+  EditorScreen,
+  TIMELINE_SECTION_ID,
+} from '../src/components/editor/EditorScreen';
 import { calculateEditorVerticalLayout } from '../src/components/editor/layout';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
 import type { Project } from '../src/types/models';
@@ -163,8 +168,9 @@ describe('editor layout budgeting', () => {
     expect(layout.textHeight).toBeGreaterThanOrEqual(180);
     expect(layout.videoHeight).toBeGreaterThanOrEqual(280);
     expect(layout.videoHeight).toBeLessThanOrEqual(340);
-    expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(104);
-    expect(layout.timelineTrackHeight).toBeLessThanOrEqual(136);
+    expect(layout.timelineControlsHeight).toBe(120);
+    expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(56);
+    expect(layout.timelineTrackHeight).toBeLessThanOrEqual(72);
     expect(usedHeight).toBeLessThanOrEqual(layout.contentHeight);
   });
 
@@ -185,10 +191,39 @@ describe('editor layout budgeting', () => {
 
       expect(layout.textHeight).toBeGreaterThanOrEqual(180);
       expect(layout.videoHeight).toBeGreaterThanOrEqual(224);
-      expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(92);
+      expect(layout.timelineControlsHeight).toBe(120);
+      expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(48);
       expect(usedHeight).toBeLessThanOrEqual(layout.contentHeight);
     },
   );
+
+  it.each(screenHeights)('expands the text editor when the timeline is collapsed on a %ipx screen', screenHeight => {
+    const expandedLayout = calculateEditorVerticalLayout({
+      screenHeight,
+      topInset: 44,
+      bottomInset: 34,
+      bannerHeight: 0,
+      timelineCollapsed: false,
+    });
+    const collapsedLayout = calculateEditorVerticalLayout({
+      screenHeight,
+      topInset: 44,
+      bottomInset: 34,
+      bannerHeight: 0,
+      timelineCollapsed: true,
+    });
+    const usedHeight =
+      collapsedLayout.videoHeight +
+      collapsedLayout.timelineHeight +
+      collapsedLayout.textHeight +
+      collapsedLayout.stackGap * 2;
+
+    expect(collapsedLayout.timelineTrackHeight).toBe(0);
+    expect(collapsedLayout.timelineControlsHeight).toBe(0);
+    expect(collapsedLayout.timelineHeight).toBe(0);
+    expect(collapsedLayout.textHeight).toBeGreaterThan(expandedLayout.textHeight);
+    expect(usedHeight).toBeLessThanOrEqual(collapsedLayout.contentHeight);
+  });
 });
 
 describe('EditorScreen', () => {
@@ -243,10 +278,107 @@ describe('EditorScreen', () => {
     });
 
     expect(renderer!.root.findByProps({ children: 'Active Subtitle' })).toBeTruthy();
+    expect(renderer!.root.findAllByProps({ children: 'Export' })).toHaveLength(0);
 
     const section = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_SECTION_ID });
     const style = StyleSheet.flatten(section.props.style);
 
     expect(style.height).toBeCloseTo(expectedLayout.textHeight, 5);
+  });
+
+  it('collapses the timeline and expands the active subtitle section when the keyboard is visible', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    const keyboardListeners: Record<string, Array<() => void>> = {};
+    const dismissKeyboard = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => undefined);
+    jest.spyOn(Keyboard, 'addListener').mockImplementation((eventName, listener) => {
+      keyboardListeners[eventName] ??= [];
+      keyboardListeners[eventName].push(listener as () => void);
+
+      return {
+        remove: jest.fn(),
+      };
+    });
+
+    const expandedLayout = calculateEditorVerticalLayout({
+      screenHeight: 844,
+      topInset: 44,
+      bottomInset: 34,
+      bannerHeight: 0,
+      timelineCollapsed: false,
+    });
+    const collapsedLayout = calculateEditorVerticalLayout({
+      screenHeight: 844,
+      topInset: 44,
+      bottomInset: 34,
+      bannerHeight: 0,
+      timelineCollapsed: true,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    let timelineSection = renderer!.root.findByProps({ testID: TIMELINE_SECTION_ID });
+    let timelineStyle = StyleSheet.flatten(timelineSection.props.style);
+    let activeSubtitleSection = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_SECTION_ID,
+    });
+    let textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
+
+    expect(timelineSection.props.pointerEvents).toBe('auto');
+    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineHeight, 5);
+    expect(textStyle.height).toBeCloseTo(expandedLayout.textHeight, 5);
+
+    await ReactTestRenderer.act(() => {
+      keyboardListeners.keyboardWillShow?.forEach(listener => {
+        listener();
+      });
+    });
+
+    timelineSection = renderer!.root.findByProps({ testID: TIMELINE_SECTION_ID });
+    timelineStyle = StyleSheet.flatten(timelineSection.props.style);
+    activeSubtitleSection = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_SECTION_ID,
+    });
+    textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
+
+    expect(timelineSection.props.pointerEvents).toBe('none');
+    expect(timelineStyle.height).toBe(0);
+    expect(timelineStyle.opacity).toBe(0);
+    expect(textStyle.height).toBeCloseTo(collapsedLayout.textHeight, 5);
+
+    await ReactTestRenderer.act(() => {
+      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+    });
+
+    expect(dismissKeyboard).toHaveBeenCalled();
+
+    await ReactTestRenderer.act(() => {
+      keyboardListeners.keyboardWillHide?.forEach(listener => {
+        listener();
+      });
+    });
+
+    timelineSection = renderer!.root.findByProps({ testID: TIMELINE_SECTION_ID });
+    timelineStyle = StyleSheet.flatten(timelineSection.props.style);
+    activeSubtitleSection = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_SECTION_ID,
+    });
+    textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
+
+    expect(timelineSection.props.pointerEvents).toBe('auto');
+    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineHeight, 5);
+    expect(timelineStyle.opacity).toBe(1);
+    expect(textStyle.height).toBeCloseTo(expandedLayout.textHeight, 5);
   });
 });

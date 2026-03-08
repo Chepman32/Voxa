@@ -7,14 +7,17 @@ import React, {
   useState,
 } from 'react';
 import {
+  Keyboard,
   Pressable,
   ScrollView,
+  StyleProp,
   StyleSheet,
   Switch,
   Text,
   TextInput,
   useWindowDimensions,
   View,
+  ViewStyle,
 } from 'react-native';
 import {
   useAtom,
@@ -28,7 +31,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
@@ -36,16 +39,13 @@ import Video, { type OnLoadData, type VideoRef } from 'react-native-video';
 
 import {
   applyManualSubtitleTextEdit,
-  clampSubtitleWordsToRange,
   clamp,
   formatDuration,
   getSubtitleVerticalBounds,
   getSubtitleVerticalOrigin,
   isPlaceholderSubtitle,
-  offsetSubtitleWords,
   resolveSubtitleStyleFromVerticalOrigin,
   setSubtitlePositionPreset,
-  snapSubtitleRange,
 } from '../../lib/project';
 import {
   exportProject,
@@ -71,7 +71,6 @@ import {
 } from '../../store/editor-atoms';
 import {
   palette,
-  springConfig,
   subtitleColorOptions,
   subtitleFontOptions,
   subtitlePositionOptions,
@@ -88,8 +87,11 @@ import { ExportSheet } from './ExportSheet';
 import { calculateEditorVerticalLayout } from './layout';
 
 const MAX_TIMELINE_SURFACE_WIDTH = 8192;
+const TIMELINE_COLLAPSE_DURATION_MS = 220;
 const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
 export const ACTIVE_SUBTITLE_SECTION_ID = 'active-subtitle-section';
+export const ACTIVE_SUBTITLE_HEADER_ID = 'active-subtitle-header';
+export const TIMELINE_SECTION_ID = 'timeline-section';
 
 interface EditorScreenProps {
   project: Project;
@@ -115,6 +117,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [exporting, setExporting] = useState(false);
   const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
   const [bannerHeight, setBannerHeight] = useState(0);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const subtitleCanvasPreviewTopY = useSharedValue(0);
 
   const [project, setProject] = useAtom(editorProjectAtom);
@@ -156,6 +159,28 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     return clearHideTimer;
   }, [isPlaying, scheduleHideControls, clearHideTimer]);
 
+  useEffect(() => {
+    const handleKeyboardShow = () => {
+      setKeyboardVisible(true);
+    };
+    const handleKeyboardHide = () => {
+      setKeyboardVisible(false);
+    };
+
+    const subscriptions = [
+      Keyboard.addListener('keyboardWillShow', handleKeyboardShow),
+      Keyboard.addListener('keyboardWillHide', handleKeyboardHide),
+      Keyboard.addListener('keyboardDidShow', handleKeyboardShow),
+      Keyboard.addListener('keyboardDidHide', handleKeyboardHide),
+    ];
+
+    return () => {
+      subscriptions.forEach(subscription => {
+        subscription.remove();
+      });
+    };
+  }, []);
+
   const handleVideoTap = useCallback(() => {
     if (isPlaying && !showControls) {
       setShowControls(true);
@@ -191,7 +216,20 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     topInset: insets.top,
     bottomInset,
     bannerHeight: project.importError ? Math.max(bannerHeight, 60) : 0,
+    timelineCollapsed: false,
   });
+  const collapsedEditorLayout = calculateEditorVerticalLayout({
+    screenHeight: height,
+    topInset: insets.top,
+    bottomInset,
+    bannerHeight: project.importError ? Math.max(bannerHeight, 60) : 0,
+    timelineCollapsed: true,
+  });
+  const isTimelineCollapsed = keyboardVisible;
+  const targetTimelineHeight = isTimelineCollapsed ? 0 : editorLayout.timelineHeight;
+  const targetTextZoneHeight = isTimelineCollapsed
+    ? collapsedEditorLayout.textHeight
+    : editorLayout.textHeight;
 
   const durationMs = Math.max(0, project?.duration ?? 0);
   const basePixelsPerSecond = 82 * timelineZoom;
@@ -228,14 +266,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     setPlaybackPosition(clamped);
     videoRef.current?.seek(clamped / 1000);
     syncTimelineToPosition(clamped);
-  };
-
-  const updateSubtitleSelection = (subtitleId: string) => {
-    setSelectedSubtitleId(subtitleId);
-    const subtitle = subtitles.find(item => item.id === subtitleId);
-    if (subtitle) {
-      seekTo(subtitle.startTime);
-    }
   };
 
   const updateWordHighlightEnabled = (value: boolean) => {
@@ -322,71 +352,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const moveSubtitle = (subtitleId: string, nextStart: number, nextEnd: number) => {
-    updateProjectSubtitles(current =>
-      current.map(subtitle => {
-        if (subtitle.id !== subtitleId || !project) {
-          return subtitle;
-        }
-        const snapped = snapSubtitleRange(
-          current,
-          subtitleId,
-          nextStart,
-          nextEnd,
-          project.duration,
-        );
-        const deltaMs = snapped.startTime - subtitle.startTime;
-        return {
-          ...subtitle,
-          startTime: snapped.startTime,
-          endTime: snapped.endTime,
-          words: clampSubtitleWordsToRange(
-            offsetSubtitleWords(subtitle.words, deltaMs),
-            snapped.startTime,
-            snapped.endTime,
-          ),
-          isGenerated: false,
-        };
-      }),
-    );
-  };
-
-  const trimSubtitle = (
-    subtitleId: string,
-    edge: 'start' | 'end',
-    deltaMs: number,
-  ) => {
-    updateProjectSubtitles(current =>
-      current.map(subtitle => {
-        if (subtitle.id !== subtitleId || !project) {
-          return subtitle;
-        }
-        const proposedStart =
-          edge === 'start' ? subtitle.startTime + deltaMs : subtitle.startTime;
-        const proposedEnd =
-          edge === 'end' ? subtitle.endTime + deltaMs : subtitle.endTime;
-        const snapped = snapSubtitleRange(
-          current,
-          subtitleId,
-          proposedStart,
-          proposedEnd,
-          project.duration,
-        );
-        return {
-          ...subtitle,
-          startTime: snapped.startTime,
-          endTime: snapped.endTime,
-          words: clampSubtitleWordsToRange(
-            subtitle.words,
-            snapped.startTime,
-            snapped.endTime,
-          ),
-          isGenerated: false,
-        };
-      }),
-    );
-  };
-
   const handleVideoLoad = (event: OnLoadData) => {
     if (!project) {
       return;
@@ -437,7 +402,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       videoRef.current?.seek(playbackPosition / 1000);
     }
     setIsPlaying(current => !current);
-  }, [isPlaying, playbackPosition]);
+  }, [isPlaying, playbackPosition, setIsPlaying]);
 
   const flashSkip = (label: string) => {
     setSkipFlash(label);
@@ -517,6 +482,15 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const subtitleBubbleAnimatedStyle = useAnimatedStyle(() => ({
     top: subtitleCanvasPreviewTopY.value,
   }));
+  const timelineSectionAnimatedStyle = useAnimatedStyle(() => ({
+    height: withTiming(targetTimelineHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
+    opacity: withTiming(isTimelineCollapsed ? 0 : 1, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
+  }));
+  const textZoneAnimatedStyle = useAnimatedStyle(() => ({
+    height: withTiming(targetTextZoneHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
+  }));
 
   useLayoutEffect(() => {
     subtitleCanvasPreviewTopY.value = videoSubtitleTop;
@@ -525,6 +499,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     stylePreset?.position,
     stylePreset?.positionOffsetYRatio,
     subtitleBubbleHeight,
+    subtitleCanvasPreviewTopY,
     videoSubtitleTop,
   ]);
 
@@ -696,46 +671,52 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           </View>
         </GestureDetector>
 
-        <TimelineSection
-          contentWidth={contentWidth}
-          currentFontPresetId={stylePreset.fontPresetId}
-          onScrubEnd={() => {
-            isScrubbing.current = false;
-          }}
-          onScrubStart={() => {
-            isScrubbing.current = true;
-            setIsPlaying(false);
-          }}
-          onScroll={handleTimelineScroll}
-          onSelectFont={option =>
-            setStylePreset({
-              ...stylePreset,
-              fontPresetId: option.id,
-              fontFamily: option.fontFamily,
-              fontWeight: option.fontWeight,
-              letterSpacing: option.letterSpacing,
-            })
-          }
-          onToggleWordHighlight={updateWordHighlightEnabled}
-          pixelsPerMs={pixelsPerMs}
-          playhead={playbackPosition}
-          timelineRef={timelineRef}
-          timelineTrackHeight={editorLayout.timelineTrackHeight}
-          timelineZoom={timelineZoom}
-          setTimelineZoom={setTimelineZoom}
-          waveform={project.waveform}
-          width={width}
-          wordHighlightAvailable={wordHighlightAvailable}
-          wordHighlightEnabled={stylePreset.wordHighlightEnabled}
-        />
+        <Animated.View
+          pointerEvents={isTimelineCollapsed ? 'none' : 'auto'}
+          style={[styles.timelineSectionShell, timelineSectionAnimatedStyle]}
+          testID={TIMELINE_SECTION_ID}>
+          <TimelineSection
+            contentWidth={contentWidth}
+            currentFontPresetId={stylePreset.fontPresetId}
+            onScrubEnd={() => {
+              isScrubbing.current = false;
+            }}
+            onScrubStart={() => {
+              isScrubbing.current = true;
+              setIsPlaying(false);
+            }}
+            onScroll={handleTimelineScroll}
+            onSelectFont={option =>
+              setStylePreset({
+                ...stylePreset,
+                fontPresetId: option.id,
+                fontFamily: option.fontFamily,
+                fontWeight: option.fontWeight,
+                letterSpacing: option.letterSpacing,
+              })
+            }
+            onToggleWordHighlight={updateWordHighlightEnabled}
+            pixelsPerMs={pixelsPerMs}
+            playhead={playbackPosition}
+            timelineRef={timelineRef}
+            timelineTrackHeight={editorLayout.timelineTrackHeight}
+            timelineZoom={timelineZoom}
+            setTimelineZoom={setTimelineZoom}
+            waveform={project.waveform}
+            width={width}
+            wordHighlightAvailable={wordHighlightAvailable}
+            wordHighlightEnabled={stylePreset.wordHighlightEnabled}
+          />
+        </Animated.View>
 
         <TextEditorSection
+          containerAnimatedStyle={textZoneAnimatedStyle}
           currentStyle={stylePreset}
           isEditing={isTextEditing}
           isStylePanelOpen={isStylePanelOpen}
+          keyboardVisible={keyboardVisible}
           onChangeStyle={setStylePreset}
           onNavigate={navigateAdjacentSubtitle}
-          onOpenExport={openExportSheet}
           onSelectText={() => {
             setIsTextEditing(true);
             if (selectedSubtitle) {
@@ -747,7 +728,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           onUpdatePositionPreset={applyPositionPreset}
           onUpdateText={updateSelectedSubtitleText}
           selectedSubtitle={selectedSubtitle}
-          textZoneHeight={editorLayout.textHeight}
         />
       </View>
 
@@ -839,9 +819,15 @@ function TimelineSection({
                 <View pointerEvents="none" style={styles.waveformLayer}>
                   {waveform.map((value, index) => {
                     const barWidth = contentWidth / Math.max(1, waveform.length);
-                    const amplitude = Math.max(12, value * (timelineTrackHeight * 0.5));
+                    const minAmplitude = timelineTrackHeight * 0.52;
+                    const maxAmplitude = timelineTrackHeight * 0.92;
+                    const amplitude = clamp(
+                      value * timelineTrackHeight * 1.05,
+                      minAmplitude,
+                      maxAmplitude,
+                    );
                     const x = index * barWidth;
-                    const y = timelineTrackHeight * 0.5 - amplitude / 2;
+                    const y = (timelineTrackHeight - amplitude) / 2;
                     const barColor =
                       Math.abs((x / pixelsPerMs) - playhead) < 1300
                         ? 'rgba(0, 240, 255, 0.5)'
@@ -933,11 +919,12 @@ function TimelineSection({
 }
 
 function TextEditorSection({
+  containerAnimatedStyle,
   selectedSubtitle,
   currentStyle,
   isEditing,
   isStylePanelOpen,
-  textZoneHeight,
+  keyboardVisible,
   onSelectText,
   onSetEditing,
   onUpdateText,
@@ -945,13 +932,13 @@ function TextEditorSection({
   onNavigate,
   onToggleStylePanel,
   onChangeStyle,
-  onOpenExport,
 }: {
+  containerAnimatedStyle?: StyleProp<ViewStyle>;
   selectedSubtitle: SubtitleBlock | null;
   currentStyle: Project['globalStyle'];
   isEditing: boolean;
   isStylePanelOpen: boolean;
-  textZoneHeight: number;
+  keyboardVisible: boolean;
   onSelectText: () => void;
   onSetEditing: (value: boolean) => void;
   onUpdateText: (text: string) => void;
@@ -959,7 +946,6 @@ function TextEditorSection({
   onNavigate: (direction: -1 | 1) => void;
   onToggleStylePanel: (value: boolean) => void;
   onChangeStyle: (style: Project['globalStyle']) => void;
-  onOpenExport: () => void;
 }) {
   const [draftText, setDraftText] = useState(selectedSubtitle?.text ?? '');
 
@@ -969,27 +955,38 @@ function TextEditorSection({
 
   const swipeGesture = Gesture.Pan().onEnd(event => {
     if (Math.abs(event.translationX) > 58 && isEditing) {
-      onUpdateText(draftText);
-      onNavigate(event.translationX < 0 ? 1 : -1);
+      runOnJS(onUpdateText)(draftText);
+      runOnJS(onNavigate)(event.translationX < 0 ? 1 : -1);
     }
     if (event.translationY < -48) {
-      onToggleStylePanel(true);
+      runOnJS(onToggleStylePanel)(true);
     }
     if (event.translationY > 48) {
-      onToggleStylePanel(false);
+      runOnJS(onToggleStylePanel)(false);
     }
   });
+  const handlePanelPress = () => {
+    if (keyboardVisible) {
+      Keyboard.dismiss();
+      return;
+    }
+
+    onSelectText();
+  };
 
   return (
     <GestureDetector gesture={swipeGesture}>
-      <View
+      <Animated.View
         testID={ACTIVE_SUBTITLE_SECTION_ID}
         style={[
           styles.textZone,
-          { height: textZoneHeight },
+          containerAnimatedStyle,
         ]}>
         <GlassPanel style={styles.textPanel}>
-          <Pressable onPress={onSelectText} style={styles.textPanelHeader}>
+          <Pressable
+            onPress={handlePanelPress}
+            style={styles.textPanelHeader}
+            testID={ACTIVE_SUBTITLE_HEADER_ID}>
             <View>
               <Text style={styles.textLabel}>Active Subtitle</Text>
               <Text style={styles.textTiming}>
@@ -998,14 +995,11 @@ function TextEditorSection({
                   : 'No subtitle selected'}
               </Text>
             </View>
-            <Pressable onPress={onOpenExport} style={styles.exportChip}>
-              <Feather color={palette.cyan} name="arrow-up-circle" size={16} />
-              <Text style={styles.exportChipText}>Export</Text>
-            </Pressable>
           </Pressable>
           <ScrollView
             bounces={isStylePanelOpen}
-            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps={keyboardVisible ? 'never' : 'handled'}
             scrollEnabled={isStylePanelOpen}
             showsVerticalScrollIndicator={false}
             style={styles.textPanelBody}
@@ -1116,7 +1110,7 @@ function TextEditorSection({
             ) : null}
           </ScrollView>
         </GlassPanel>
-      </View>
+      </Animated.View>
     </GestureDetector>
   );
 }
@@ -1279,6 +1273,9 @@ const styles = StyleSheet.create({
   timelineZone: {
     marginTop: 0,
   },
+  timelineSectionShell: {
+    overflow: 'hidden',
+  },
   timelineViewport: {
     marginHorizontal: 12,
     borderRadius: 32,
@@ -1395,20 +1392,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     color: palette.textPrimary,
     fontSize: 15,
-    fontWeight: '700',
-  },
-  exportChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(0, 240, 255, 0.12)',
-  },
-  exportChipText: {
-    color: palette.cyan,
-    fontSize: 13,
     fontWeight: '700',
   },
   textPanelBody: {

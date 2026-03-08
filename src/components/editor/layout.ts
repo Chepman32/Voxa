@@ -5,6 +5,7 @@ interface EditorVerticalLayoutInput {
   topInset: number;
   bottomInset: number;
   bannerHeight?: number;
+  timelineCollapsed?: boolean;
 }
 
 export interface EditorVerticalLayout {
@@ -23,14 +24,14 @@ const TOP_BAR_TOP_OFFSET = 2;
 const CONTENT_TOP_PADDING = 8;
 const CONTENT_STACK_GAP = 10;
 const BANNER_SPACING = 12;
-const TIMELINE_CONTROLS_HEIGHT = 92;
+const TIMELINE_CONTROLS_HEIGHT = 120;
 const TEXT_MIN_HEIGHT = 180;
 const VIDEO_TARGET_MIN_HEIGHT = 280;
 const VIDEO_TARGET_MAX_HEIGHT = 340;
 const VIDEO_COMPACT_MIN_HEIGHT = 224;
-const TRACK_TARGET_MIN_HEIGHT = 104;
-const TRACK_TARGET_MAX_HEIGHT = 136;
-const TRACK_COMPACT_MIN_HEIGHT = 92;
+const TRACK_TARGET_MIN_HEIGHT = 56;
+const TRACK_TARGET_MAX_HEIGHT = 72;
+const TRACK_COMPACT_MIN_HEIGHT = 48;
 const BOTTOM_HANDLE_CLEARANCE = 10;
 
 export function calculateEditorVerticalLayout({
@@ -38,6 +39,7 @@ export function calculateEditorVerticalLayout({
   topInset,
   bottomInset,
   bannerHeight = 0,
+  timelineCollapsed = false,
 }: EditorVerticalLayoutInput): EditorVerticalLayout {
   const contentPaddingBottom = bottomInset + BOTTOM_HANDLE_CLEARANCE;
   const reservedHeight =
@@ -50,6 +52,7 @@ export function calculateEditorVerticalLayout({
 
   const contentHeight = Math.max(0, screenHeight - reservedHeight);
 
+  const timelineControlsHeight = timelineCollapsed ? 0 : TIMELINE_CONTROLS_HEIGHT;
   let videoHeight = clamp(
     contentHeight * 0.42,
     VIDEO_TARGET_MIN_HEIGHT,
@@ -102,7 +105,11 @@ export function calculateEditorVerticalLayout({
     shortage -= compactTrackReduction;
   }
 
-  const timelineHeight = timelineTrackHeight + TIMELINE_CONTROLS_HEIGHT;
+  if (timelineCollapsed) {
+    timelineTrackHeight = 0;
+  }
+
+  const timelineHeight = timelineTrackHeight + timelineControlsHeight;
   const textHeight = Math.max(
     TEXT_MIN_HEIGHT,
     contentHeight - videoHeight - timelineHeight - CONTENT_STACK_GAP * 2,
@@ -114,7 +121,7 @@ export function calculateEditorVerticalLayout({
     stackGap: CONTENT_STACK_GAP,
     videoHeight,
     timelineTrackHeight,
-    timelineControlsHeight: TIMELINE_CONTROLS_HEIGHT,
+    timelineControlsHeight,
     timelineHeight,
     textHeight,
   };
