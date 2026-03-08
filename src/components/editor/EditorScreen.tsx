@@ -672,7 +672,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
       <TimelineSection
         contentWidth={contentWidth}
-        onMoveSubtitle={moveSubtitle}
         onScrubEnd={() => {
           isScrubbing.current = false;
         }}
@@ -681,14 +680,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           setIsPlaying(false);
         }}
         onScroll={handleTimelineScroll}
-        onSelectSubtitle={updateSubtitleSelection}
-        onTrimSubtitle={trimSubtitle}
         pixelsPerMs={pixelsPerMs}
         playhead={playbackPosition}
         timelineZoom={timelineZoom}
-        selectedSubtitleId={selectedSubtitleId}
         setTimelineZoom={setTimelineZoom}
-        subtitles={subtitles}
         timelineRef={timelineRef}
         waveform={project.waveform}
         wordHighlightAvailable={wordHighlightAvailable}
@@ -757,14 +752,9 @@ function TimelineSection({
   pixelsPerMs,
   contentWidth,
   waveform,
-  subtitles,
   wordHighlightEnabled,
   wordHighlightAvailable,
-  selectedSubtitleId,
   currentFontPresetId,
-  onSelectSubtitle,
-  onMoveSubtitle,
-  onTrimSubtitle,
   onToggleWordHighlight,
   onSelectFont,
   onScroll,
@@ -780,14 +770,9 @@ function TimelineSection({
   pixelsPerMs: number;
   contentWidth: number;
   waveform: number[];
-  subtitles: SubtitleBlock[];
   wordHighlightEnabled: boolean;
   wordHighlightAvailable: boolean;
-  selectedSubtitleId: string | null;
   currentFontPresetId: string;
-  onSelectSubtitle: (subtitleId: string) => void;
-  onMoveSubtitle: (subtitleId: string, nextStart: number, nextEnd: number) => void;
-  onTrimSubtitle: (subtitleId: string, edge: 'start' | 'end', deltaMs: number) => void;
   onToggleWordHighlight: (value: boolean) => void;
   onSelectFont: (option: (typeof subtitleFontOptions)[number]) => void;
   onScroll: (offsetX: number) => void;
@@ -853,19 +838,8 @@ function TimelineSection({
                 })}
               </View>
 
-              <View style={styles.blocksLayer}>
-                {subtitles.map(subtitle => (
-                  <TimelineSubtitleBlock
-                    key={subtitle.id}
-                    block={subtitle}
-                    isSelected={selectedSubtitleId === subtitle.id}
-                    onMove={onMoveSubtitle}
-                    onSelect={onSelectSubtitle}
-                    onTrim={onTrimSubtitle}
-                    pixelsPerMs={pixelsPerMs}
-                  />
-                ))}
-              </View>
+
+
             </View>
           </ScrollView>
 
@@ -930,108 +904,6 @@ function TimelineSection({
         </View>
       </GestureDetector>
     </View>
-  );
-}
-
-function TimelineSubtitleBlock({
-  block,
-  pixelsPerMs,
-  isSelected,
-  onSelect,
-  onMove,
-  onTrim,
-}: {
-  block: SubtitleBlock;
-  pixelsPerMs: number;
-  isSelected: boolean;
-  onSelect: (subtitleId: string) => void;
-  onMove: (subtitleId: string, nextStart: number, nextEnd: number) => void;
-  onTrim: (subtitleId: string, edge: 'start' | 'end', deltaMs: number) => void;
-}) {
-  const translateX = useSharedValue(0);
-  const [trimPreview, setTrimPreview] = useState({ left: 0, right: 0 });
-  const baseWidth = Math.max(72, (block.endTime - block.startTime) * pixelsPerMs);
-
-  const bodyGesture = Gesture.Pan()
-    .activateAfterLongPress(120)
-    .onBegin(() => {
-      runOnJS(onSelect)(block.id);
-      runOnJS(haptics.medium)();
-    })
-    .onUpdate(event => {
-      translateX.value = event.translationX;
-    })
-    .onEnd(event => {
-      translateX.value = withSpring(0, springConfig);
-      runOnJS(onMove)(
-        block.id,
-        block.startTime + event.translationX / pixelsPerMs,
-        block.endTime + event.translationX / pixelsPerMs,
-      );
-    });
-
-  const tapGesture = Gesture.Tap().onEnd((_event, success) => {
-    if (!success) {
-      return;
-    }
-    runOnJS(onSelect)(block.id);
-  });
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  const leftHandleGesture = Gesture.Pan()
-    .onUpdate(event => {
-      runOnJS(setTrimPreview)({ left: event.translationX, right: 0 });
-    })
-    .onEnd(event => {
-      runOnJS(setTrimPreview)({ left: 0, right: 0 });
-      runOnJS(onTrim)(block.id, 'start', event.translationX / pixelsPerMs);
-    });
-
-  const rightHandleGesture = Gesture.Pan()
-    .onUpdate(event => {
-      runOnJS(setTrimPreview)({ left: 0, right: event.translationX });
-    })
-    .onEnd(event => {
-      runOnJS(setTrimPreview)({ left: 0, right: 0 });
-      runOnJS(onTrim)(block.id, 'end', event.translationX / pixelsPerMs);
-    });
-
-  const visualLeft = block.startTime * pixelsPerMs + trimPreview.left;
-  const visualWidth = Math.max(72, baseWidth + trimPreview.right - trimPreview.left);
-
-  return (
-    <Animated.View
-      style={[
-        styles.subtitleBlockWrap,
-        {
-          left: visualLeft,
-          width: visualWidth,
-        },
-        animatedStyle,
-      ]}>
-      <GestureDetector gesture={Gesture.Simultaneous(tapGesture, bodyGesture)}>
-        <Animated.View
-          style={[
-            styles.subtitleBlock,
-            isSelected ? styles.subtitleBlockSelected : undefined,
-          ]}
-        />
-      </GestureDetector>
-
-      {isSelected ? (
-        <>
-          <GestureDetector gesture={leftHandleGesture}>
-            <View style={[styles.trimHandle, styles.trimHandleLeft]} />
-          </GestureDetector>
-          <GestureDetector gesture={rightHandleGesture}>
-            <View style={[styles.trimHandle, styles.trimHandleRight]} />
-          </GestureDetector>
-        </>
-      ) : null}
-    </Animated.View>
   );
 }
 
@@ -1388,10 +1260,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 999,
   },
-  blocksLayer: {
-    ...StyleSheet.absoluteFillObject,
-    paddingTop: 46,
-  },
   playhead: {
     ...StyleSheet.absoluteFillObject,
     left: '50%',
@@ -1466,41 +1334,6 @@ const styles = StyleSheet.create({
   },
   fontChipLabelActive: {
     color: palette.textPrimary,
-  },
-  subtitleBlockWrap: {
-    position: 'absolute',
-    top: 52,
-    height: 56,
-  },
-  subtitleBlock: {
-    flex: 1,
-    borderRadius: 18,
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-    backgroundColor: 'rgba(24, 28, 38, 0.9)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  subtitleBlockSelected: {
-    borderColor: 'rgba(0, 240, 255, 0.42)',
-    shadowColor: palette.cyan,
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  trimHandle: {
-    position: 'absolute',
-    top: 8,
-    bottom: 8,
-    width: 10,
-    borderRadius: 999,
-    backgroundColor: 'rgba(0, 240, 255, 0.8)',
-  },
-  trimHandleLeft: {
-    left: -4,
-  },
-  trimHandleRight: {
-    right: -4,
   },
   textZone: {
     marginHorizontal: 12,
