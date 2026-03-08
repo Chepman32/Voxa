@@ -975,11 +975,8 @@ function TimelineSubtitleBlock({
           style={[
             styles.subtitleBlock,
             isSelected ? styles.subtitleBlockSelected : undefined,
-          ]}>
-          <Text numberOfLines={1} style={styles.subtitleBlockText}>
-            {block.text}
-          </Text>
-        </Animated.View>
+          ]}
+        />
       </GestureDetector>
 
       {isSelected ? (
@@ -1424,11 +1421,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
-  },
-  subtitleBlockText: {
-    color: palette.textPrimary,
-    fontSize: 14,
-    fontWeight: '700',
   },
   trimHandle: {
     position: 'absolute',
