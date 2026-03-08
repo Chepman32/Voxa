@@ -43,6 +43,8 @@ import {
   formatDuration,
   getSubtitleVerticalBounds,
   getSubtitleVerticalOrigin,
+  hasTimedSubtitleWords,
+  isSameEditableSubtitleText,
   isPlaceholderSubtitle,
   resolveSubtitleStyleFromVerticalOrigin,
   setSubtitlePositionPreset,
@@ -92,6 +94,44 @@ const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
 export const ACTIVE_SUBTITLE_SECTION_ID = 'active-subtitle-section';
 export const ACTIVE_SUBTITLE_HEADER_ID = 'active-subtitle-header';
 export const TIMELINE_SECTION_ID = 'timeline-section';
+export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
+
+export function resolveSubtitlePreviewTop({
+  isDragging,
+  dragStartTop,
+  liveAnchorTop,
+  translationY,
+  minTop,
+  maxTop,
+}: {
+  isDragging: boolean;
+  dragStartTop: number;
+  liveAnchorTop: number;
+  translationY: number;
+  minTop: number;
+  maxTop: number;
+}) {
+  'worklet';
+
+  const baseTop = isDragging ? dragStartTop : liveAnchorTop;
+  return Math.min(Math.max(baseTop + translationY, minTop), maxTop);
+}
+
+export function resolveOverlaySubtitle({
+  isDragging,
+  draggedSubtitleSnapshot,
+  liveSubtitle,
+}: {
+  isDragging: boolean;
+  draggedSubtitleSnapshot: SubtitleBlock | null;
+  liveSubtitle: SubtitleBlock | null;
+}) {
+  if (isDragging && draggedSubtitleSnapshot) {
+    return draggedSubtitleSnapshot;
+  }
+
+  return liveSubtitle;
+}
 
 interface EditorScreenProps {
   project: Project;
@@ -118,7 +158,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
   const [bannerHeight, setBannerHeight] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [draggedSubtitleSnapshot, setDraggedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
+  const isSubtitleDraggingRef = useRef(false);
   const subtitleCanvasPreviewTopY = useSharedValue(0);
+  const isSubtitleDragging = useSharedValue(false);
+  const dragStartTop = useSharedValue(0);
 
   const [project, setProject] = useAtom(editorProjectAtom);
   const [playbackPosition, setPlaybackPosition] = useAtom(playbackPositionAtom);
@@ -244,11 +288,16 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
   const activeDisplaySubtitle =
     isTextEditing ? selectedSubtitle ?? activeSubtitle : activeSubtitle;
-  const displaySubtitle = isPlaceholderSubtitle(activeDisplaySubtitle)
+  const liveDisplaySubtitle = isPlaceholderSubtitle(activeDisplaySubtitle)
     ? null
     : activeDisplaySubtitle;
+  const displaySubtitle = resolveOverlaySubtitle({
+    isDragging: isSubtitleDraggingRef.current,
+    draggedSubtitleSnapshot,
+    liveSubtitle: liveDisplaySubtitle,
+  });
   const wordHighlightAvailable = subtitles.some(
-    subtitle => !isPlaceholderSubtitle(subtitle) && (subtitle.words?.length ?? 0) > 0,
+    subtitle => !isPlaceholderSubtitle(subtitle) && hasTimedSubtitleWords(subtitle),
   );
 
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
@@ -308,7 +357,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   };
 
   const updateSelectedSubtitleText = (text: string) => {
-    if (!selectedSubtitleId) {
+    if (!selectedSubtitleId || !selectedSubtitle) {
+      return;
+    }
+    if (isSameEditableSubtitleText(selectedSubtitle.text, text)) {
       return;
     }
     updateProjectSubtitles(current =>
@@ -327,6 +379,16 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         : current,
     );
   };
+
+  const beginSubtitleDragSession = useCallback((subtitle: SubtitleBlock | null) => {
+    isSubtitleDraggingRef.current = true;
+    setDraggedSubtitleSnapshot(subtitle);
+  }, []);
+
+  const finishSubtitleDragSession = useCallback(() => {
+    isSubtitleDraggingRef.current = false;
+    setDraggedSubtitleSnapshot(null);
+  }, []);
 
   const navigateAdjacentSubtitle = (direction: -1 | 1) => {
     if (!selectedSubtitle) {
@@ -478,6 +540,13 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         effectiveSubtitleBubbleHeight,
       )
     : 0;
+  const overlayStylePreset =
+    displaySubtitle && hasTimedSubtitleWords(displaySubtitle)
+      ? stylePreset
+      : {
+          ...stylePreset,
+          wordHighlightEnabled: false,
+        };
 
   const subtitleBubbleAnimatedStyle = useAnimatedStyle(() => ({
     top: subtitleCanvasPreviewTopY.value,
@@ -493,6 +562,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }));
 
   useLayoutEffect(() => {
+    if (isSubtitleDraggingRef.current) {
+      return;
+    }
     subtitleCanvasPreviewTopY.value = videoSubtitleTop;
   }, [
     displaySubtitle?.id,
@@ -507,23 +579,38 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     .activeOffsetY([-4, 4])
     .failOffsetX([-28, 28])
     .onBegin(() => {
-      subtitleCanvasPreviewTopY.value = videoSubtitleTop;
+      isSubtitleDragging.value = true;
+      dragStartTop.value = subtitleCanvasPreviewTopY.value || videoSubtitleTop;
+      subtitleCanvasPreviewTopY.value = dragStartTop.value;
+      runOnJS(beginSubtitleDragSession)(displaySubtitle);
       runOnJS(haptics.light)();
     })
     .onUpdate(event => {
-      const nextTop = Math.min(
-        Math.max(videoSubtitleTop + event.translationY, videoSubtitleBounds.minTop),
-        videoSubtitleBounds.maxTop,
-      );
+      const nextTop = resolveSubtitlePreviewTop({
+        isDragging: isSubtitleDragging.value,
+        dragStartTop: dragStartTop.value,
+        liveAnchorTop: videoSubtitleTop,
+        translationY: event.translationY,
+        minTop: videoSubtitleBounds.minTop,
+        maxTop: videoSubtitleBounds.maxTop,
+      });
       subtitleCanvasPreviewTopY.value = nextTop;
     })
     .onEnd(event => {
-      const nextTop = Math.min(
-        Math.max(videoSubtitleTop + event.translationY, videoSubtitleBounds.minTop),
-        videoSubtitleBounds.maxTop,
-      );
+      const nextTop = resolveSubtitlePreviewTop({
+        isDragging: isSubtitleDragging.value,
+        dragStartTop: dragStartTop.value,
+        liveAnchorTop: videoSubtitleTop,
+        translationY: event.translationY,
+        minTop: videoSubtitleBounds.minTop,
+        maxTop: videoSubtitleBounds.maxTop,
+      });
       subtitleCanvasPreviewTopY.value = nextTop;
       runOnJS(commitSubtitleVerticalPosition)(nextTop);
+    })
+    .onFinalize(() => {
+      isSubtitleDragging.value = false;
+      runOnJS(finishSubtitleDragSession)();
     });
 
   const subtitleTapGesture = Gesture.Tap().onEnd((_event, success) => {
@@ -638,17 +725,17 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
               <View pointerEvents="box-none" style={styles.overlaySubtitleWrap}>
                 <GestureDetector gesture={Gesture.Race(subtitleDragGesture, subtitleTapGesture)}>
                   <Animated.View
-                    onLayout={event => {
-                      const nextHeight = event.nativeEvent.layout.height;
-                      if (nextHeight !== subtitleBubbleHeight) {
-                        setSubtitleBubbleHeight(nextHeight);
-                      }
-                    }}
                     style={[
                       styles.overlaySubtitleBubble,
                       subtitleBubbleAnimatedStyle,
                     ]}>
                     <HighlightedSubtitleText
+                      onLayout={event => {
+                        const nextHeight = event.nativeEvent.layout.height;
+                        if (Math.abs(nextHeight - subtitleBubbleHeight) > 1) {
+                          setSubtitleBubbleHeight(nextHeight);
+                        }
+                      }}
                       playheadPosition={playbackPosition}
                       style={[
                         styles.overlaySubtitleText,
@@ -661,8 +748,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                           fontSize: stylePreset.fontSize,
                         },
                       ]}
-                      stylePreset={stylePreset}
+                      stylePreset={overlayStylePreset}
                       subtitle={displaySubtitle}
+                      wordTestIDPrefix={OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}
                     />
                   </Animated.View>
                 </GestureDetector>
@@ -953,9 +1041,19 @@ function TextEditorSection({
     setDraftText(selectedSubtitle?.text ?? '');
   }, [selectedSubtitle?.id, selectedSubtitle?.text]);
 
+  const commitDraftTextIfChanged = useCallback(() => {
+    if (!selectedSubtitle) {
+      return;
+    }
+    if (isSameEditableSubtitleText(selectedSubtitle.text, draftText)) {
+      return;
+    }
+    onUpdateText(draftText);
+  }, [draftText, onUpdateText, selectedSubtitle]);
+
   const swipeGesture = Gesture.Pan().onEnd(event => {
     if (Math.abs(event.translationX) > 58 && isEditing) {
-      runOnJS(onUpdateText)(draftText);
+      runOnJS(commitDraftTextIfChanged)();
       runOnJS(onNavigate)(event.translationX < 0 ? 1 : -1);
     }
     if (event.translationY < -48) {
@@ -1011,7 +1109,7 @@ function TextEditorSection({
                   key={selectedSubtitle.id}
                   multiline
                   onBlur={() => {
-                    onUpdateText(draftText);
+                    commitDraftTextIfChanged();
                     onSetEditing(false);
                   }}
                   onChangeText={text => {

@@ -185,6 +185,25 @@ describe('project helpers', () => {
     expect(subtitle.words).toBeUndefined();
   });
 
+  it('preserves word timings when a manual subtitle edit does not change the text', () => {
+    const originalSubtitle = {
+      id: 'generated-2',
+      startTime: 2200,
+      endTime: 3100,
+      text: 'keep original words',
+      words: [{ text: 'keep', startTime: 2200, endTime: 2500 }],
+      isGenerated: true,
+    };
+    const subtitle = applyManualSubtitleTextEdit(
+      originalSubtitle,
+      '  keep   original words  ',
+    );
+
+    expect(subtitle).toBe(originalSubtitle);
+    expect(subtitle.words).toEqual(originalSubtitle.words);
+    expect(subtitle.isGenerated).toBe(true);
+  });
+
   it('fills missing subtitle style fields with defaults', () => {
     const style = normalizeSubtitleStyle({
       position: 'top',

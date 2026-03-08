@@ -62,6 +62,7 @@ jest.mock('react-native-gesture-handler', () => {
       numberOfTaps: () => gesture,
       onBegin: () => gesture,
       onEnd: () => gesture,
+      onFinalize: () => gesture,
       onUpdate: () => gesture,
     };
 
@@ -143,7 +144,10 @@ import {
   ACTIVE_SUBTITLE_HEADER_ID,
   ACTIVE_SUBTITLE_SECTION_ID,
   EditorScreen,
+  OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX,
   TIMELINE_SECTION_ID,
+  resolveOverlaySubtitle,
+  resolveSubtitlePreviewTop,
 } from '../src/components/editor/EditorScreen';
 import { calculateEditorVerticalLayout } from '../src/components/editor/layout';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
@@ -226,6 +230,62 @@ describe('editor layout budgeting', () => {
   });
 });
 
+describe('EditorScreen drag helpers', () => {
+  it('keeps the drag preview anchored to the captured drag start until finalize', () => {
+    expect(
+      resolveSubtitlePreviewTop({
+        isDragging: true,
+        dragStartTop: 132,
+        liveAnchorTop: 44,
+        translationY: 18,
+        minTop: 16,
+        maxTop: 220,
+      }),
+    ).toBe(150);
+
+    expect(
+      resolveSubtitlePreviewTop({
+        isDragging: false,
+        dragStartTop: 132,
+        liveAnchorTop: 44,
+        translationY: 18,
+        minTop: 16,
+        maxTop: 220,
+      }),
+    ).toBe(62);
+  });
+
+  it('freezes the dragged subtitle content until the drag session ends', () => {
+    const draggedSubtitle = {
+      id: 'subtitle-dragged',
+      startTime: 0,
+      endTime: 1000,
+      text: 'dragged text',
+    };
+    const liveSubtitle = {
+      id: 'subtitle-live',
+      startTime: 1000,
+      endTime: 2000,
+      text: 'live text',
+    };
+
+    expect(
+      resolveOverlaySubtitle({
+        isDragging: true,
+        draggedSubtitleSnapshot: draggedSubtitle,
+        liveSubtitle,
+      }),
+    ).toBe(draggedSubtitle);
+    expect(
+      resolveOverlaySubtitle({
+        isDragging: false,
+        draggedSubtitleSnapshot: draggedSubtitle,
+        liveSubtitle,
+      }),
+    ).toBe(liveSubtitle);
+  });
+});
+
 describe('EditorScreen', () => {
   const mockProject: Project = {
     id: 'project-1',
@@ -238,9 +298,14 @@ describe('EditorScreen', () => {
     subtitles: [
       {
         id: 'subtitle-1',
-        startTime: 2400,
+        startTime: 0,
         endTime: 3200,
-        text: 'first line',
+        text: 'first bright line',
+        words: [
+          { text: 'first', startTime: 0, endTime: 700 },
+          { text: 'bright', startTime: 800, endTime: 1500 },
+          { text: 'line', startTime: 1600, endTime: 2400 },
+        ],
       },
     ],
     globalStyle: defaultSubtitleStyle,
@@ -380,5 +445,121 @@ describe('EditorScreen', () => {
     expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineHeight, 5);
     expect(timelineStyle.opacity).toBe(1);
     expect(textStyle.height).toBeCloseTo(expandedLayout.textHeight, 5);
+  });
+
+  it('highlights the active subtitle word during playback', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    const video = renderer!.root.find(
+      node => typeof node.props.onProgress === 'function',
+    );
+
+    await ReactTestRenderer.act(() => {
+      video.props.onProgress({ currentTime: 1 });
+    });
+
+    const activeWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-1`,
+    });
+    const inactiveWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
+    });
+
+    expect(activeWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
+    expect(inactiveWord.props.style).toBeUndefined();
+  });
+
+  it('keeps generated word highlighting after focusing and blurring without a real text edit', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    const video = renderer!.root.find(
+      node => typeof node.props.onProgress === 'function',
+    );
+
+    await ReactTestRenderer.act(() => {
+      video.props.onProgress({ currentTime: 1 });
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+    });
+
+    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+
+    await ReactTestRenderer.act(() => {
+      textInput.props.onBlur();
+    });
+
+    const activeWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-1`,
+    });
+
+    expect(activeWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
+  });
+
+  it('falls back to plain text after a real manual subtitle edit', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+    });
+
+    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+
+    await ReactTestRenderer.act(() => {
+      textInput.props.onChangeText('rewritten text');
+    });
+
+    const updatedTextInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+
+    await ReactTestRenderer.act(() => {
+      updatedTextInput.props.onBlur();
+    });
+
+    expect(
+      renderer!.root.findAllByProps({
+        testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
+      }),
+    ).toHaveLength(0);
+    expect(renderer!.root.findAllByProps({ children: 'rewritten text' }).length).toBeGreaterThan(0);
   });
 });

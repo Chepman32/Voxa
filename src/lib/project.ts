@@ -412,12 +412,26 @@ export function findActiveSubtitleWordIndex(
   );
 }
 
+export function hasTimedSubtitleWords(
+  subtitle: Pick<SubtitleBlock, 'words'> | null | undefined,
+) {
+  return (normalizeSubtitleWords(subtitle?.words)?.length ?? 0) > 0;
+}
+
 export function sortProjects(projects: Project[]) {
   return [...projects].sort((left, right) => right.updatedAt - left.updatedAt);
 }
 
 export function applySubtitleCasing(text: string, style: SubtitleStyle) {
   return style.casing === 'uppercase' ? text.toUpperCase() : text;
+}
+
+export function normalizeEditableSubtitleText(text: string) {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+export function isSameEditableSubtitleText(currentText: string, nextText: string) {
+  return normalizeEditableSubtitleText(currentText) === normalizeEditableSubtitleText(nextText);
 }
 
 function subtitleAnchorTop(
@@ -514,6 +528,10 @@ export function resolveSubtitleStyleFromVerticalOrigin(
 }
 
 export function applyManualSubtitleTextEdit(subtitle: SubtitleBlock, text: string) {
+  if (isSameEditableSubtitleText(subtitle.text, text)) {
+    return subtitle;
+  }
+
   return {
     ...subtitle,
     text,
