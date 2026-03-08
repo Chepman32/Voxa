@@ -172,7 +172,7 @@ describe('editor layout budgeting', () => {
     expect(layout.textHeight).toBeGreaterThanOrEqual(180);
     expect(layout.videoHeight).toBeGreaterThanOrEqual(280);
     expect(layout.videoHeight).toBeLessThanOrEqual(340);
-    expect(layout.timelineControlsHeight).toBe(120);
+    expect(layout.timelineControlsHeight).toBe(128);
     expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(56);
     expect(layout.timelineTrackHeight).toBeLessThanOrEqual(72);
     expect(usedHeight).toBeLessThanOrEqual(layout.contentHeight);
@@ -195,7 +195,7 @@ describe('editor layout budgeting', () => {
 
       expect(layout.textHeight).toBeGreaterThanOrEqual(180);
       expect(layout.videoHeight).toBeGreaterThanOrEqual(224);
-      expect(layout.timelineControlsHeight).toBe(120);
+      expect(layout.timelineControlsHeight).toBe(128);
       expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(48);
       expect(usedHeight).toBeLessThanOrEqual(layout.contentHeight);
     },

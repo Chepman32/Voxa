@@ -1409,7 +1409,7 @@ const styles = StyleSheet.create({
   timelineControlDock: {
     paddingHorizontal: 14,
     paddingTop: 8,
-    paddingBottom: 12,
+    paddingBottom: 14,
     alignItems: 'center',
     gap: 8,
   },
@@ -1444,6 +1444,7 @@ const styles = StyleSheet.create({
   fontChipScroll: {
     gap: 8,
     paddingHorizontal: 4,
+    paddingBottom: 2,
   },
   fontChip: {
     paddingHorizontal: 14,
