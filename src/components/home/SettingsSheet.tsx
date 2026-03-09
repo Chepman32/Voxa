@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import {
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -30,9 +31,11 @@ interface SettingsSheetProps {
   visible: boolean;
   speechLocale: string;
   preferredExportResolution: ExportResolution;
+  highlightEditedWords: boolean;
   onClose: () => void;
   onSpeechLocaleChange: (locale: string) => void;
   onResolutionChange: (resolution: ExportResolution) => void;
+  onHighlightEditedWordsChange: (value: boolean) => void;
   onResetOnboarding: () => void;
 }
 
@@ -40,9 +43,11 @@ export function SettingsSheet({
   visible,
   speechLocale,
   preferredExportResolution,
+  highlightEditedWords,
   onClose,
   onSpeechLocaleChange,
   onResolutionChange,
+  onHighlightEditedWordsChange,
   onResetOnboarding,
 }: SettingsSheetProps) {
   const insets = useSafeAreaInsets();
@@ -160,6 +165,28 @@ export function SettingsSheet({
             </View>
 
             <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Subtitle Highlighting</Text>
+              <View style={styles.toggleCard}>
+                <View style={styles.toggleCopy}>
+                  <Text style={styles.toggleLabel}>Highlight edited words</Text>
+                  <Text style={styles.toggleHint}>
+                    Approximate word timing after manual subtitle edits.
+                  </Text>
+                </View>
+                <Switch
+                  ios_backgroundColor="rgba(255, 255, 255, 0.12)"
+                  onValueChange={onHighlightEditedWordsChange}
+                  thumbColor={palette.textPrimary}
+                  trackColor={{
+                    false: 'rgba(255, 255, 255, 0.16)',
+                    true: 'rgba(0, 240, 255, 0.42)',
+                  }}
+                  value={highlightEditedWords}
+                />
+              </View>
+            </View>
+
+            <View style={styles.section}>
               <Text style={styles.sectionLabel}>Privacy</Text>
               <Text style={styles.bodyText}>
                 Voxa keeps extraction, speech recognition, subtitle editing, and
@@ -261,6 +288,32 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 14,
     lineHeight: 21,
+  },
+  toggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  toggleCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  toggleLabel: {
+    color: palette.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  toggleHint: {
+    color: palette.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
   },
   resetRow: {
     flexDirection: 'row',

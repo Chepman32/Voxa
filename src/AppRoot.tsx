@@ -57,6 +57,7 @@ export function AppRoot() {
   const setPreferredExportResolution = useAppStore(
     state => state.setPreferredExportResolution,
   );
+  const setHighlightEditedWords = useAppStore(state => state.setHighlightEditedWords);
 
   const [showSplash, setShowSplash] = useState(true);
   const [permissionSummary, setPermissionSummary] =
@@ -276,12 +277,14 @@ export function AppRoot() {
 
       <SettingsSheet
         onClose={closeSettings}
+        onHighlightEditedWordsChange={setHighlightEditedWords}
         onResetOnboarding={() => {
           closeSettings();
           resetOnboarding();
         }}
         onResolutionChange={setPreferredExportResolution}
         onSpeechLocaleChange={setSpeechLocale}
+        highlightEditedWords={settings.highlightEditedWords}
         preferredExportResolution={settings.preferredExportResolution}
         speechLocale={settings.speechLocale}
         visible={settingsOpen}

@@ -10,12 +10,14 @@ describe('HighlightedSubtitleText', () => {
   function renderSubtitle(
     subtitle: SubtitleBlock,
     playheadPosition: number,
+    allowSyntheticWords = true,
   ) {
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
     ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
         <HighlightedSubtitleText
+          allowSyntheticWords={allowSyntheticWords}
           playheadPosition={playheadPosition}
           style={{ color: defaultSubtitleStyle.textColor }}
           stylePreset={defaultSubtitleStyle}
@@ -113,5 +115,23 @@ describe('HighlightedSubtitleText', () => {
     expect(firstWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
     expect(secondWord.props.children.join('')).toBe(' subtitle');
     expect(secondWord.props.style).toBeUndefined();
+  });
+
+  it('renders plain text for subtitles without timings when synthetic words are disabled', () => {
+    const renderer = renderSubtitle(
+      {
+        id: 'subtitle-4',
+        startTime: 0,
+        endTime: 1800,
+        text: 'plain subtitle',
+      },
+      700,
+      false,
+    );
+
+    const textNodes = renderer.root.findAllByType(Text);
+
+    expect(textNodes).toHaveLength(1);
+    expect(textNodes[0]?.props.children).toBe('plain subtitle');
   });
 });

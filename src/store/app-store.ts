@@ -32,6 +32,7 @@ interface AppState {
   finishProcessing: () => void;
   setSpeechLocale: (locale: string) => void;
   setPreferredExportResolution: (resolution: UserSettings['preferredExportResolution']) => void;
+  setHighlightEditedWords: (value: boolean) => void;
   addProject: (project: Project) => void;
   upsertProject: (project: Project) => void;
   deleteProject: (projectId: string) => void;
@@ -44,6 +45,7 @@ type PersistedAppState = Partial<
 const defaultSettings: UserSettings = {
   speechLocale: 'en-US',
   preferredExportResolution: '1080p',
+  highlightEditedWords: true,
 };
 
 const defaultProcessing: ProcessingState = {
@@ -111,6 +113,10 @@ export const useAppStore = create<AppState>()(
         set(state => ({
           settings: { ...state.settings, preferredExportResolution },
         })),
+      setHighlightEditedWords: highlightEditedWords =>
+        set(state => ({
+          settings: { ...state.settings, highlightEditedWords },
+        })),
       addProject: project =>
         set(state => ({
           projects: [normalizeStoredProject(project), ...state.projects],
@@ -163,7 +169,7 @@ export const useAppStore = create<AppState>()(
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 3,
+      version: 4,
     },
   ),
 );

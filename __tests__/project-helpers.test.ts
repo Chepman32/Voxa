@@ -221,6 +221,23 @@ describe('project helpers', () => {
     ]);
   });
 
+  it('can skip synthetic word timings for manually edited subtitles', () => {
+    const words = getRenderableSubtitleWords(
+      {
+        id: 'manual-2',
+        startTime: 1000,
+        endTime: 2200,
+        text: 'rewritten text here',
+        words: undefined,
+      },
+      {
+        allowSyntheticWords: false,
+      },
+    );
+
+    expect(words).toBeUndefined();
+  });
+
   it('fills missing subtitle style fields with defaults', () => {
     const style = normalizeSubtitleStyle({
       position: 'top',

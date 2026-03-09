@@ -17,6 +17,7 @@ interface HighlightedSubtitleTextProps {
   subtitle: SubtitleBlock;
   playheadPosition: number;
   stylePreset: SubtitleStyle;
+  allowSyntheticWords?: boolean;
   style?: StyleProp<TextStyle>;
   wordTestIDPrefix?: string;
   onLayout?: (event: LayoutChangeEvent) => void;
@@ -26,11 +27,14 @@ export function HighlightedSubtitleText({
   subtitle,
   playheadPosition,
   stylePreset,
+  allowSyntheticWords = true,
   style,
   wordTestIDPrefix,
   onLayout,
 }: HighlightedSubtitleTextProps) {
-  const words = getRenderableSubtitleWords(subtitle);
+  const words = getRenderableSubtitleWords(subtitle, {
+    allowSyntheticWords,
+  });
   if (!words || !stylePreset.wordHighlightEnabled) {
     return (
       <Text onLayout={onLayout} style={style}>
@@ -39,7 +43,9 @@ export function HighlightedSubtitleText({
     );
   }
 
-  const activeWordIndex = findActiveSubtitleWordIndex(subtitle, playheadPosition);
+  const activeWordIndex = findActiveSubtitleWordIndex(subtitle, playheadPosition, {
+    allowSyntheticWords,
+  });
 
   return (
     <Text onLayout={onLayout} style={style}>

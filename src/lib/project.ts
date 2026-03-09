@@ -404,8 +404,11 @@ export function findActiveSubtitleWordIndex(
     | null
     | undefined,
   playheadPosition: number,
+  options?: {
+    allowSyntheticWords?: boolean;
+  },
 ) {
-  const words = getRenderableSubtitleWords(subtitle);
+  const words = getRenderableSubtitleWords(subtitle, options);
   if (!words) {
     return -1;
   }
@@ -465,8 +468,19 @@ export function getRenderableSubtitleWords(
     | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
     | null
     | undefined,
+  options?: {
+    allowSyntheticWords?: boolean;
+  },
 ) {
-  return normalizeSubtitleWords(subtitle?.words) ?? synthesizeSubtitleWords(subtitle);
+  const normalizedWords = normalizeSubtitleWords(subtitle?.words);
+  if (normalizedWords) {
+    return normalizedWords;
+  }
+  if (options?.allowSyntheticWords === false) {
+    return undefined;
+  }
+
+  return synthesizeSubtitleWords(subtitle);
 }
 
 export function hasRenderableSubtitleWords(
@@ -474,8 +488,11 @@ export function hasRenderableSubtitleWords(
     | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
     | null
     | undefined,
+  options?: {
+    allowSyntheticWords?: boolean;
+  },
 ) {
-  return (getRenderableSubtitleWords(subtitle)?.length ?? 0) > 0;
+  return (getRenderableSubtitleWords(subtitle, options)?.length ?? 0) > 0;
 }
 
 export function sortProjects(projects: Project[]) {

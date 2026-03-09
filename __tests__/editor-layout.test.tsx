@@ -121,18 +121,20 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-jest.mock('../src/store/app-store', () => {
-  const mockState = {
-    closeProject: jest.fn(),
-    settings: {
-      preferredExportResolution: '1080p',
-    },
-    setPreferredExportResolution: jest.fn(),
-    upsertProject: jest.fn(),
-  };
+const mockAppStoreState = {
+  closeProject: jest.fn(),
+  settings: {
+    preferredExportResolution: '1080p',
+    highlightEditedWords: true,
+  },
+  setPreferredExportResolution: jest.fn(),
+  upsertProject: jest.fn(),
+};
 
+jest.mock('../src/store/app-store', () => {
   return {
-    useAppStore: (selector: (state: typeof mockState) => unknown) => selector(mockState),
+    useAppStore: (selector: (state: typeof mockAppStoreState) => unknown) =>
+      selector(mockAppStoreState),
   };
 });
 
@@ -348,6 +350,7 @@ describe('EditorScreen', () => {
   };
 
   afterEach(() => {
+    mockAppStoreState.settings.highlightEditedWords = true;
     jest.restoreAllMocks();
   });
 
@@ -795,5 +798,46 @@ describe('EditorScreen', () => {
     expect(firstWord.props.children.join('')).toBe('rewritten');
     expect(firstWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
     expect(secondWord.props.children.join('')).toBe(' text');
+  });
+
+  it('can disable synthetic edited-word highlighting from settings', async () => {
+    mockAppStoreState.settings.highlightEditedWords = false;
+
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+    });
+
+    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+
+    await ReactTestRenderer.act(() => {
+      textInput.props.onChangeText('rewritten text');
+    });
+
+    const updatedTextInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+
+    await ReactTestRenderer.act(() => {
+      updatedTextInput.props.onBlur();
+    });
+
+    expect(() =>
+      renderer!.root.findByProps({
+        testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
+      }),
+    ).toThrow();
   });
 });

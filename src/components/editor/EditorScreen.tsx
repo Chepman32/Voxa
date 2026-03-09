@@ -42,6 +42,7 @@ import {
   applyManualSubtitleTextEdit,
   clamp,
   formatDuration,
+  getRenderableSubtitleWords,
   getSubtitleVerticalBounds,
   getSubtitleVerticalOrigin,
   hasRenderableSubtitleWords,
@@ -271,6 +272,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const closeProject = useAppStore(state => state.closeProject);
   const upsertProject = useAppStore(state => state.upsertProject);
   const resolution = useAppStore(state => state.settings.preferredExportResolution);
+  const highlightEditedWords = useAppStore(state => state.settings.highlightEditedWords);
   const setResolution = useAppStore(state => state.setPreferredExportResolution);
 
   const persistProject = useEffectEvent((nextProject: Project | null) => {
@@ -350,7 +352,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     liveSubtitle: liveDisplaySubtitle,
   });
   const wordHighlightAvailable = subtitles.some(
-    subtitle => !isPlaceholderSubtitle(subtitle) && hasRenderableSubtitleWords(subtitle),
+    subtitle =>
+      !isPlaceholderSubtitle(subtitle) &&
+      hasRenderableSubtitleWords(subtitle, {
+        allowSyntheticWords: highlightEditedWords,
+      }),
   );
 
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
@@ -586,7 +592,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             startTime: subtitle.startTime,
             endTime: subtitle.endTime,
             text: subtitle.text,
-            words: subtitle.words,
+            words: getRenderableSubtitleWords(subtitle, {
+              allowSyntheticWords: highlightEditedWords,
+            }),
             confidence: subtitle.confidence,
           })) satisfies NativeSubtitleSegment[],
       });
@@ -622,7 +630,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       )
     : 0;
   const overlayStylePreset =
-    displaySubtitle && hasRenderableSubtitleWords(displaySubtitle)
+    displaySubtitle &&
+    hasRenderableSubtitleWords(displaySubtitle, {
+      allowSyntheticWords: highlightEditedWords,
+    })
       ? stylePreset
       : {
           ...stylePreset,
@@ -877,6 +888,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                       subtitleBubbleAnimatedStyle,
                     ]}>
                     <HighlightedSubtitleText
+                      allowSyntheticWords={highlightEditedWords}
                       onLayout={event => {
                         const nextHeight = event.nativeEvent.layout.height;
                         if (Math.abs(nextHeight - subtitleBubbleHeight) > 1) {
@@ -1014,6 +1026,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       ) : null}
 
       <ExportSheet
+        highlightEditedWords={highlightEditedWords}
         onChangeResolution={setResolution}
         onClose={() => setIsExportSheetOpen(false)}
         onExport={handleExport}

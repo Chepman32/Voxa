@@ -70,6 +70,7 @@ export interface ProcessingState {
 export interface UserSettings {
   speechLocale: string;
   preferredExportResolution: ExportResolution;
+  highlightEditedWords: boolean;
 }
 
 export interface PermissionSummary {

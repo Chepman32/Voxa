@@ -38,6 +38,7 @@ interface ExportSheetProps {
   project: Project;
   stylePreset: SubtitleStyle;
   resolution: ExportResolution;
+  highlightEditedWords: boolean;
   onClose: () => void;
   onChangeResolution: (resolution: ExportResolution) => void;
   onExport: () => Promise<void>;
@@ -48,6 +49,7 @@ export function ExportSheet({
   project,
   stylePreset,
   resolution,
+  highlightEditedWords,
   onClose,
   onChangeResolution,
   onExport,
@@ -206,6 +208,7 @@ export function ExportSheet({
                     { top: previewSubtitleTop },
                   ]}>
                   <HighlightedSubtitleText
+                    allowSyntheticWords={highlightEditedWords}
                     onLayout={(event: LayoutChangeEvent) => {
                       const nextHeight = event.nativeEvent.layout.height;
                       if (nextHeight !== previewSubtitleHeight) {
