@@ -44,7 +44,7 @@ import {
   formatDuration,
   getSubtitleVerticalBounds,
   getSubtitleVerticalOrigin,
-  hasTimedSubtitleWords,
+  hasRenderableSubtitleWords,
   isSameEditableSubtitleText,
   isPlaceholderSubtitle,
   resolveSubtitleStyleFromVerticalOrigin,
@@ -350,7 +350,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     liveSubtitle: liveDisplaySubtitle,
   });
   const wordHighlightAvailable = subtitles.some(
-    subtitle => !isPlaceholderSubtitle(subtitle) && hasTimedSubtitleWords(subtitle),
+    subtitle => !isPlaceholderSubtitle(subtitle) && hasRenderableSubtitleWords(subtitle),
   );
 
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
@@ -622,7 +622,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       )
     : 0;
   const overlayStylePreset =
-    displaySubtitle && hasTimedSubtitleWords(displaySubtitle)
+    displaySubtitle && hasRenderableSubtitleWords(displaySubtitle)
       ? stylePreset
       : {
           ...stylePreset,

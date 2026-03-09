@@ -95,7 +95,7 @@ describe('HighlightedSubtitleText', () => {
     expect(textNodes[0]?.props.children).toBe('hello bright world');
   });
 
-  it('keeps the plain subtitle style when no word timings exist', () => {
+  it('synthesizes word highlighting when no word timings exist', () => {
     const renderer = renderSubtitle(
       {
         id: 'subtitle-2',
@@ -106,10 +106,12 @@ describe('HighlightedSubtitleText', () => {
       700,
     );
 
-    const textNodes = renderer.root.findAllByType(Text);
+    const firstWord = renderer.root.findByProps({ testID: 'subtitle-word-0' });
+    const secondWord = renderer.root.findByProps({ testID: 'subtitle-word-1' });
 
-    expect(textNodes).toHaveLength(1);
-    expect(textNodes[0]?.props.children).toBe('plain subtitle');
-    expect(textNodes[0]?.props.style).toEqual({ color: defaultSubtitleStyle.textColor });
+    expect(firstWord.props.children.join('')).toBe('plain');
+    expect(firstWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
+    expect(secondWord.props.children.join('')).toBe(' subtitle');
+    expect(secondWord.props.style).toBeUndefined();
   });
 });

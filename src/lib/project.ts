@@ -399,10 +399,13 @@ export function findActiveSubtitle(subtitles: SubtitleBlock[], playheadPosition:
 }
 
 export function findActiveSubtitleWordIndex(
-  subtitle: Pick<SubtitleBlock, 'words'> | null | undefined,
+  subtitle:
+    | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
+    | null
+    | undefined,
   playheadPosition: number,
 ) {
-  const words = normalizeSubtitleWords(subtitle?.words);
+  const words = getRenderableSubtitleWords(subtitle);
   if (!words) {
     return -1;
   }
@@ -416,6 +419,63 @@ export function hasTimedSubtitleWords(
   subtitle: Pick<SubtitleBlock, 'words'> | null | undefined,
 ) {
   return (normalizeSubtitleWords(subtitle?.words)?.length ?? 0) > 0;
+}
+
+function synthesizeSubtitleWords(
+  subtitle: Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text'> | null | undefined,
+) {
+  if (!subtitle || isPlaceholderSubtitle(subtitle)) {
+    return undefined;
+  }
+
+  const tokens = subtitle.text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (tokens.length === 0) {
+    return undefined;
+  }
+
+  const duration = Math.max(1, subtitle.endTime - subtitle.startTime);
+
+  return normalizeSubtitleWords(
+    tokens.map((text, index) => {
+      const startTime = Math.round(
+        subtitle.startTime + (duration * index) / tokens.length,
+      );
+      const endTime =
+        index === tokens.length - 1
+          ? subtitle.endTime
+          : Math.round(
+              subtitle.startTime + (duration * (index + 1)) / tokens.length,
+            );
+
+      return {
+        text,
+        startTime,
+        endTime: Math.max(startTime + MIN_SUBTITLE_WORD_DURATION_MS, endTime),
+      };
+    }),
+  );
+}
+
+export function getRenderableSubtitleWords(
+  subtitle:
+    | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
+    | null
+    | undefined,
+) {
+  return normalizeSubtitleWords(subtitle?.words) ?? synthesizeSubtitleWords(subtitle);
+}
+
+export function hasRenderableSubtitleWords(
+  subtitle:
+    | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
+    | null
+    | undefined,
+) {
+  return (getRenderableSubtitleWords(subtitle)?.length ?? 0) > 0;
 }
 
 export function sortProjects(projects: Project[]) {

@@ -9,6 +9,7 @@ import {
 import {
   applySubtitleCasing,
   findActiveSubtitleWordIndex,
+  getRenderableSubtitleWords,
 } from '../../lib/project';
 import type { SubtitleBlock, SubtitleStyle } from '../../types/models';
 
@@ -29,8 +30,8 @@ export function HighlightedSubtitleText({
   wordTestIDPrefix,
   onLayout,
 }: HighlightedSubtitleTextProps) {
-  const words = subtitle.words;
-  if (!words || words.length === 0 || !stylePreset.wordHighlightEnabled) {
+  const words = getRenderableSubtitleWords(subtitle);
+  if (!words || !stylePreset.wordHighlightEnabled) {
     return (
       <Text onLayout={onLayout} style={style}>
         {applySubtitleCasing(subtitle.text, stylePreset)}

@@ -753,7 +753,7 @@ describe('EditorScreen', () => {
     expect(inputStyle.padding).toBe(0);
   });
 
-  it('falls back to plain text after a real manual subtitle edit', async () => {
+  it('keeps active word highlighting after a real manual subtitle edit', async () => {
     jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
       width: 390,
       height: 844,
@@ -785,11 +785,15 @@ describe('EditorScreen', () => {
       updatedTextInput.props.onBlur();
     });
 
-    expect(
-      renderer!.root.findAllByProps({
-        testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
-      }),
-    ).toHaveLength(0);
-    expect(renderer!.root.findAllByProps({ children: 'rewritten text' }).length).toBeGreaterThan(0);
+    const firstWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
+    });
+    const secondWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-1`,
+    });
+
+    expect(firstWord.props.children.join('')).toBe('rewritten');
+    expect(firstWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
+    expect(secondWord.props.children.join('')).toBe(' text');
   });
 });

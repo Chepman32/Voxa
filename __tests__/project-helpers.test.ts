@@ -3,6 +3,7 @@ import {
   clampSubtitleWordsToRange,
   createPlaceholderSubtitle,
   ensureSubtitles,
+  getRenderableSubtitleWords,
   getSubtitleVerticalOrigin,
   mergeSegmentsIntoBlocks,
   normalizeSubtitleStyle,
@@ -202,6 +203,22 @@ describe('project helpers', () => {
     expect(subtitle).toBe(originalSubtitle);
     expect(subtitle.words).toEqual(originalSubtitle.words);
     expect(subtitle.isGenerated).toBe(true);
+  });
+
+  it('synthesizes renderable word timings for a manually edited subtitle without words', () => {
+    const words = getRenderableSubtitleWords({
+      id: 'manual-1',
+      startTime: 1000,
+      endTime: 2200,
+      text: 'rewritten text here',
+      words: undefined,
+    });
+
+    expect(words).toEqual([
+      { text: 'rewritten', startTime: 1000, endTime: 1400 },
+      { text: 'text', startTime: 1400, endTime: 1800 },
+      { text: 'here', startTime: 1800, endTime: 2200 },
+    ]);
   });
 
   it('fills missing subtitle style fields with defaults', () => {
