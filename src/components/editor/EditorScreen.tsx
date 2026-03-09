@@ -73,9 +73,11 @@ import {
 } from '../../store/editor-atoms';
 import {
   palette,
-  subtitleColorOptions,
   subtitleFontOptions,
+  subtitleHighlightColorOptions,
   subtitlePositionOptions,
+  subtitleSizeOptions,
+  subtitleTextColorOptions,
 } from '../../theme/tokens';
 import type {
   ExportResolution,
@@ -94,6 +96,9 @@ const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
 export const ACTIVE_SUBTITLE_SECTION_ID = 'active-subtitle-section';
 export const ACTIVE_SUBTITLE_HEADER_ID = 'active-subtitle-header';
 export const TIMELINE_SECTION_ID = 'timeline-section';
+export const BOTTOM_EDITOR_PAGER_ID = 'bottom-editor-pager';
+export const BOTTOM_EDITOR_PRIMARY_TAB_ID = 'bottom-editor-primary-tab';
+export const BOTTOM_EDITOR_STYLE_TAB_ID = 'bottom-editor-style-tab';
 export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
 
 export function resolveSubtitlePreviewTop({
@@ -151,6 +156,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const videoRef = useRef<VideoRef>(null);
   const timelineRef = useRef<ScrollView>(null);
+  const bottomEditorPagerRef = useRef<ScrollView>(null);
   const lastSeekMs = useRef(0);
   const isScrubbing = useRef(false);
   const [skipFlash, setSkipFlash] = useState<string | null>(null);
@@ -225,6 +231,13 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  useEffect(() => {
+    bottomEditorPagerRef.current?.scrollTo?.({
+      x: isStylePanelOpen ? width : 0,
+      animated: true,
+    });
+  }, [isStylePanelOpen, width]);
+
   const handleVideoTap = useCallback(() => {
     if (isPlaying && !showControls) {
       setShowControls(true);
@@ -270,10 +283,13 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     timelineCollapsed: true,
   });
   const isTimelineCollapsed = keyboardVisible;
-  const targetTimelineHeight = isTimelineCollapsed ? 0 : editorLayout.timelineHeight;
+  const targetTimelineHeight = isTimelineCollapsed ? 0 : editorLayout.timelineTrackHeight;
   const targetTextZoneHeight = isTimelineCollapsed
     ? collapsedEditorLayout.textHeight
     : editorLayout.textHeight;
+  const targetBottomEditorHeight = isTimelineCollapsed
+    ? collapsedEditorLayout.textHeight
+    : editorLayout.timelineControlsHeight + editorLayout.textHeight;
 
   const durationMs = Math.max(0, project?.duration ?? 0);
   const basePixelsPerSecond = 82 * timelineZoom;
@@ -560,6 +576,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const textZoneAnimatedStyle = useAnimatedStyle(() => ({
     height: withTiming(targetTextZoneHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
   }));
+  const bottomEditorAnimatedStyle = useAnimatedStyle(() => ({
+    height: withTiming(targetBottomEditorHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
+  }));
 
   useLayoutEffect(() => {
     if (isSubtitleDraggingRef.current) {
@@ -763,27 +782,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           pointerEvents={isTimelineCollapsed ? 'none' : 'auto'}
           style={[styles.timelineSectionShell, timelineSectionAnimatedStyle]}
           testID={TIMELINE_SECTION_ID}>
-          <TimelineSection
+          <TimelineTrackSection
             contentWidth={contentWidth}
-            currentFontPresetId={stylePreset.fontPresetId}
-            onScrubEnd={() => {
-              isScrubbing.current = false;
-            }}
-            onScrubStart={() => {
-              isScrubbing.current = true;
-              setIsPlaying(false);
-            }}
             onScroll={handleTimelineScroll}
-            onSelectFont={option =>
-              setStylePreset({
-                ...stylePreset,
-                fontPresetId: option.id,
-                fontFamily: option.fontFamily,
-                fontWeight: option.fontWeight,
-                letterSpacing: option.letterSpacing,
-              })
-            }
-            onToggleWordHighlight={updateWordHighlightEnabled}
             pixelsPerMs={pixelsPerMs}
             playhead={playbackPosition}
             timelineRef={timelineRef}
@@ -792,31 +793,69 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             setTimelineZoom={setTimelineZoom}
             waveform={project.waveform}
             width={width}
-            wordHighlightAvailable={wordHighlightAvailable}
-            wordHighlightEnabled={stylePreset.wordHighlightEnabled}
+            onScrubEnd={() => {
+              isScrubbing.current = false;
+            }}
+            onScrubStart={() => {
+              isScrubbing.current = true;
+              setIsPlaying(false);
+            }}
           />
         </Animated.View>
 
-        <TextEditorSection
-          containerAnimatedStyle={textZoneAnimatedStyle}
-          currentStyle={stylePreset}
-          isEditing={isTextEditing}
-          isStylePanelOpen={isStylePanelOpen}
-          keyboardVisible={keyboardVisible}
-          onChangeStyle={setStylePreset}
-          onNavigate={navigateAdjacentSubtitle}
-          onSelectText={() => {
-            setIsTextEditing(true);
-            if (selectedSubtitle) {
-              setSelectedSubtitleId(selectedSubtitle.id);
-            }
-          }}
-          onSetEditing={setIsTextEditing}
-          onToggleStylePanel={setIsStylePanelOpen}
-          onUpdatePositionPreset={applyPositionPreset}
-          onUpdateText={updateSelectedSubtitleText}
-          selectedSubtitle={selectedSubtitle}
-        />
+        <Animated.View style={[styles.bottomEditorShell, bottomEditorAnimatedStyle]}>
+          <BottomEditorTabs
+            isStylePageActive={isStylePanelOpen}
+            onSelectPrimary={() => setIsStylePanelOpen(false)}
+            onSelectStyle={() => setIsStylePanelOpen(true)}
+          />
+          <ScrollView
+            bounces={false}
+            horizontal
+            keyboardShouldPersistTaps="handled"
+            pagingEnabled
+            ref={bottomEditorPagerRef}
+            scrollEnabled={false}
+            showsHorizontalScrollIndicator={false}
+            style={styles.bottomEditorPager}
+            testID={BOTTOM_EDITOR_PAGER_ID}>
+            <View style={[styles.bottomEditorPage, { width }]}>
+              {isTimelineCollapsed ? null : (
+                <TimelineControlsPanel
+                  onToggleWordHighlight={updateWordHighlightEnabled}
+                  wordHighlightAvailable={wordHighlightAvailable}
+                  wordHighlightEnabled={stylePreset.wordHighlightEnabled}
+                />
+              )}
+
+              <TextEditorSection
+                containerAnimatedStyle={textZoneAnimatedStyle}
+                isEditing={isTextEditing}
+                keyboardVisible={keyboardVisible}
+                onNavigate={navigateAdjacentSubtitle}
+                onSelectText={() => {
+                  setIsStylePanelOpen(false);
+                  setIsTextEditing(true);
+                  if (selectedSubtitle) {
+                    setSelectedSubtitleId(selectedSubtitle.id);
+                  }
+                }}
+                onSetEditing={setIsTextEditing}
+                onToggleStylePanel={setIsStylePanelOpen}
+                onUpdateText={updateSelectedSubtitleText}
+                selectedSubtitle={selectedSubtitle}
+              />
+            </View>
+
+            <View style={[styles.bottomEditorPage, { width }]}>
+              <StyleSelectorsPanel
+                currentStyle={stylePreset}
+                onChangeStyle={setStylePreset}
+                onUpdatePositionPreset={applyPositionPreset}
+              />
+            </View>
+          </ScrollView>
+        </Animated.View>
       </View>
 
       <GestureDetector gesture={bottomEdgeGesture}>
@@ -838,7 +877,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   );
 }
 
-function TimelineSection({
+function TimelineTrackSection({
   width,
   timelineTrackHeight,
   playhead,
@@ -846,11 +885,6 @@ function TimelineSection({
   pixelsPerMs,
   contentWidth,
   waveform,
-  wordHighlightEnabled,
-  wordHighlightAvailable,
-  currentFontPresetId,
-  onToggleWordHighlight,
-  onSelectFont,
   onScroll,
   onScrubStart,
   onScrubEnd,
@@ -864,11 +898,6 @@ function TimelineSection({
   pixelsPerMs: number;
   contentWidth: number;
   waveform: number[];
-  wordHighlightEnabled: boolean;
-  wordHighlightAvailable: boolean;
-  currentFontPresetId: string;
-  onToggleWordHighlight: (value: boolean) => void;
-  onSelectFont: (option: (typeof subtitleFontOptions)[number]) => void;
   onScroll: (offsetX: number) => void;
   onScrubStart: () => void;
   onScrubEnd: () => void;
@@ -945,63 +974,94 @@ function TimelineSection({
               <View style={styles.playheadGlow} />
             </View>
           </View>
-
-          <View style={styles.timelineControlDock}>
-            <View style={styles.timelineControlRow}>
-              <View style={styles.timelineControlCopy}>
-                <Text style={styles.timelineControlLabel}>Word Highlight</Text>
-                <Text style={styles.timelineControlHint}>
-                  {wordHighlightAvailable
-                    ? 'Accent the currently spoken word.'
-                    : 'Word timing unavailable'}
-                </Text>
-              </View>
-              <Switch
-                disabled={!wordHighlightAvailable}
-                ios_backgroundColor="rgba(255, 255, 255, 0.12)"
-                onValueChange={onToggleWordHighlight}
-                testID={WORD_HIGHLIGHT_SWITCH_ID}
-                thumbColor={
-                  wordHighlightAvailable ? palette.textPrimary : 'rgba(255, 255, 255, 0.32)'
-                }
-                trackColor={{
-                  false: 'rgba(255, 255, 255, 0.16)',
-                  true: 'rgba(0, 240, 255, 0.42)',
-                }}
-                value={wordHighlightEnabled && wordHighlightAvailable}
-              />
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.fontChipScroll}>
-              {subtitleFontOptions.map(option => {
-                const isActive = currentFontPresetId === option.id;
-                return (
-                  <Pressable
-                    key={option.id}
-                    onPress={() => onSelectFont(option)}
-                    style={[
-                      styles.fontChip,
-                      isActive && styles.fontChipActive,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.fontChipLabel,
-                        option.fontFamily !== 'System' && {
-                          fontFamily: option.fontFamily,
-                        },
-                        isActive && styles.fontChipLabelActive,
-                      ]}>
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
         </View>
       </GestureDetector>
+    </View>
+  );
+}
+
+function TimelineControlsPanel({
+  wordHighlightEnabled,
+  wordHighlightAvailable,
+  onToggleWordHighlight,
+}: {
+  wordHighlightEnabled: boolean;
+  wordHighlightAvailable: boolean;
+  onToggleWordHighlight: (value: boolean) => void;
+}) {
+  return (
+    <View style={styles.timelineControlsCard}>
+      <View style={styles.timelineControlDock}>
+        <View style={styles.timelineControlRow}>
+          <View style={styles.timelineControlCopy}>
+            <Text style={styles.timelineControlLabel}>Word Highlight</Text>
+            <Text style={styles.timelineControlHint}>
+              {wordHighlightAvailable
+                ? 'Accent the currently spoken word.'
+                : 'Word timing unavailable'}
+            </Text>
+          </View>
+          <Switch
+            disabled={!wordHighlightAvailable}
+            ios_backgroundColor="rgba(255, 255, 255, 0.12)"
+            onValueChange={onToggleWordHighlight}
+            testID={WORD_HIGHLIGHT_SWITCH_ID}
+            thumbColor={
+              wordHighlightAvailable ? palette.textPrimary : 'rgba(255, 255, 255, 0.32)'
+            }
+            trackColor={{
+              false: 'rgba(255, 255, 255, 0.16)',
+              true: 'rgba(0, 240, 255, 0.42)',
+            }}
+            value={wordHighlightEnabled && wordHighlightAvailable}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function BottomEditorTabs({
+  isStylePageActive,
+  onSelectPrimary,
+  onSelectStyle,
+}: {
+  isStylePageActive: boolean;
+  onSelectPrimary: () => void;
+  onSelectStyle: () => void;
+}) {
+  return (
+    <View style={styles.bottomEditorTabs}>
+      <Pressable
+        onPress={onSelectPrimary}
+        style={[
+          styles.bottomEditorTab,
+          !isStylePageActive && styles.bottomEditorTabActive,
+        ]}
+        testID={BOTTOM_EDITOR_PRIMARY_TAB_ID}>
+        <Text
+          style={[
+            styles.bottomEditorTabLabel,
+            !isStylePageActive && styles.bottomEditorTabLabelActive,
+          ]}>
+          Subtitle
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={onSelectStyle}
+        style={[
+          styles.bottomEditorTab,
+          isStylePageActive && styles.bottomEditorTabActive,
+        ]}
+        testID={BOTTOM_EDITOR_STYLE_TAB_ID}>
+        <Text
+          style={[
+            styles.bottomEditorTabLabel,
+            isStylePageActive && styles.bottomEditorTabLabelActive,
+          ]}>
+          Style
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -1009,31 +1069,23 @@ function TimelineSection({
 function TextEditorSection({
   containerAnimatedStyle,
   selectedSubtitle,
-  currentStyle,
   isEditing,
-  isStylePanelOpen,
   keyboardVisible,
   onSelectText,
   onSetEditing,
   onUpdateText,
-  onUpdatePositionPreset,
   onNavigate,
   onToggleStylePanel,
-  onChangeStyle,
 }: {
   containerAnimatedStyle?: StyleProp<ViewStyle>;
   selectedSubtitle: SubtitleBlock | null;
-  currentStyle: Project['globalStyle'];
   isEditing: boolean;
-  isStylePanelOpen: boolean;
   keyboardVisible: boolean;
   onSelectText: () => void;
   onSetEditing: (value: boolean) => void;
   onUpdateText: (text: string) => void;
-  onUpdatePositionPreset: (position: Project['globalStyle']['position']) => void;
   onNavigate: (direction: -1 | 1) => void;
   onToggleStylePanel: (value: boolean) => void;
-  onChangeStyle: (style: Project['globalStyle']) => void;
 }) {
   const [draftText, setDraftText] = useState(selectedSubtitle?.text ?? '');
 
@@ -1095,10 +1147,10 @@ function TextEditorSection({
             </View>
           </Pressable>
           <ScrollView
-            bounces={isStylePanelOpen}
+            bounces={false}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps={keyboardVisible ? 'never' : 'handled'}
-            scrollEnabled={isStylePanelOpen}
+            scrollEnabled={false}
             showsVerticalScrollIndicator={false}
             style={styles.textPanelBody}
             contentContainerStyle={styles.textPanelBodyContent}>
@@ -1130,86 +1182,130 @@ function TextEditorSection({
 
             <View style={styles.panelHintRow}>
               <Text style={styles.panelHint}>Swipe left or right to move between blocks.</Text>
-              <Text style={styles.panelHint}>Swipe up for style controls.</Text>
+              <Text style={styles.panelHint}>Swipe up or tap Style for selectors.</Text>
             </View>
-
-            {isStylePanelOpen ? (
-              <View style={styles.stylePanel}>
-                <StyleRow
-                  label="Fonts"
-                  options={subtitleFontOptions.map(option => ({
-                    id: option.id,
-                    label: option.label,
-                    active: currentStyle.fontPresetId === option.id,
-                    onPress: () =>
-                      onChangeStyle({
-                        ...currentStyle,
-                        fontPresetId: option.id,
-                        fontFamily: option.fontFamily,
-                        fontWeight: option.fontWeight,
-                        letterSpacing: option.letterSpacing,
-                      }),
-                  }))}
-                />
-
-                <StyleRow
-                  label="Colors"
-                  options={subtitleColorOptions.map(option => ({
-                    id: option.id,
-                    label: option.label,
-                    active: currentStyle.accentColor === option.accentColor,
-                    swatch: option.accentColor,
-                    onPress: () =>
-                      onChangeStyle({
-                        ...currentStyle,
-                        textColor: option.textColor,
-                        accentColor: option.accentColor,
-                        backgroundColor: option.backgroundColor,
-                      }),
-                  }))}
-                />
-
-                <StyleRow
-                  label="Positions"
-                  options={subtitlePositionOptions.map(option => ({
-                    id: option.value,
-                    label: option.label,
-                    active: currentStyle.position === option.value,
-                    onPress: () => onUpdatePositionPreset(option.value),
-                  }))}
-                />
-
-                <StyleRow
-                  label="Casing"
-                  options={[
-                    {
-                      id: 'sentence',
-                      label: 'Sentence',
-                      active: currentStyle.casing === 'sentence',
-                      onPress: () =>
-                        onChangeStyle({
-                          ...currentStyle,
-                          casing: 'sentence',
-                        }),
-                    },
-                    {
-                      id: 'uppercase',
-                      label: 'Uppercase',
-                      active: currentStyle.casing === 'uppercase',
-                      onPress: () =>
-                        onChangeStyle({
-                          ...currentStyle,
-                          casing: 'uppercase',
-                        }),
-                    },
-                  ]}
-                />
-              </View>
-            ) : null}
           </ScrollView>
         </GlassPanel>
       </Animated.View>
     </GestureDetector>
+  );
+}
+
+function StyleSelectorsPanel({
+  currentStyle,
+  onChangeStyle,
+  onUpdatePositionPreset,
+}: {
+  currentStyle: Project['globalStyle'];
+  onChangeStyle: (style: Project['globalStyle']) => void;
+  onUpdatePositionPreset: (position: Project['globalStyle']['position']) => void;
+}) {
+  return (
+    <GlassPanel style={styles.styleSelectorsCard}>
+      <Text style={styles.styleSelectorsTitle}>Style Controls</Text>
+      <ScrollView
+        bounces
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.styleSelectorsContent}>
+        <StyleRow
+          label="Fonts"
+          options={subtitleFontOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            active: currentStyle.fontPresetId === option.id,
+            onPress: () =>
+              onChangeStyle({
+                ...currentStyle,
+                fontPresetId: option.id,
+                fontFamily: option.fontFamily,
+                fontWeight: option.fontWeight,
+                letterSpacing: option.letterSpacing,
+              }),
+          }))}
+        />
+
+        <StyleRow
+          label="Size"
+          options={subtitleSizeOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            active: currentStyle.fontSize === option.fontSize,
+            onPress: () =>
+              onChangeStyle({
+                ...currentStyle,
+                fontSize: option.fontSize,
+              }),
+          }))}
+        />
+
+        <StyleRow
+          label="Text Color"
+          options={subtitleTextColorOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            active: currentStyle.textColor === option.textColor,
+            swatch: option.textColor,
+            onPress: () =>
+              onChangeStyle({
+                ...currentStyle,
+                textColor: option.textColor,
+              }),
+          }))}
+        />
+
+        <StyleRow
+          label="Highlight"
+          options={subtitleHighlightColorOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            active: currentStyle.accentColor === option.accentColor,
+            swatch: option.accentColor,
+            onPress: () =>
+              onChangeStyle({
+                ...currentStyle,
+                accentColor: option.accentColor,
+              }),
+          }))}
+        />
+
+        <StyleRow
+          label="Positions"
+          options={subtitlePositionOptions.map(option => ({
+            id: option.value,
+            label: option.label,
+            active: currentStyle.position === option.value,
+            onPress: () => onUpdatePositionPreset(option.value),
+          }))}
+        />
+
+        <StyleRow
+          label="Casing"
+          options={[
+            {
+              id: 'sentence',
+              label: 'Sentence',
+              active: currentStyle.casing === 'sentence',
+              onPress: () =>
+                onChangeStyle({
+                  ...currentStyle,
+                  casing: 'sentence',
+                }),
+            },
+            {
+              id: 'uppercase',
+              label: 'Uppercase',
+              active: currentStyle.casing === 'uppercase',
+              onPress: () =>
+                onChangeStyle({
+                  ...currentStyle,
+                  casing: 'uppercase',
+                }),
+            },
+          ]}
+        />
+      </ScrollView>
+    </GlassPanel>
   );
 }
 
@@ -1374,11 +1470,57 @@ const styles = StyleSheet.create({
   timelineSectionShell: {
     overflow: 'hidden',
   },
+  bottomEditorShell: {
+    overflow: 'hidden',
+  },
+  bottomEditorTabs: {
+    marginHorizontal: 12,
+    marginBottom: 10,
+    padding: 4,
+    borderRadius: 999,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  bottomEditorTab: {
+    minWidth: 96,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottomEditorTabActive: {
+    backgroundColor: 'rgba(0, 240, 255, 0.14)',
+  },
+  bottomEditorTabLabel: {
+    color: palette.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  bottomEditorTabLabelActive: {
+    color: palette.textPrimary,
+  },
+  bottomEditorPager: {
+    flex: 1,
+  },
+  bottomEditorPage: {
+    height: '100%',
+    gap: 10,
+  },
   timelineViewport: {
     marginHorizontal: 12,
     borderRadius: 32,
     overflow: 'hidden',
     backgroundColor: 'rgba(16, 18, 21, 0.74)',
+  },
+  timelineControlsCard: {
+    marginHorizontal: 12,
+    borderRadius: 32,
+    backgroundColor: 'rgba(16, 18, 21, 0.74)',
+    overflow: 'hidden',
   },
   timelineTrack: {
     overflow: 'hidden',
@@ -1468,6 +1610,23 @@ const styles = StyleSheet.create({
   textZone: {
     marginHorizontal: 12,
   },
+  styleSelectorsCard: {
+    flex: 1,
+    marginHorizontal: 12,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 18,
+  },
+  styleSelectorsTitle: {
+    color: palette.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  styleSelectorsContent: {
+    gap: 14,
+    paddingTop: 14,
+    paddingBottom: 4,
+  },
   textPanel: {
     flex: 1,
     paddingHorizontal: 18,
@@ -1523,9 +1682,6 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 12,
     lineHeight: 17,
-  },
-  stylePanel: {
-    gap: 14,
   },
   styleRow: {
     gap: 8,

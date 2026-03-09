@@ -145,34 +145,77 @@ export const subtitleFontOptions = [
   },
 ];
 
-export const subtitleColorOptions = [
+export const subtitleTextColorOptions = [
+  {
+    id: 'white',
+    label: 'White',
+    textColor: '#FFFFFF',
+  },
+  {
+    id: 'warm',
+    label: 'Warm',
+    textColor: '#FFF4E8',
+  },
+  {
+    id: 'mint',
+    label: 'Mint',
+    textColor: '#DFFCF2',
+  },
+  {
+    id: 'ice',
+    label: 'Ice',
+    textColor: '#E7F5FF',
+  },
+];
+
+export const subtitleHighlightColorOptions = [
   {
     id: 'cyan',
     label: 'Cyan',
-    textColor: '#FFFFFF',
     accentColor: '#00F0FF',
-    backgroundColor: 'rgba(0, 15, 19, 0.72)',
   },
   {
     id: 'violet',
     label: 'Violet',
-    textColor: '#FFFFFF',
     accentColor: '#8A2BE2',
-    backgroundColor: 'rgba(18, 8, 28, 0.72)',
   },
   {
     id: 'amber',
     label: 'Amber',
-    textColor: '#FFF9F2',
     accentColor: '#FFB340',
-    backgroundColor: 'rgba(28, 18, 7, 0.72)',
   },
   {
     id: 'clean',
-    label: 'Clean',
-    textColor: '#FFFFFF',
+    label: 'Silver',
     accentColor: '#C7C7CC',
-    backgroundColor: 'rgba(12, 12, 15, 0.72)',
+  },
+  {
+    id: 'lime',
+    label: 'Lime',
+    accentColor: '#C7FF52',
+  },
+];
+
+export const subtitleSizeOptions = [
+  {
+    id: 'compact',
+    label: '28',
+    fontSize: 28,
+  },
+  {
+    id: 'default',
+    label: '34',
+    fontSize: 34,
+  },
+  {
+    id: 'large',
+    label: '40',
+    fontSize: 40,
+  },
+  {
+    id: 'x-large',
+    label: '46',
+    fontSize: 46,
   },
 ];
 

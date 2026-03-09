@@ -143,6 +143,9 @@ jest.mock('react-native-haptic-feedback', () => ({
 import {
   ACTIVE_SUBTITLE_HEADER_ID,
   ACTIVE_SUBTITLE_SECTION_ID,
+  BOTTOM_EDITOR_PAGER_ID,
+  BOTTOM_EDITOR_PRIMARY_TAB_ID,
+  BOTTOM_EDITOR_STYLE_TAB_ID,
   EditorScreen,
   OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX,
   TIMELINE_SECTION_ID,
@@ -401,8 +404,9 @@ describe('EditorScreen', () => {
     let textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
 
     expect(timelineSection.props.pointerEvents).toBe('auto');
-    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineHeight, 5);
+    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineTrackHeight, 5);
     expect(textStyle.height).toBeCloseTo(expandedLayout.textHeight, 5);
+    expect(renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PAGER_ID })).toBeTruthy();
 
     await ReactTestRenderer.act(() => {
       keyboardListeners.keyboardWillShow?.forEach(listener => {
@@ -442,9 +446,47 @@ describe('EditorScreen', () => {
     textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
 
     expect(timelineSection.props.pointerEvents).toBe('auto');
-    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineHeight, 5);
+    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineTrackHeight, 5);
     expect(timelineStyle.opacity).toBe(1);
     expect(textStyle.height).toBeCloseTo(expandedLayout.textHeight, 5);
+  });
+
+  it('switches the bottom editor between subtitle and style slides', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    let subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
+    let styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
+
+    let subtitleTabStyle = StyleSheet.flatten(subtitleTab.props.style);
+    let styleTabStyle = StyleSheet.flatten(styleTab.props.style);
+
+    expect(subtitleTabStyle.backgroundColor).toBe('rgba(0, 240, 255, 0.14)');
+    expect(styleTabStyle.backgroundColor).toBeUndefined();
+
+    await ReactTestRenderer.act(() => {
+      styleTab.props.onPress();
+    });
+
+    subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
+    styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
+    subtitleTabStyle = StyleSheet.flatten(subtitleTab.props.style);
+    styleTabStyle = StyleSheet.flatten(styleTab.props.style);
+
+    expect(subtitleTabStyle.backgroundColor).toBeUndefined();
+    expect(styleTabStyle.backgroundColor).toBe('rgba(0, 240, 255, 0.14)');
   });
 
   it('highlights the active subtitle word during playback', async () => {
