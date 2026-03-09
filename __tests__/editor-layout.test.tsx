@@ -284,6 +284,7 @@ describe('EditorScreen drag helpers', () => {
       resolveOverlaySubtitle({
         isDragging: true,
         draggedSubtitleSnapshot: draggedSubtitle,
+        navigationPinnedSubtitleSnapshot: null,
         liveSubtitle,
       }),
     ).toBe(draggedSubtitle);
@@ -291,6 +292,15 @@ describe('EditorScreen drag helpers', () => {
       resolveOverlaySubtitle({
         isDragging: false,
         draggedSubtitleSnapshot: draggedSubtitle,
+        navigationPinnedSubtitleSnapshot: draggedSubtitle,
+        liveSubtitle,
+      }),
+    ).toBe(draggedSubtitle);
+    expect(
+      resolveOverlaySubtitle({
+        isDragging: false,
+        draggedSubtitleSnapshot: draggedSubtitle,
+        navigationPinnedSubtitleSnapshot: null,
         liveSubtitle,
       }),
     ).toBe(liveSubtitle);

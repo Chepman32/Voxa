@@ -93,6 +93,8 @@ import { calculateEditorVerticalLayout } from './layout';
 
 const MAX_TIMELINE_SURFACE_WIDTH = 8192;
 const TIMELINE_COLLAPSE_DURATION_MS = 220;
+const SUBTITLE_NAVIGATION_SETTLE_MS = 260;
+const SEEK_PROGRESS_SYNC_WINDOW_MS = 220;
 const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
 export const ACTIVE_SUBTITLE_SECTION_ID = 'active-subtitle-section';
 export const ACTIVE_SUBTITLE_HEADER_ID = 'active-subtitle-header';
@@ -131,14 +133,20 @@ export function resolveSubtitlePreviewTop({
 export function resolveOverlaySubtitle({
   isDragging,
   draggedSubtitleSnapshot,
+  navigationPinnedSubtitleSnapshot,
   liveSubtitle,
 }: {
   isDragging: boolean;
   draggedSubtitleSnapshot: SubtitleBlock | null;
+  navigationPinnedSubtitleSnapshot: SubtitleBlock | null;
   liveSubtitle: SubtitleBlock | null;
 }) {
   if (isDragging && draggedSubtitleSnapshot) {
     return draggedSubtitleSnapshot;
+  }
+
+  if (navigationPinnedSubtitleSnapshot) {
+    return navigationPinnedSubtitleSnapshot;
   }
 
   return liveSubtitle;
@@ -165,6 +173,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const bottomEditorPagerRef = useRef<ScrollView>(null);
   const lastSeekMs = useRef(0);
   const isScrubbing = useRef(false);
+  const navigationPinnedSubtitleExpiresAtRef = useRef(0);
+  const pendingSeekSyncRef = useRef<{ expiresAt: number; targetMs: number } | null>(null);
   const [skipFlash, setSkipFlash] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
@@ -172,10 +182,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [draggedSubtitleSnapshot, setDraggedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
+  const [navigationPinnedSubtitleSnapshot, setNavigationPinnedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
   const isSubtitleDraggingRef = useRef(false);
   const subtitleCanvasPreviewTopY = useSharedValue(0);
   const isSubtitleDragging = useSharedValue(false);
   const dragStartTop = useSharedValue(0);
+  const subtitleSwapProgress = useSharedValue(1);
 
   const [project, setProject] = useAtom(editorProjectAtom);
   const [playbackPosition, setPlaybackPosition] = useAtom(playbackPositionAtom);
@@ -330,6 +342,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const displaySubtitle = resolveOverlaySubtitle({
     isDragging: isSubtitleDraggingRef.current,
     draggedSubtitleSnapshot,
+    navigationPinnedSubtitleSnapshot:
+      navigationPinnedSubtitleSnapshot &&
+      Date.now() < navigationPinnedSubtitleExpiresAtRef.current
+        ? navigationPinnedSubtitleSnapshot
+        : null,
     liveSubtitle: liveDisplaySubtitle,
   });
   const wordHighlightAvailable = subtitles.some(
@@ -348,6 +365,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
   const seekTo = (timeMs: number) => {
     const clamped = clamp(timeMs, 0, project?.duration ?? 0);
+    pendingSeekSyncRef.current = {
+      targetMs: clamped,
+      expiresAt: Date.now() + SEEK_PROGRESS_SYNC_WINDOW_MS,
+    };
     setPlaybackPosition(clamped);
     videoRef.current?.seek(clamped / 1000);
     syncTimelineToPosition(clamped);
@@ -426,6 +447,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     setDraggedSubtitleSnapshot(null);
   }, []);
 
+  const beginSubtitleNavigationTransition = useCallback((subtitle: SubtitleBlock | null) => {
+    navigationPinnedSubtitleExpiresAtRef.current = Date.now() + SUBTITLE_NAVIGATION_SETTLE_MS;
+    setNavigationPinnedSubtitleSnapshot(subtitle);
+  }, []);
+
   const navigateAdjacentSubtitle = (direction: -1 | 1, keepEditing: boolean) => {
     if (!selectedSubtitle) {
       return;
@@ -438,6 +464,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     if (!nextSubtitle) {
       return;
     }
+    beginSubtitleNavigationTransition(nextSubtitle);
     updateSelectedSubtitleSelection(nextSubtitle.id, keepEditing);
   };
 
@@ -478,6 +505,17 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const handleVideoProgress = (currentTimeMs: number) => {
     if (isScrubbing.current) {
       return;
+    }
+    const pendingSeekSync = pendingSeekSyncRef.current;
+    if (pendingSeekSync) {
+      const seekSettled = Math.abs(currentTimeMs - pendingSeekSync.targetMs) <= 140;
+      const seekExpired = Date.now() >= pendingSeekSync.expiresAt;
+
+      if (!seekSettled && !seekExpired) {
+        return;
+      }
+
+      pendingSeekSyncRef.current = null;
     }
     setPlayback(currentTimeMs);
     syncTimelineToPosition(currentTimeMs);
@@ -592,7 +630,16 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         };
 
   const subtitleBubbleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: 0.86 + subtitleSwapProgress.value * 0.14,
     top: subtitleCanvasPreviewTopY.value,
+    transform: [
+      {
+        scale: 0.985 + subtitleSwapProgress.value * 0.015,
+      },
+      {
+        translateY: (1 - subtitleSwapProgress.value) * 8,
+      },
+    ],
   }));
   const timelineSectionAnimatedStyle = useAnimatedStyle(() => ({
     height: withTiming(targetTimelineHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
@@ -644,7 +691,13 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     if (isSubtitleDraggingRef.current) {
       return;
     }
-    subtitleCanvasPreviewTopY.value = videoSubtitleTop;
+    const topDelta = videoSubtitleTop - subtitleCanvasPreviewTopY.value;
+    subtitleCanvasPreviewTopY.value = withSpring(videoSubtitleTop, {
+      stiffness: 280,
+      damping: 28,
+      mass: 0.8,
+      velocity: topDelta === 0 ? 0 : Math.sign(topDelta) * 2.2,
+    });
   }, [
     displaySubtitle?.id,
     stylePreset?.position,
@@ -653,6 +706,16 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     subtitleCanvasPreviewTopY,
     videoSubtitleTop,
   ]);
+
+  useEffect(() => {
+    subtitleSwapProgress.value = 0;
+    subtitleSwapProgress.value = withSpring(1, {
+      stiffness: 300,
+      damping: 24,
+      mass: 0.74,
+      velocity: 2.4,
+    });
+  }, [displaySubtitle?.id, subtitleSwapProgress]);
 
   const subtitleDragGesture = Gesture.Pan()
     .activeOffsetY([-4, 4])
