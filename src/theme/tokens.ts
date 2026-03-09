@@ -152,19 +152,24 @@ export const subtitleTextColorOptions = [
     textColor: '#FFFFFF',
   },
   {
-    id: 'warm',
-    label: 'Warm',
-    textColor: '#FFF4E8',
+    id: 'coral',
+    label: 'Coral',
+    textColor: '#FF7A6B',
   },
   {
-    id: 'mint',
-    label: 'Mint',
-    textColor: '#DFFCF2',
+    id: 'black',
+    label: 'Black',
+    textColor: '#111111',
   },
   {
-    id: 'ice',
-    label: 'Ice',
-    textColor: '#E7F5FF',
+    id: 'yellow',
+    label: 'Yellow',
+    textColor: '#FFD84D',
+  },
+  {
+    id: 'beige',
+    label: 'Beige',
+    textColor: '#E8D3B2',
   },
 ];
 
