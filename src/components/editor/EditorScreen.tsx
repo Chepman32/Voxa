@@ -95,10 +95,12 @@ const TIMELINE_COLLAPSE_DURATION_MS = 220;
 const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
 export const ACTIVE_SUBTITLE_SECTION_ID = 'active-subtitle-section';
 export const ACTIVE_SUBTITLE_HEADER_ID = 'active-subtitle-header';
+export const BOTTOM_EDITOR_SHELL_ID = 'bottom-editor-shell';
 export const TIMELINE_SECTION_ID = 'timeline-section';
 export const BOTTOM_EDITOR_PAGER_ID = 'bottom-editor-pager';
 export const BOTTOM_EDITOR_PRIMARY_TAB_ID = 'bottom-editor-primary-tab';
 export const BOTTOM_EDITOR_STYLE_TAB_ID = 'bottom-editor-style-tab';
+export const EDITOR_TOP_BAR_ID = 'editor-top-bar';
 export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
 
 export function resolveSubtitlePreviewTop({
@@ -164,6 +166,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
   const [bannerHeight, setBannerHeight] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [draggedSubtitleSnapshot, setDraggedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
   const isSubtitleDraggingRef = useRef(false);
   const subtitleCanvasPreviewTopY = useSharedValue(0);
@@ -210,11 +213,13 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }, [isPlaying, scheduleHideControls, clearHideTimer]);
 
   useEffect(() => {
-    const handleKeyboardShow = () => {
+    const handleKeyboardShow = (event?: { endCoordinates?: { height?: number } }) => {
       setKeyboardVisible(true);
+      setKeyboardHeight(event?.endCoordinates?.height ?? 0);
     };
     const handleKeyboardHide = () => {
       setKeyboardVisible(false);
+      setKeyboardHeight(0);
     };
 
     const subscriptions = [
@@ -268,28 +273,38 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
   const topBarOffset = insets.top + 2;
   const bottomInset = Math.max(insets.bottom, 12);
+  const keyboardOverlapInset = keyboardVisible
+    ? Math.max(0, keyboardHeight - insets.bottom)
+    : 0;
+  const isKeyboardEditing = keyboardVisible && isTextEditing;
   const editorLayout = calculateEditorVerticalLayout({
     screenHeight: height,
     topInset: insets.top,
-    bottomInset,
+    bottomInset: bottomInset + keyboardOverlapInset,
     bannerHeight: project.importError ? Math.max(bannerHeight, 60) : 0,
     timelineCollapsed: false,
+    topBarCollapsed: isKeyboardEditing,
   });
   const collapsedEditorLayout = calculateEditorVerticalLayout({
     screenHeight: height,
     topInset: insets.top,
-    bottomInset,
+    bottomInset: bottomInset + keyboardOverlapInset,
     bannerHeight: project.importError ? Math.max(bannerHeight, 60) : 0,
     timelineCollapsed: true,
+    topBarCollapsed: isKeyboardEditing,
   });
   const isTimelineCollapsed = keyboardVisible;
   const targetTimelineHeight = isTimelineCollapsed ? 0 : editorLayout.timelineTrackHeight;
   const targetTextZoneHeight = isTimelineCollapsed
     ? collapsedEditorLayout.textHeight
     : editorLayout.textHeight;
-  const targetBottomEditorHeight = isTimelineCollapsed
-    ? collapsedEditorLayout.textHeight
-    : editorLayout.timelineControlsHeight + editorLayout.textHeight;
+  const targetBottomEditorHeight =
+    (isTimelineCollapsed
+      ? collapsedEditorLayout.textHeight
+      : editorLayout.timelineControlsHeight + editorLayout.textHeight) +
+    (isTimelineCollapsed
+      ? collapsedEditorLayout.bottomEditorTabsHeight
+      : editorLayout.bottomEditorTabsHeight);
 
   const durationMs = Math.max(0, project?.duration ?? 0);
   const basePixelsPerSecond = 82 * timelineZoom;
@@ -573,6 +588,24 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       duration: TIMELINE_COLLAPSE_DURATION_MS,
     }),
   }));
+  const topBarAnimatedStyle = useAnimatedStyle(() => ({
+    height: withTiming(isKeyboardEditing ? 0 : 34, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
+    marginTop: withTiming(isKeyboardEditing ? insets.top : topBarOffset, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
+    opacity: withTiming(isKeyboardEditing ? 0 : 1, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
+    transform: [
+      {
+        translateY: withTiming(isKeyboardEditing ? -10 : 0, {
+          duration: TIMELINE_COLLAPSE_DURATION_MS,
+        }),
+      },
+    ],
+  }));
   const textZoneAnimatedStyle = useAnimatedStyle(() => ({
     height: withTiming(targetTextZoneHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
   }));
@@ -649,19 +682,24 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       exiting={FadeOut.duration(180)}
       style={styles.root}>
       <AtmosphereCanvas intensity={1.1} />
-      <View style={[styles.topBar, { marginTop: topBarOffset }]}>
-        <Pressable onPress={closeEditor} style={styles.topBarButton}>
-          <Feather color={palette.textPrimary} name="chevron-down" size={18} />
-        </Pressable>
-        <View style={styles.topBarMeta}>
-          <Text style={styles.topBarSubtitle}>
-            {formatDuration(playbackPosition)} / {formatDuration(project.duration)}
-          </Text>
+      <Animated.View
+        pointerEvents={isKeyboardEditing ? 'none' : 'auto'}
+        style={[styles.topBarShell, topBarAnimatedStyle]}
+        testID={EDITOR_TOP_BAR_ID}>
+        <View style={styles.topBar}>
+          <Pressable onPress={closeEditor} style={styles.topBarButton}>
+            <Feather color={palette.textPrimary} name="chevron-down" size={18} />
+          </Pressable>
+          <View style={styles.topBarMeta}>
+            <Text style={styles.topBarSubtitle}>
+              {formatDuration(playbackPosition)} / {formatDuration(project.duration)}
+            </Text>
+          </View>
+          <Pressable onPress={openExportSheet} style={styles.topBarButton}>
+            <Feather color={palette.textPrimary} name="upload" size={18} />
+          </Pressable>
         </View>
-        <Pressable onPress={openExportSheet} style={styles.topBarButton}>
-          <Feather color={palette.textPrimary} name="upload" size={18} />
-        </Pressable>
-      </View>
+      </Animated.View>
 
       {project.importError ? (
         <GlassPanel
@@ -803,7 +841,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           />
         </Animated.View>
 
-        <Animated.View style={[styles.bottomEditorShell, bottomEditorAnimatedStyle]}>
+        <Animated.View
+          style={[styles.bottomEditorShell, bottomEditorAnimatedStyle]}
+          testID={BOTTOM_EDITOR_SHELL_ID}>
           <BottomEditorTabs
             isStylePageActive={isStylePanelOpen}
             onSelectPrimary={() => setIsStylePanelOpen(false)}
@@ -1169,7 +1209,7 @@ function TextEditorSection({
                   }}
                   placeholder="Rewrite subtitle text"
                   placeholderTextColor={palette.textSecondary}
-                  style={styles.textInput}
+                  style={[styles.subtitlePreview, styles.textInput]}
                 />
               ) : (
                 <Pressable onPress={onSelectText}>
@@ -1362,6 +1402,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: palette.canvas,
+  },
+  topBarShell: {
+    overflow: 'hidden',
   },
   topBar: {
     marginHorizontal: 16,
@@ -1667,10 +1710,9 @@ const styles = StyleSheet.create({
   },
   textInput: {
     minHeight: 86,
-    color: palette.textPrimary,
-    fontSize: 25,
-    lineHeight: 32,
-    fontWeight: '700',
+    margin: 0,
+    padding: 0,
+    textAlignVertical: 'top',
   },
   panelHintRow: {
     flexDirection: 'row',
