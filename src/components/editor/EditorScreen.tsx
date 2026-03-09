@@ -31,6 +31,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -95,12 +96,15 @@ const TIMELINE_COLLAPSE_DURATION_MS = 220;
 const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
 export const ACTIVE_SUBTITLE_SECTION_ID = 'active-subtitle-section';
 export const ACTIVE_SUBTITLE_HEADER_ID = 'active-subtitle-header';
+export const ACTIVE_SUBTITLE_PREV_BUTTON_ID = 'active-subtitle-prev-button';
+export const ACTIVE_SUBTITLE_NEXT_BUTTON_ID = 'active-subtitle-next-button';
 export const BOTTOM_EDITOR_SHELL_ID = 'bottom-editor-shell';
 export const TIMELINE_SECTION_ID = 'timeline-section';
 export const BOTTOM_EDITOR_PAGER_ID = 'bottom-editor-pager';
 export const BOTTOM_EDITOR_PRIMARY_TAB_ID = 'bottom-editor-primary-tab';
 export const BOTTOM_EDITOR_STYLE_TAB_ID = 'bottom-editor-style-tab';
 export const EDITOR_TOP_BAR_ID = 'editor-top-bar';
+export const KEYBOARD_DISMISS_BUTTON_ID = 'keyboard-dismiss-button';
 export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
 
 export function resolveSubtitlePreviewTop({
@@ -294,6 +298,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     topBarCollapsed: isKeyboardEditing,
   });
   const isTimelineCollapsed = keyboardVisible;
+  const showKeyboardDismissButton = keyboardVisible && isTextEditing;
   const targetTimelineHeight = isTimelineCollapsed ? 0 : editorLayout.timelineTrackHeight;
   const targetTextZoneHeight = isTimelineCollapsed
     ? collapsedEditorLayout.textHeight
@@ -421,7 +426,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     setDraggedSubtitleSnapshot(null);
   }, []);
 
-  const navigateAdjacentSubtitle = (direction: -1 | 1) => {
+  const navigateAdjacentSubtitle = (direction: -1 | 1, keepEditing: boolean) => {
     if (!selectedSubtitle) {
       return;
     }
@@ -433,17 +438,24 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     if (!nextSubtitle) {
       return;
     }
-    updateSelectedSubtitleSelection(nextSubtitle.id);
+    updateSelectedSubtitleSelection(nextSubtitle.id, keepEditing);
   };
 
-  const updateSelectedSubtitleSelection = (subtitleId: string) => {
+  const updateSelectedSubtitleSelection = (subtitleId: string, keepEditing: boolean) => {
     setSelectedSubtitleId(subtitleId);
-    setIsTextEditing(true);
+    setIsTextEditing(keepEditing);
     const subtitle = subtitles.find(item => item.id === subtitleId);
     if (subtitle) {
       seekTo(subtitle.startTime);
     }
   };
+
+  const selectedSubtitleIndex = selectedSubtitle
+    ? subtitles.findIndex(item => item.id === selectedSubtitle.id)
+    : -1;
+  const canNavigatePrevSubtitle = selectedSubtitleIndex > 0;
+  const canNavigateNextSubtitle =
+    selectedSubtitleIndex > -1 && selectedSubtitleIndex < subtitles.length - 1;
 
   const handleVideoLoad = (event: OnLoadData) => {
     if (!project) {
@@ -611,6 +623,21 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }));
   const bottomEditorAnimatedStyle = useAnimatedStyle(() => ({
     height: withTiming(targetBottomEditorHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
+  }));
+  const keyboardDismissAnimatedStyle = useAnimatedStyle(() => ({
+    bottom: withTiming(showKeyboardDismissButton ? keyboardHeight + 10 : 0, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
+    opacity: withTiming(showKeyboardDismissButton ? 1 : 0, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
+    transform: [
+      {
+        translateY: withTiming(showKeyboardDismissButton ? 0 : 12, {
+          duration: TIMELINE_COLLAPSE_DURATION_MS,
+        }),
+      },
+    ],
   }));
 
   useLayoutEffect(() => {
@@ -853,9 +880,15 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             bounces={false}
             horizontal
             keyboardShouldPersistTaps="handled"
+            directionalLockEnabled
+            decelerationRate="fast"
+            onMomentumScrollEnd={event => {
+              const nextPageIndex = event.nativeEvent.contentOffset.x >= width / 2 ? 1 : 0;
+              setIsStylePanelOpen(nextPageIndex === 1);
+            }}
             pagingEnabled
             ref={bottomEditorPagerRef}
-            scrollEnabled={false}
+            scrollEnabled={!isTextEditing}
             showsHorizontalScrollIndicator={false}
             style={styles.bottomEditorPager}
             testID={BOTTOM_EDITOR_PAGER_ID}>
@@ -869,6 +902,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
               )}
 
               <TextEditorSection
+                canNavigateNext={canNavigateNextSubtitle}
+                canNavigatePrev={canNavigatePrevSubtitle}
                 containerAnimatedStyle={textZoneAnimatedStyle}
                 isEditing={isTextEditing}
                 keyboardVisible={keyboardVisible}
@@ -881,7 +916,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                   }
                 }}
                 onSetEditing={setIsTextEditing}
-                onToggleStylePanel={setIsStylePanelOpen}
                 onUpdateText={updateSelectedSubtitleText}
                 selectedSubtitle={selectedSubtitle}
               />
@@ -903,6 +937,18 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           <View style={styles.bottomHandle} />
         </View>
       </GestureDetector>
+
+      {showKeyboardDismissButton ? (
+        <Animated.View style={[styles.keyboardDismissWrap, keyboardDismissAnimatedStyle]}>
+          <Pressable
+            onPress={() => Keyboard.dismiss()}
+            style={styles.keyboardDismissButton}
+            testID={KEYBOARD_DISMISS_BUTTON_ID}>
+            <Feather color={palette.textPrimary} name="chevron-down" size={16} />
+            <Text style={styles.keyboardDismissLabel}>Done</Text>
+          </Pressable>
+        </Animated.View>
+      ) : null}
 
       <ExportSheet
         onChangeResolution={setResolution}
@@ -1070,43 +1116,123 @@ function BottomEditorTabs({
   onSelectPrimary: () => void;
   onSelectStyle: () => void;
 }) {
+  const [tabTrackWidth, setTabTrackWidth] = useState(0);
+  const activeTabProgress = useSharedValue(isStylePageActive ? 1 : 0);
+
+  useEffect(() => {
+    const nextProgress = isStylePageActive ? 1 : 0;
+    const direction = nextProgress - activeTabProgress.value;
+
+    activeTabProgress.value = withSpring(nextProgress, {
+      stiffness: 320,
+      damping: 26,
+      mass: 0.78,
+      velocity: direction === 0 ? 0 : direction * 3.6,
+    });
+  }, [activeTabProgress, isStylePageActive]);
+
+  const tabIndicatorWidth = tabTrackWidth > 12 ? (tabTrackWidth - 12) / 2 : 0;
+  const tabIndicatorTravel = tabIndicatorWidth + 4;
+  const indicatorAnimatedStyle = useAnimatedStyle(() => {
+    const bounceDistance = Math.abs(activeTabProgress.value - Math.round(activeTabProgress.value));
+    const scale = 1 + bounceDistance * 0.04;
+
+    return {
+      opacity: tabIndicatorWidth > 0 ? 1 : 0,
+      width: tabIndicatorWidth,
+      transform: [
+        {
+          translateX: activeTabProgress.value * tabIndicatorTravel,
+        },
+        {
+          scale,
+        },
+      ],
+    };
+  });
+  const subtitleLabelAnimatedStyle = useAnimatedStyle(() => {
+    const emphasis = 1 - activeTabProgress.value;
+
+    return {
+      opacity: 0.64 + emphasis * 0.36,
+      transform: [
+        {
+          scale: 0.965 + emphasis * 0.035,
+        },
+        {
+          translateY: (1 - emphasis) * 1.5,
+        },
+      ],
+    };
+  });
+  const styleLabelAnimatedStyle = useAnimatedStyle(() => {
+    const emphasis = activeTabProgress.value;
+
+    return {
+      opacity: 0.64 + emphasis * 0.36,
+      transform: [
+        {
+          scale: 0.965 + emphasis * 0.035,
+        },
+        {
+          translateY: (1 - emphasis) * 1.5,
+        },
+      ],
+    };
+  });
+
   return (
-    <View style={styles.bottomEditorTabs}>
+    <View
+      onLayout={event => {
+        const nextWidth = event.nativeEvent.layout.width;
+        if (Math.abs(nextWidth - tabTrackWidth) > 1) {
+          setTabTrackWidth(nextWidth);
+        }
+      }}
+      style={styles.bottomEditorTabs}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.bottomEditorTabIndicator, indicatorAnimatedStyle]}
+      />
       <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected: !isStylePageActive }}
         onPress={onSelectPrimary}
-        style={[
-          styles.bottomEditorTab,
-          !isStylePageActive && styles.bottomEditorTabActive,
-        ]}
+        style={styles.bottomEditorTab}
         testID={BOTTOM_EDITOR_PRIMARY_TAB_ID}>
-        <Text
-          style={[
-            styles.bottomEditorTabLabel,
-            !isStylePageActive && styles.bottomEditorTabLabelActive,
-          ]}>
-          Subtitle
-        </Text>
+        <Animated.View style={subtitleLabelAnimatedStyle}>
+          <Text
+            style={[
+              styles.bottomEditorTabLabel,
+              !isStylePageActive && styles.bottomEditorTabLabelActive,
+            ]}>
+            Subtitle
+          </Text>
+        </Animated.View>
       </Pressable>
       <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected: isStylePageActive }}
         onPress={onSelectStyle}
-        style={[
-          styles.bottomEditorTab,
-          isStylePageActive && styles.bottomEditorTabActive,
-        ]}
+        style={styles.bottomEditorTab}
         testID={BOTTOM_EDITOR_STYLE_TAB_ID}>
-        <Text
-          style={[
-            styles.bottomEditorTabLabel,
-            isStylePageActive && styles.bottomEditorTabLabelActive,
-          ]}>
-          Style
-        </Text>
+        <Animated.View style={styleLabelAnimatedStyle}>
+          <Text
+            style={[
+              styles.bottomEditorTabLabel,
+              isStylePageActive && styles.bottomEditorTabLabelActive,
+            ]}>
+            Style
+          </Text>
+        </Animated.View>
       </Pressable>
     </View>
   );
 }
 
 function TextEditorSection({
+  canNavigateNext,
+  canNavigatePrev,
   containerAnimatedStyle,
   selectedSubtitle,
   isEditing,
@@ -1115,8 +1241,9 @@ function TextEditorSection({
   onSetEditing,
   onUpdateText,
   onNavigate,
-  onToggleStylePanel,
 }: {
+  canNavigateNext: boolean;
+  canNavigatePrev: boolean;
   containerAnimatedStyle?: StyleProp<ViewStyle>;
   selectedSubtitle: SubtitleBlock | null;
   isEditing: boolean;
@@ -1124,8 +1251,7 @@ function TextEditorSection({
   onSelectText: () => void;
   onSetEditing: (value: boolean) => void;
   onUpdateText: (text: string) => void;
-  onNavigate: (direction: -1 | 1) => void;
-  onToggleStylePanel: (value: boolean) => void;
+  onNavigate: (direction: -1 | 1, keepEditing: boolean) => void;
 }) {
   const [draftText, setDraftText] = useState(selectedSubtitle?.text ?? '');
 
@@ -1143,18 +1269,6 @@ function TextEditorSection({
     onUpdateText(draftText);
   }, [draftText, onUpdateText, selectedSubtitle]);
 
-  const swipeGesture = Gesture.Pan().onEnd(event => {
-    if (Math.abs(event.translationX) > 58 && isEditing) {
-      runOnJS(commitDraftTextIfChanged)();
-      runOnJS(onNavigate)(event.translationX < 0 ? 1 : -1);
-    }
-    if (event.translationY < -48) {
-      runOnJS(onToggleStylePanel)(true);
-    }
-    if (event.translationY > 48) {
-      runOnJS(onToggleStylePanel)(false);
-    }
-  });
   const handlePanelPress = () => {
     if (keyboardVisible) {
       Keyboard.dismiss();
@@ -1163,19 +1277,25 @@ function TextEditorSection({
 
     onSelectText();
   };
+  const handleNavigate = (direction: -1 | 1) => {
+    if (isEditing) {
+      commitDraftTextIfChanged();
+    }
+    onNavigate(direction, isEditing);
+  };
 
   return (
-    <GestureDetector gesture={swipeGesture}>
-      <Animated.View
-        testID={ACTIVE_SUBTITLE_SECTION_ID}
-        style={[
-          styles.textZone,
-          containerAnimatedStyle,
-        ]}>
-        <GlassPanel style={styles.textPanel}>
+    <Animated.View
+      testID={ACTIVE_SUBTITLE_SECTION_ID}
+      style={[
+        styles.textZone,
+        containerAnimatedStyle,
+      ]}>
+      <GlassPanel style={styles.textPanel}>
+        <View style={styles.textPanelHeader}>
           <Pressable
             onPress={handlePanelPress}
-            style={styles.textPanelHeader}
+            style={styles.textPanelHeaderCopy}
             testID={ACTIVE_SUBTITLE_HEADER_ID}>
             <View>
               <Text style={styles.textLabel}>Active Subtitle</Text>
@@ -1186,48 +1306,66 @@ function TextEditorSection({
               </Text>
             </View>
           </Pressable>
-          <ScrollView
-            bounces={false}
-            keyboardDismissMode="interactive"
-            keyboardShouldPersistTaps={keyboardVisible ? 'never' : 'handled'}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-            style={styles.textPanelBody}
-            contentContainerStyle={styles.textPanelBodyContent}>
-            {selectedSubtitle ? (
-              isEditing ? (
-                <TextInput
-                  defaultValue={selectedSubtitle.text}
-                  key={selectedSubtitle.id}
-                  multiline
-                  onBlur={() => {
-                    commitDraftTextIfChanged();
-                    onSetEditing(false);
-                  }}
-                  onChangeText={text => {
-                    setDraftText(text);
-                  }}
-                  placeholder="Rewrite subtitle text"
-                  placeholderTextColor={palette.textSecondary}
-                  style={[styles.subtitlePreview, styles.textInput]}
-                />
-              ) : (
-                <Pressable onPress={onSelectText}>
-                  <Text style={styles.subtitlePreview}>{selectedSubtitle.text}</Text>
-                </Pressable>
-              )
-            ) : (
-              <Text style={styles.subtitlePreview}>Select a subtitle block to edit.</Text>
-            )}
 
-            <View style={styles.panelHintRow}>
-              <Text style={styles.panelHint}>Swipe left or right to move between blocks.</Text>
-              <Text style={styles.panelHint}>Swipe up or tap Style for selectors.</Text>
-            </View>
-          </ScrollView>
-        </GlassPanel>
-      </Animated.View>
-    </GestureDetector>
+          <View style={styles.subtitleNavRow}>
+            <Pressable
+              disabled={!canNavigatePrev}
+              onPress={() => handleNavigate(-1)}
+              style={[
+                styles.subtitleNavButton,
+                !canNavigatePrev && styles.subtitleNavButtonDisabled,
+              ]}
+              testID={ACTIVE_SUBTITLE_PREV_BUTTON_ID}>
+              <Feather color={palette.textPrimary} name="chevron-left" size={16} />
+            </Pressable>
+            <Pressable
+              disabled={!canNavigateNext}
+              onPress={() => handleNavigate(1)}
+              style={[
+                styles.subtitleNavButton,
+                !canNavigateNext && styles.subtitleNavButtonDisabled,
+              ]}
+              testID={ACTIVE_SUBTITLE_NEXT_BUTTON_ID}>
+              <Feather color={palette.textPrimary} name="chevron-right" size={16} />
+            </Pressable>
+          </View>
+        </View>
+        <ScrollView
+          bounces={false}
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps={keyboardVisible ? 'never' : 'handled'}
+          scrollEnabled={false}
+          showsVerticalScrollIndicator={false}
+          style={styles.textPanelBody}
+          contentContainerStyle={styles.textPanelBodyContent}>
+          {selectedSubtitle ? (
+            isEditing ? (
+              <TextInput
+                defaultValue={selectedSubtitle.text}
+                key={selectedSubtitle.id}
+                multiline
+                onBlur={() => {
+                  commitDraftTextIfChanged();
+                  onSetEditing(false);
+                }}
+                onChangeText={text => {
+                  setDraftText(text);
+                }}
+                placeholder="Rewrite subtitle text"
+                placeholderTextColor={palette.textSecondary}
+                style={[styles.subtitlePreview, styles.textInput]}
+              />
+            ) : (
+              <Pressable onPress={onSelectText}>
+                <Text style={styles.subtitlePreview}>{selectedSubtitle.text}</Text>
+              </Pressable>
+            )
+          ) : (
+            <Text style={styles.subtitlePreview}>Select a subtitle block to edit.</Text>
+          )}
+        </ScrollView>
+      </GlassPanel>
+    </Animated.View>
   );
 }
 
@@ -1524,7 +1662,21 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     gap: 4,
+    position: 'relative',
+    overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  bottomEditorTabIndicator: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 240, 255, 0.16)',
+    shadowColor: palette.cyan,
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
   },
   bottomEditorTab: {
     minWidth: 96,
@@ -1534,13 +1686,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bottomEditorTabActive: {
-    backgroundColor: 'rgba(0, 240, 255, 0.14)',
-  },
   bottomEditorTabLabel: {
     color: palette.textSecondary,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.2,
   },
   bottomEditorTabLabelActive: {
@@ -1682,6 +1831,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
+  textPanelHeaderCopy: {
+    flex: 1,
+  },
   textLabel: {
     color: palette.textSecondary,
     fontSize: 12,
@@ -1714,16 +1866,22 @@ const styles = StyleSheet.create({
     padding: 0,
     textAlignVertical: 'top',
   },
-  panelHintRow: {
+  subtitleNavRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 12,
   },
-  panelHint: {
-    flex: 1,
-    color: palette.textSecondary,
-    fontSize: 12,
-    lineHeight: 17,
+  subtitleNavButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  subtitleNavButtonDisabled: {
+    opacity: 0.35,
   },
   styleRow: {
     gap: 8,
@@ -1778,5 +1936,26 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 999,
     backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  keyboardDismissWrap: {
+    position: 'absolute',
+    right: 16,
+  },
+  keyboardDismissButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(10, 12, 17, 0.9)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  keyboardDismissLabel: {
+    color: palette.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });

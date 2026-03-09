@@ -142,6 +142,8 @@ jest.mock('react-native-haptic-feedback', () => ({
 
 import {
   ACTIVE_SUBTITLE_HEADER_ID,
+  ACTIVE_SUBTITLE_NEXT_BUTTON_ID,
+  ACTIVE_SUBTITLE_PREV_BUTTON_ID,
   ACTIVE_SUBTITLE_SECTION_ID,
   BOTTOM_EDITOR_PAGER_ID,
   BOTTOM_EDITOR_PRIMARY_TAB_ID,
@@ -149,6 +151,7 @@ import {
   BOTTOM_EDITOR_STYLE_TAB_ID,
   EDITOR_TOP_BAR_ID,
   EditorScreen,
+  KEYBOARD_DISMISS_BUTTON_ID,
   OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX,
   TIMELINE_SECTION_ID,
   resolveOverlaySubtitle,
@@ -315,6 +318,17 @@ describe('EditorScreen', () => {
           { text: 'line', startTime: 1600, endTime: 2400 },
         ],
       },
+      {
+        id: 'subtitle-2',
+        startTime: 3400,
+        endTime: 5200,
+        text: 'second bright line',
+        words: [
+          { text: 'second', startTime: 3400, endTime: 3900 },
+          { text: 'bright', startTime: 3950, endTime: 4500 },
+          { text: 'line', startTime: 4550, endTime: 5100 },
+        ],
+      },
     ],
     globalStyle: defaultSubtitleStyle,
     waveform: [0.2, 0.4, 0.6],
@@ -352,6 +366,16 @@ describe('EditorScreen', () => {
 
     expect(renderer!.root.findByProps({ children: 'Active Subtitle' })).toBeTruthy();
     expect(renderer!.root.findAllByProps({ children: 'Export' })).toHaveLength(0);
+    expect(
+      renderer!.root.findAllByProps({
+        children: 'Swipe left or right to move between blocks.',
+      }),
+    ).toHaveLength(0);
+    expect(
+      renderer!.root.findAllByProps({
+        children: 'Swipe up or tap Style for selectors.',
+      }),
+    ).toHaveLength(0);
 
     const section = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_SECTION_ID });
     const style = StyleSheet.flatten(section.props.style);
@@ -417,6 +441,11 @@ describe('EditorScreen', () => {
     let topBarStyle = StyleSheet.flatten(topBar.props.style);
     let bottomEditorShell = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_SHELL_ID });
     let bottomEditorShellStyle = StyleSheet.flatten(bottomEditorShell.props.style);
+    let dismissButtons = renderer!.root.findAll(
+      node =>
+        node.props.testID === KEYBOARD_DISMISS_BUTTON_ID &&
+        typeof node.props.onPress === 'function',
+    );
 
     expect(timelineSection.props.pointerEvents).toBe('auto');
     expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineTrackHeight, 5);
@@ -424,6 +453,7 @@ describe('EditorScreen', () => {
     expect(topBar.props.pointerEvents).toBe('auto');
     expect(topBarStyle.height).toBe(34);
     expect(bottomEditorShellStyle.height).toBeGreaterThan(expandedLayout.textHeight);
+    expect(dismissButtons).toHaveLength(0);
     expect(renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PAGER_ID })).toBeTruthy();
 
     await ReactTestRenderer.act(() => {
@@ -450,6 +480,11 @@ describe('EditorScreen', () => {
     topBarStyle = StyleSheet.flatten(topBar.props.style);
     bottomEditorShell = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_SHELL_ID });
     bottomEditorShellStyle = StyleSheet.flatten(bottomEditorShell.props.style);
+    dismissButtons = renderer!.root.findAll(
+      node =>
+        node.props.testID === KEYBOARD_DISMISS_BUTTON_ID &&
+        typeof node.props.onPress === 'function',
+    );
 
     expect(timelineSection.props.pointerEvents).toBe('none');
     expect(timelineStyle.height).toBe(0);
@@ -459,12 +494,19 @@ describe('EditorScreen', () => {
     expect(topBarStyle.opacity).toBe(0);
     expect(textStyle.height).toBeCloseTo(collapsedLayout.textHeight, 5);
     expect(bottomEditorShellStyle.height).toBeGreaterThan(textStyle.height);
+    expect(dismissButtons).toHaveLength(1);
+
+    await ReactTestRenderer.act(() => {
+      dismissButtons[0].props.onPress();
+    });
+
+    expect(dismissKeyboard).toHaveBeenCalledTimes(1);
 
     await ReactTestRenderer.act(() => {
       renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
     });
 
-    expect(dismissKeyboard).toHaveBeenCalled();
+    expect(dismissKeyboard).toHaveBeenCalledTimes(2);
 
     await ReactTestRenderer.act(() => {
       keyboardListeners.keyboardWillHide?.forEach(listener => {
@@ -480,6 +522,11 @@ describe('EditorScreen', () => {
     textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
     topBar = renderer!.root.findByProps({ testID: EDITOR_TOP_BAR_ID });
     topBarStyle = StyleSheet.flatten(topBar.props.style);
+    dismissButtons = renderer!.root.findAll(
+      node =>
+        node.props.testID === KEYBOARD_DISMISS_BUTTON_ID &&
+        typeof node.props.onPress === 'function',
+    );
 
     expect(timelineSection.props.pointerEvents).toBe('auto');
     expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineTrackHeight, 5);
@@ -488,6 +535,7 @@ describe('EditorScreen', () => {
     expect(topBarStyle.height).toBe(34);
     expect(topBarStyle.opacity).toBe(1);
     expect(textStyle.height).toBeCloseTo(expandedLayout.textHeight, 5);
+    expect(dismissButtons).toHaveLength(0);
   });
 
   it('switches the bottom editor between subtitle and style slides', async () => {
@@ -508,24 +556,86 @@ describe('EditorScreen', () => {
 
     let subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
     let styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
+    const pager = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PAGER_ID });
 
-    let subtitleTabStyle = StyleSheet.flatten(subtitleTab.props.style);
-    let styleTabStyle = StyleSheet.flatten(styleTab.props.style);
-
-    expect(subtitleTabStyle.backgroundColor).toBe('rgba(0, 240, 255, 0.14)');
-    expect(styleTabStyle.backgroundColor).toBeUndefined();
+    expect(subtitleTab.props.accessibilityState.selected).toBe(true);
+    expect(styleTab.props.accessibilityState.selected).toBe(false);
 
     await ReactTestRenderer.act(() => {
-      styleTab.props.onPress();
+      pager.props.onMomentumScrollEnd({
+        nativeEvent: {
+          contentOffset: {
+            x: 390,
+            y: 0,
+          },
+        },
+      });
     });
 
     subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
     styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
-    subtitleTabStyle = StyleSheet.flatten(subtitleTab.props.style);
-    styleTabStyle = StyleSheet.flatten(styleTab.props.style);
+    expect(subtitleTab.props.accessibilityState.selected).toBe(false);
+    expect(styleTab.props.accessibilityState.selected).toBe(true);
 
-    expect(subtitleTabStyle.backgroundColor).toBeUndefined();
-    expect(styleTabStyle.backgroundColor).toBe('rgba(0, 240, 255, 0.14)');
+    await ReactTestRenderer.act(() => {
+      pager.props.onMomentumScrollEnd({
+        nativeEvent: {
+          contentOffset: {
+            x: 0,
+            y: 0,
+          },
+        },
+      });
+    });
+
+    subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
+    styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
+    expect(subtitleTab.props.accessibilityState.selected).toBe(true);
+    expect(styleTab.props.accessibilityState.selected).toBe(false);
+  });
+
+  it('navigates between subtitle blocks with the active subtitle arrow buttons', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    let prevButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_PREV_BUTTON_ID });
+    let nextButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_NEXT_BUTTON_ID });
+
+    expect(prevButton.props.disabled).toBe(true);
+    expect(nextButton.props.disabled).toBe(false);
+    expect(renderer!.root.findByProps({ children: '0:00 - 0:03' })).toBeTruthy();
+    expect(renderer!.root.findByProps({ children: 'first bright line' })).toBeTruthy();
+
+    await ReactTestRenderer.act(() => {
+      nextButton.props.onPress();
+    });
+
+    prevButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_PREV_BUTTON_ID });
+    nextButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_NEXT_BUTTON_ID });
+
+    expect(prevButton.props.disabled).toBe(false);
+    expect(nextButton.props.disabled).toBe(true);
+    expect(renderer!.root.findByProps({ children: '0:03 - 0:05' })).toBeTruthy();
+    expect(renderer!.root.findByProps({ children: 'second bright line' })).toBeTruthy();
+
+    await ReactTestRenderer.act(() => {
+      prevButton.props.onPress();
+    });
+
+    expect(renderer!.root.findByProps({ children: '0:00 - 0:03' })).toBeTruthy();
+    expect(renderer!.root.findByProps({ children: 'first bright line' })).toBeTruthy();
   });
 
   it('highlights the active subtitle word during playback', async () => {
