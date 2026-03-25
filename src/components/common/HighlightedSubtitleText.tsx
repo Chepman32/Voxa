@@ -35,9 +35,9 @@ function getEffectStyle(effect?: SubtitleEffect): TextStyle {
       };
     case 'shadow':
       return {
-        textShadowColor: '#000000',
-        textShadowOffset: { width: 3, height: 3 },
-        textShadowRadius: 6,
+        textShadowColor: 'rgba(0, 0, 0, 0.9)',
+        textShadowOffset: { width: 4, height: 4 },
+        textShadowRadius: 2,
       };
     default:
       return {};
