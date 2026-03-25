@@ -196,7 +196,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [localeRetrySheetVisible, setLocaleRetrySheetVisible] = useState(false);
   const [availableSpeechLocales, setAvailableSpeechLocales] = useState<SpeechLocaleOption[]>([]);
   const [loadingSpeechLocales, setLoadingSpeechLocales] = useState(false);
-  const [selectedRetryLocale, setSelectedRetryLocale] = useState(AUTO_DETECT_LOCALE_VALUE);
   const [retryingSubtitles, setRetryingSubtitles] = useState(false);
   const [draggedSubtitleSnapshot, setDraggedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
   const [navigationPinnedSubtitleSnapshot, setNavigationPinnedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
@@ -222,7 +221,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const project = editorProject as Project;
   const stylePreset = stylePresetValue as Project['globalStyle'];
 
+  const [selectedRetryLocale, setSelectedRetryLocale] = useState(
+    project.recognitionLocale || AUTO_DETECT_LOCALE_VALUE
+  );
   const [activeTab, setActiveTab] = useState<'subtitle' | 'style' | 'language'>('subtitle');
+  const [showRegenerateButton, setShowRegenerateButton] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1159,13 +1162,13 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 availableLocales={availableSpeechLocales}
                 currentLocale={project.recognitionLocale}
                 loading={loadingSpeechLocales}
-                onRetry={locale => {
-                  setSelectedRetryLocale(locale);
-                  handleRetrySubtitleGeneration().catch(showRetryError);
-                }}
                 retrying={retryingSubtitles}
                 selectedLocale={selectedRetryLocale}
-                onSelectLocale={setSelectedRetryLocale}
+                onSelectLocale={locale => {
+                  setSelectedRetryLocale(locale);
+                  const hasChanged = locale !== (project.recognitionLocale || AUTO_DETECT_LOCALE_VALUE);
+                  setShowRegenerateButton(hasChanged);
+                }}
               />
             </View>
           </ScrollView>
@@ -1177,6 +1180,28 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           <View style={styles.bottomHandle} />
         </View>
       </GestureDetector>
+
+      {showRegenerateButton && (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(150)}
+          style={[styles.floatingRegenerateButton, { bottom: bottomInset + 24, right: 16 }]}>
+          <Pressable
+            disabled={retryingSubtitles || availableSpeechLocales.length === 0}
+            onPress={() => {
+              setShowRegenerateButton(false);
+              handleRetrySubtitleGeneration().catch(showRetryError);
+            }}
+            style={[
+              styles.regenerateButton,
+              (retryingSubtitles || availableSpeechLocales.length === 0) && styles.regenerateButtonDisabled,
+            ]}>
+            <Text style={styles.regenerateButtonText}>
+              {retryingSubtitles ? 'Regenerating...' : 'Regenerate Subtitles'}
+            </Text>
+          </Pressable>
+        </Animated.View>
+      )}
 
       {showKeyboardDismissButton ? (
         <Animated.View style={[styles.keyboardDismissWrap, keyboardDismissAnimatedStyle]}>
@@ -1365,7 +1390,6 @@ function LanguagePanel({
   availableLocales,
   currentLocale,
   loading,
-  onRetry,
   retrying,
   selectedLocale,
   onSelectLocale,
@@ -1373,7 +1397,6 @@ function LanguagePanel({
   availableLocales: SpeechLocaleOption[];
   currentLocale?: string;
   loading: boolean;
-  onRetry: (locale: string) => void;
   retrying: boolean;
   selectedLocale: string;
   onSelectLocale: (locale: string) => void;
@@ -1438,18 +1461,6 @@ function LanguagePanel({
           ? 'Loading on-device languages...'
           : `${availableLocales.length} on-device languages available`}
       </Text>
-
-      <Pressable
-        disabled={loading || retrying || availableLocales.length === 0}
-        onPress={() => onRetry(selectedLocale)}
-        style={[
-          styles.retryButton,
-          (loading || retrying || availableLocales.length === 0) && styles.retryButtonDisabled,
-        ]}>
-        <Text style={styles.retryButtonText}>
-          {retrying ? 'Regenerating...' : 'Regenerate Subtitles'}
-        </Text>
-      </Pressable>
     </ScrollView>
   );
 }
@@ -2412,6 +2423,30 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  floatingRegenerateButton: {
+    position: 'absolute',
+    zIndex: 10,
+  },
+  regenerateButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.textPrimary,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  regenerateButtonText: {
+    color: palette.canvas,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  regenerateButtonDisabled: {
+    opacity: 0.55,
   },
   retryButton: {
     minHeight: 52,
