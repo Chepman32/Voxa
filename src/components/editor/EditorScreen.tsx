@@ -224,6 +224,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const setPlayback = useSetAtom(playbackPositionAtom);
   const project = editorProject as Project;
   const stylePreset = stylePresetValue as Project['globalStyle'];
+  const [draftTextPreview, setDraftTextPreview] = useState<string | null>(null);
 
   const [selectedRetryLocale, setSelectedRetryLocale] = useState(
     project.recognitionLocale || AUTO_DETECT_LOCALE_VALUE
@@ -363,7 +364,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const liveDisplaySubtitle = isPlaceholderSubtitle(activeDisplaySubtitle)
     ? null
     : activeDisplaySubtitle;
-  const displaySubtitle = resolveOverlaySubtitle({
+  const resolvedDisplaySubtitle = resolveOverlaySubtitle({
     isDragging: isSubtitleDraggingRef.current,
     draggedSubtitleSnapshot,
     navigationPinnedSubtitleSnapshot:
@@ -373,6 +374,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         : null,
     liveSubtitle: liveDisplaySubtitle,
   });
+  const displaySubtitle =
+    isTextEditing && resolvedDisplaySubtitle && draftTextPreview !== null
+      ? { ...resolvedDisplaySubtitle, text: draftTextPreview }
+      : resolvedDisplaySubtitle;
   const wordHighlightAvailable = subtitles.some(
     subtitle =>
       !isPlaceholderSubtitle(subtitle) &&
@@ -1139,6 +1144,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 isEditing={isTextEditing}
                 keyboardVisible={keyboardVisible}
                 onNavigate={navigateAdjacentSubtitle}
+                onDraftChange={text => { setDraftTextPreview(text); }}
                 onSelectText={() => {
                   setIsStylePanelOpen(false);
                   setIsTextEditing(true);
@@ -1146,7 +1152,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                     setSelectedSubtitleId(selectedSubtitle.id);
                   }
                 }}
-                onSetEditing={setIsTextEditing}
+                onSetEditing={value => {
+                  if (!value) { setDraftTextPreview(null); }
+                  setIsTextEditing(value);
+                }}
                 onUpdateText={updateSelectedSubtitleText}
                 selectedSubtitle={selectedSubtitle}
                 playbackPosition={playbackPosition}
@@ -1718,6 +1727,7 @@ function TextEditorSection({
   onSelectText,
   onSetEditing,
   onUpdateText,
+  onDraftChange,
   onNavigate,
   playbackPosition,
   stylePreset,
@@ -1731,6 +1741,7 @@ function TextEditorSection({
   onSelectText: () => void;
   onSetEditing: (value: boolean) => void;
   onUpdateText: (text: string) => void;
+  onDraftChange: (text: string) => void;
   onNavigate: (direction: -1 | 1, keepEditing: boolean) => void;
   playbackPosition: number;
   stylePreset: Project['globalStyle'];
@@ -1740,8 +1751,6 @@ function TextEditorSection({
   useEffect(() => {
     setDraftText(selectedSubtitle?.text ?? '');
   }, [selectedSubtitle?.id, selectedSubtitle?.text]);
-
-  const [cursorIndex, setCursorIndex] = useState<number | null>(null);
 
   const activeEditWordIndexRef = useRef(-1);
 
@@ -1849,9 +1858,7 @@ function TextEditorSection({
                 }}
                 onChangeText={text => {
                   setDraftText(text);
-                }}
-                onSelectionChange={e => {
-                  setCursorIndex(e.nativeEvent.selection.start);
+                  onDraftChange(text);
                 }}
                 placeholder="Rewrite subtitle text"
                 placeholderTextColor={palette.textSecondary}
