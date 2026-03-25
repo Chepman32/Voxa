@@ -90,6 +90,7 @@ import type {
   Project,
   SpeechLocaleOption,
   SubtitleBlock,
+  SubtitleEffect,
 } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { GlassPanel } from '../common/GlassPanel';
@@ -116,6 +117,7 @@ export const BOTTOM_EDITOR_PAGER_ID = 'bottom-editor-pager';
 export const BOTTOM_EDITOR_PRIMARY_TAB_ID = 'bottom-editor-primary-tab';
 export const BOTTOM_EDITOR_STYLE_TAB_ID = 'bottom-editor-style-tab';
 export const BOTTOM_EDITOR_LANGUAGE_TAB_ID = 'bottom-editor-language-tab';
+export const BOTTOM_EDITOR_FX_TAB_ID = 'bottom-editor-fx-tab';
 export const EDITOR_TOP_BAR_ID = 'editor-top-bar';
 export const KEYBOARD_DISMISS_BUTTON_ID = 'keyboard-dismiss-button';
 export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
@@ -224,7 +226,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [selectedRetryLocale, setSelectedRetryLocale] = useState(
     project.recognitionLocale || AUTO_DETECT_LOCALE_VALUE
   );
-  const [activeTab, setActiveTab] = useState<'subtitle' | 'style' | 'language'>('subtitle');
+  const [activeTab, setActiveTab] = useState<'subtitle' | 'style' | 'language' | 'fx'>('subtitle');
   const [showRegenerateButton, setShowRegenerateButton] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -276,7 +278,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => {
-    const pageIndex = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : 2;
+    const pageIndex = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : activeTab === 'language' ? 2 : 3;
     bottomEditorPagerRef.current?.scrollTo?.({
       x: pageIndex * width,
       animated: true,
@@ -1109,7 +1111,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             decelerationRate="fast"
             onMomentumScrollEnd={event => {
               const pageIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-              const newTab = pageIndex === 0 ? 'subtitle' : pageIndex === 1 ? 'style' : 'language';
+              const newTab = pageIndex === 0 ? 'subtitle' : pageIndex === 1 ? 'style' : pageIndex === 2 ? 'language' : 'fx';
               setActiveTab(newTab);
               setIsStylePanelOpen(newTab === 'style');
             }}
@@ -1167,6 +1169,15 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                   setSelectedRetryLocale(locale);
                   const hasChanged = locale !== (project.recognitionLocale || AUTO_DETECT_LOCALE_VALUE);
                   setShowRegenerateButton(hasChanged);
+                }}
+              />
+            </View>
+
+            <View style={[styles.bottomEditorPage, { width }]}>
+              <FXPanel
+                currentEffect={stylePreset.effect || 'none'}
+                onSelectEffect={effect => {
+                  setStylePreset({ ...stylePreset, effect });
                 }}
               />
             </View>
@@ -1385,6 +1396,50 @@ function TimelineControlsPanel({
   );
 }
 
+function FXPanel({
+  currentEffect,
+  onSelectEffect,
+}: {
+  currentEffect: string;
+  onSelectEffect: (effect: SubtitleEffect) => void;
+}) {
+  const effects: Array<{ value: SubtitleEffect; label: string }> = [
+    { value: 'none', label: 'None' },
+    { value: 'neon', label: 'Neon' },
+    { value: 'chrome', label: 'Chrome' },
+    { value: 'glow', label: 'Glow' },
+    { value: 'shadow', label: 'Shadow' },
+  ];
+
+  return (
+    <View style={styles.fxPanel}>
+      <Text style={styles.fxPanelTitle}>Text Effects</Text>
+      <View style={styles.fxOptions}>
+        {effects.map(effect => (
+          <Pressable
+            key={effect.value}
+            onPress={() => onSelectEffect(effect.value)}
+            style={[
+              styles.fxOption,
+              currentEffect === effect.value && styles.fxOptionActive,
+            ]}>
+            <Text
+              style={[
+                styles.fxOptionLabel,
+                currentEffect === effect.value && styles.fxOptionLabelActive,
+              ]}>
+              {effect.label}
+            </Text>
+            {currentEffect === effect.value && (
+              <Feather color={palette.cyan} name="check" size={16} />
+            )}
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function LanguagePanel({
   availableLocales,
   currentLocale,
@@ -1468,14 +1523,16 @@ function BottomEditorTabs({
   activeTab,
   onSelectTab,
 }: {
-  activeTab: 'subtitle' | 'style' | 'language';
-  onSelectTab: (tab: 'subtitle' | 'style' | 'language') => void;
+  activeTab: 'subtitle' | 'style' | 'language' | 'fx';
+  onSelectTab: (tab: 'subtitle' | 'style' | 'language' | 'fx') => void;
 }) {
   const [tabTrackWidth, setTabTrackWidth] = useState(0);
-  const activeTabProgress = useSharedValue(activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : 2);
+  const activeTabProgress = useSharedValue(
+    activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : activeTab === 'language' ? 2 : 3
+  );
 
   useEffect(() => {
-    const nextProgress = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : 2;
+    const nextProgress = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : activeTab === 'language' ? 2 : 3;
     const direction = nextProgress - activeTabProgress.value;
 
     activeTabProgress.value = withSpring(nextProgress, {
@@ -1486,7 +1543,7 @@ function BottomEditorTabs({
     });
   }, [activeTabProgress, activeTab]);
 
-  const tabIndicatorWidth = tabTrackWidth > 12 ? (tabTrackWidth - 12) / 3 : 0;
+  const tabIndicatorWidth = tabTrackWidth > 12 ? (tabTrackWidth - 12) / 4 : 0;
   const tabIndicatorTravel = tabIndicatorWidth + 4;
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
     const bounceDistance = Math.abs(activeTabProgress.value - Math.round(activeTabProgress.value));
@@ -1537,6 +1594,21 @@ function BottomEditorTabs({
   });
   const languageLabelAnimatedStyle = useAnimatedStyle(() => {
     const emphasis = Math.max(0, 1 - Math.abs(activeTabProgress.value - 2));
+
+    return {
+      opacity: 0.64 + emphasis * 0.36,
+      transform: [
+        {
+          scale: 0.965 + emphasis * 0.035,
+        },
+        {
+          translateY: (1 - emphasis) * 1.5,
+        },
+      ],
+    };
+  });
+  const fxLabelAnimatedStyle = useAnimatedStyle(() => {
+    const emphasis = Math.max(0, 1 - Math.abs(activeTabProgress.value - 3));
 
     return {
       opacity: 0.64 + emphasis * 0.36,
@@ -1609,6 +1681,22 @@ function BottomEditorTabs({
               activeTab === 'language' && styles.bottomEditorTabLabelActive,
             ]}>
             Language
+          </Text>
+        </Animated.View>
+      </Pressable>
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === 'fx' }}
+        onPress={() => onSelectTab('fx')}
+        style={styles.bottomEditorTab}
+        testID={BOTTOM_EDITOR_FX_TAB_ID}>
+        <Animated.View style={fxLabelAnimatedStyle}>
+          <Text
+            style={[
+              styles.bottomEditorTabLabel,
+              activeTab === 'fx' && styles.bottomEditorTabLabelActive,
+            ]}>
+            FX
           </Text>
         </Animated.View>
       </Pressable>
@@ -2422,6 +2510,45 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  fxPanel: {
+    paddingHorizontal: 12,
+    paddingTop: 18,
+    paddingBottom: 18,
+    gap: 16,
+  },
+  fxPanelTitle: {
+    color: palette.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  fxOptions: {
+    gap: 10,
+  },
+  fxOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  fxOptionActive: {
+    borderColor: 'rgba(0, 240, 255, 0.3)',
+    backgroundColor: 'rgba(0, 240, 255, 0.12)',
+  },
+  fxOptionLabel: {
+    flex: 1,
+    color: palette.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  fxOptionLabelActive: {
+    color: palette.textPrimary,
   },
   floatingRegenerateButton: {
     position: 'absolute',

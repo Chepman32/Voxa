@@ -11,7 +11,38 @@ import {
   findActiveSubtitleWordIndex,
   getRenderableSubtitleWords,
 } from '../../lib/project';
-import type { SubtitleBlock, SubtitleStyle } from '../../types/models';
+import type { SubtitleBlock, SubtitleEffect, SubtitleStyle } from '../../types/models';
+
+function getEffectStyle(effect?: SubtitleEffect): TextStyle {
+  switch (effect) {
+    case 'neon':
+      return {
+        textShadowColor: '#00f0ff',
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 20,
+      };
+    case 'chrome':
+      return {
+        textShadowColor: '#ffffff',
+        textShadowOffset: { width: 2, height: 2 },
+        textShadowRadius: 4,
+      };
+    case 'glow':
+      return {
+        textShadowColor: '#ffff00',
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 15,
+      };
+    case 'shadow':
+      return {
+        textShadowColor: '#000000',
+        textShadowOffset: { width: 3, height: 3 },
+        textShadowRadius: 6,
+      };
+    default:
+      return {};
+  }
+}
 
 interface HighlightedSubtitleTextProps {
   subtitle: SubtitleBlock;
@@ -35,9 +66,11 @@ export function HighlightedSubtitleText({
   const words = getRenderableSubtitleWords(subtitle, {
     allowSyntheticWords,
   });
+  const effectStyle = getEffectStyle(stylePreset.effect);
+  
   if (!words || !stylePreset.wordHighlightEnabled) {
     return (
-      <Text onLayout={onLayout} style={style}>
+      <Text onLayout={onLayout} style={[style, effectStyle]}>
         {applySubtitleCasing(subtitle.text, stylePreset)}
       </Text>
     );
@@ -48,7 +81,7 @@ export function HighlightedSubtitleText({
   });
 
   return (
-    <Text onLayout={onLayout} style={style}>
+    <Text onLayout={onLayout} style={[style, effectStyle]}>
       {words.map((word, index) => (
         <Text
           key={`${subtitle.id}-word-${index}-${word.startTime}`}

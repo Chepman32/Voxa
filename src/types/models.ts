@@ -1,5 +1,6 @@
 export type SubtitlePosition = 'top' | 'middle' | 'bottom';
 export type SubtitleCasing = 'sentence' | 'uppercase';
+export type SubtitleEffect = 'none' | 'neon' | 'chrome' | 'glow' | 'shadow';
 export type RecognitionStatus = 'ready' | 'manual' | 'failed';
 export type RecognitionMode = 'auto' | 'manual';
 export type ExportResolution = '720p' | '1080p' | '4k';
@@ -23,6 +24,7 @@ export interface SubtitleStyle {
   position: SubtitlePosition;
   positionOffsetYRatio: number;
   casing: SubtitleCasing;
+  effect?: SubtitleEffect;
 }
 
 export interface SubtitleWord {
