@@ -822,6 +822,55 @@ describe('EditorScreen', () => {
     expect(activeWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
   });
 
+  it('highlights the current word inside the active subtitle input after entering edit mode', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    const video = renderer!.root.find(
+      node => typeof node.props.onProgress === 'function',
+    );
+
+    await ReactTestRenderer.act(() => {
+      video.props.onProgress({ currentTime: 1 });
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+    });
+
+    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+
+    await ReactTestRenderer.act(() => {
+      textInput.props.onFocus();
+    });
+
+    const activeSubtitleSection = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_SECTION_ID,
+    });
+    const highlightedWords = activeSubtitleSection.findAll(node => {
+      const content = Array.isArray(node.props.children)
+        ? node.props.children.join('')
+        : node.props.children;
+      const style = StyleSheet.flatten(node.props.style);
+
+      return content === 'bright' && style?.color === defaultSubtitleStyle.accentColor;
+    });
+
+    expect(highlightedWords.length).toBeGreaterThan(0);
+  });
+
   it('keeps the active subtitle input typography aligned with the preview while editing', async () => {
     jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
       width: 390,

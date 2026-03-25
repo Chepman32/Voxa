@@ -1751,12 +1751,11 @@ function TextEditorSection({
   stylePreset: Project['globalStyle'];
 }) {
   const [draftText, setDraftText] = useState(selectedSubtitle?.text ?? '');
+  const [activeEditWordIndex, setActiveEditWordIndex] = useState(-1);
 
   useEffect(() => {
     setDraftText(selectedSubtitle?.text ?? '');
   }, [selectedSubtitle?.id, selectedSubtitle?.text]);
-
-  const activeEditWordIndexRef = useRef(-1);
 
   const commitDraftTextIfChanged = useCallback(() => {
     if (!selectedSubtitle) {
@@ -1769,6 +1768,19 @@ function TextEditorSection({
   }, [draftText, onUpdateText, selectedSubtitle]);
 
   const textInputRef = useRef<TextInput>(null);
+  const captureActiveEditWordIndex = useCallback(() => {
+    if (!selectedSubtitle) {
+      setActiveEditWordIndex(-1);
+      return;
+    }
+
+    const currentIndex = findActiveSubtitleWordIndex(selectedSubtitle, playbackPosition);
+    setActiveEditWordIndex(
+      currentIndex > -1
+        ? currentIndex
+        : findActiveSubtitleWordIndex(selectedSubtitle, selectedSubtitle.startTime),
+    );
+  }, [playbackPosition, selectedSubtitle]);
 
   const handlePanelPress = () => {
     if (keyboardVisible) {
@@ -1776,6 +1788,7 @@ function TextEditorSection({
       return;
     }
 
+    captureActiveEditWordIndex();
     onSelectText();
     textInputRef.current?.focus();
   };
@@ -1847,18 +1860,15 @@ function TextEditorSection({
                 multiline
                 value={draftText}
                 onFocus={() => {
+                  captureActiveEditWordIndex();
                   if (!isEditing) {
                     onSelectText();
-                    activeEditWordIndexRef.current = findActiveSubtitleWordIndex(
-                      selectedSubtitle,
-                      playbackPosition,
-                    );
                   }
                 }}
                 onBlur={() => {
                   commitDraftTextIfChanged();
                   onSetEditing(false);
-                  activeEditWordIndexRef.current = -1;
+                  setActiveEditWordIndex(-1);
                 }}
                 onChangeText={text => {
                   setDraftText(text);
@@ -1877,7 +1887,7 @@ function TextEditorSection({
                           acc.nodes.push(
                             <Text
                               key={acc.wordIdx}
-                              style={acc.wordIdx === activeEditWordIndexRef.current ? { color: stylePreset.accentColor } : undefined}>
+                              style={acc.wordIdx === activeEditWordIndex ? { color: stylePreset.accentColor } : undefined}>
                               {token}
                             </Text>,
                           );
