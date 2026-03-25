@@ -30,7 +30,6 @@ interface AppState {
   beginProcessing: (assetUri?: string) => void;
   setProcessingPhase: (phase: ProcessingState['phase'], label: string) => void;
   finishProcessing: () => void;
-  setSpeechLocale: (locale: string) => void;
   setPreferredExportResolution: (resolution: UserSettings['preferredExportResolution']) => void;
   setHighlightEditedWords: (value: boolean) => void;
   addProject: (project: Project) => void;
@@ -43,7 +42,6 @@ type PersistedAppState = Partial<
 >;
 
 const defaultSettings: UserSettings = {
-  speechLocale: 'en-US',
   preferredExportResolution: '1080p',
   highlightEditedWords: true,
 };
@@ -64,7 +62,26 @@ function normalizeStoredProject(project: Project): Project {
     ...project,
     globalStyle: normalizeSubtitleStyle(project.globalStyle ?? defaultSubtitleStyle),
     subtitles,
+    recognitionMode: project.recognitionMode ?? 'auto',
     lastEditedSubtitleId: hasSelectedSubtitle ? project.lastEditedSubtitleId : undefined,
+  };
+}
+
+export function migratePersistedAppState(persistedState?: PersistedAppState | null) {
+  const state = (persistedState ?? {}) as PersistedAppState & {
+    settings?: Partial<UserSettings> & { speechLocale?: string };
+  };
+
+  return {
+    ...state,
+    settings: {
+      preferredExportResolution:
+        state.settings?.preferredExportResolution ??
+        defaultSettings.preferredExportResolution,
+      highlightEditedWords:
+        state.settings?.highlightEditedWords ?? defaultSettings.highlightEditedWords,
+    },
+    projects: (state.projects ?? []).map(normalizeStoredProject),
   };
 }
 
@@ -105,10 +122,6 @@ export const useAppStore = create<AppState>()(
           },
         })),
       finishProcessing: () => set({ processing: defaultProcessing }),
-      setSpeechLocale: speechLocale =>
-        set(state => ({
-          settings: { ...state.settings, speechLocale },
-        })),
       setPreferredExportResolution: preferredExportResolution =>
         set(state => ({
           settings: { ...state.settings, preferredExportResolution },
@@ -154,22 +167,11 @@ export const useAppStore = create<AppState>()(
         settings: state.settings,
         projects: state.projects,
       }),
-      migrate: persistedState => {
-        const state = (persistedState ?? {}) as PersistedAppState;
-
-        return {
-          ...state,
-          settings: {
-            ...defaultSettings,
-            ...state.settings,
-          },
-          projects: (state.projects ?? []).map(normalizeStoredProject),
-        };
-      },
+      migrate: persistedState => migratePersistedAppState(persistedState as PersistedAppState),
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 4,
+      version: 5,
     },
   ),
 );

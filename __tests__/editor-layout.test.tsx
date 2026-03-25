@@ -113,6 +113,27 @@ jest.mock('react-native-reanimated', () => {
     },
     FadeIn: animation,
     FadeOut: animation,
+    interpolate: (value: number, input: number[], output: number[]) => {
+      if (input.length < 2 || output.length < 2) {
+        return output[0];
+      }
+
+      const startInput = input[0];
+      const endInput = input[input.length - 1];
+      const startOutput = output[0];
+      const endOutput = output[output.length - 1];
+
+      if (value <= startInput) {
+        return startOutput;
+      }
+
+      if (value >= endInput) {
+        return endOutput;
+      }
+
+      const progress = (value - startInput) / (endInput - startInput);
+      return startOutput + (endOutput - startOutput) * progress;
+    },
     runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
     useAnimatedStyle: (updater: () => object) => updater(),
     useSharedValue: <T,>(value: T) => ({ value }),
@@ -121,12 +142,28 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+jest.mock('../src/services/native-voxa', () => ({
+  exportProject: jest.fn(),
+  getAvailableSpeechLocales: jest.fn().mockResolvedValue([
+    { label: 'English (United States)', value: 'en-US' },
+    { label: 'Russian', value: 'ru-RU' },
+  ]),
+  saveVideoToPhotos: jest.fn(),
+}));
+
+jest.mock('../src/services/project-processor', () => ({
+  retryProjectSubtitles: jest.fn(),
+}));
+
 const mockAppStoreState = {
+  beginProcessing: jest.fn(),
   closeProject: jest.fn(),
+  finishProcessing: jest.fn(),
   settings: {
     preferredExportResolution: '1080p',
     highlightEditedWords: true,
   },
+  setProcessingPhase: jest.fn(),
   setPreferredExportResolution: jest.fn(),
   upsertProject: jest.fn(),
 };
@@ -155,13 +192,50 @@ import {
   EditorScreen,
   KEYBOARD_DISMISS_BUTTON_ID,
   OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX,
+  RETRY_SUBTITLE_BANNER_BUTTON_ID,
   TIMELINE_SECTION_ID,
   resolveOverlaySubtitle,
   resolveSubtitlePreviewTop,
 } from '../src/components/editor/EditorScreen';
+import {
+  LOCALE_RETRY_BUTTON_ID,
+  LOCALE_RETRY_OPTION_TEST_ID_PREFIX,
+} from '../src/components/editor/LocaleRetrySheet';
 import { calculateEditorVerticalLayout } from '../src/components/editor/layout';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
 import type { Project } from '../src/types/models';
+
+const mockGetAvailableSpeechLocales = jest.mocked(
+  require('../src/services/native-voxa').getAvailableSpeechLocales,
+);
+const mockRetryProjectSubtitles = jest.mocked(
+  require('../src/services/project-processor').retryProjectSubtitles,
+);
+
+mockRetryProjectSubtitles.mockResolvedValue({
+  id: 'project-1',
+  title: 'Layout check',
+  sourceFileName: 'layout-check.mov',
+  videoLocalURI: 'file:///tmp/layout-check.mov',
+  duration: 6800,
+  createdAt: 1,
+  updatedAt: 1,
+  subtitles: [
+    {
+      id: 'subtitle-1',
+      startTime: 0,
+      endTime: 1800,
+      text: 'regenerated line',
+    },
+  ],
+  globalStyle: defaultSubtitleStyle,
+  waveform: [0.2, 0.4, 0.6],
+  recognitionStatus: 'ready',
+  recognitionLocale: 'en-US',
+  recognitionMode: 'manual',
+  metrics: { width: 1080, height: 1920 },
+  lastEditedSubtitleId: 'subtitle-1',
+});
 
 describe('editor layout budgeting', () => {
   const screenHeights = [812, 844, 932];
@@ -348,9 +422,30 @@ describe('EditorScreen', () => {
     metrics: { width: 1080, height: 1920 },
     lastEditedSubtitleId: 'subtitle-1',
   };
+  const failedProject: Project = {
+    ...mockProject,
+    subtitles: [
+      {
+        id: 'subtitle-placeholder',
+        startTime: 0,
+        endTime: 2200,
+        text: 'Tap to add your first subtitle.',
+        isPlaceholder: true,
+      },
+    ],
+    recognitionStatus: 'failed',
+    importError: 'No supported on-device speech locale could transcribe this video.',
+  };
 
   afterEach(() => {
     mockAppStoreState.settings.highlightEditedWords = true;
+    mockGetAvailableSpeechLocales.mockClear();
+    mockRetryProjectSubtitles.mockReset();
+    mockRetryProjectSubtitles.mockResolvedValue(mockProject);
+    mockAppStoreState.beginProcessing.mockClear();
+    mockAppStoreState.finishProcessing.mockClear();
+    mockAppStoreState.setProcessingPhase.mockClear();
+    mockAppStoreState.upsertProject.mockClear();
     jest.restoreAllMocks();
   });
 
@@ -417,7 +512,7 @@ describe('EditorScreen', () => {
 
       return {
         remove: jest.fn(),
-      };
+      } as any;
     });
 
     const expandedLayout = calculateEditorVerticalLayout({
@@ -839,5 +934,112 @@ describe('EditorScreen', () => {
         testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
       }),
     ).toThrow();
+  });
+
+  it('shows retry controls when subtitle generation failed', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={failedProject} />,
+      );
+    });
+
+    expect(
+      renderer!.root.findByProps({ testID: RETRY_SUBTITLE_BANNER_BUTTON_ID }),
+    ).toBeTruthy();
+    expect(renderer!.root.findByProps({ children: 'Retry' })).toBeTruthy();
+  });
+
+  it('opens the locale retry sheet with auto detect and device locales', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={failedProject} />,
+      );
+    });
+
+    await ReactTestRenderer.act(async () => {
+      renderer!.root
+        .findByProps({ testID: RETRY_SUBTITLE_BANNER_BUTTON_ID })
+        .props.onPress();
+      await Promise.resolve();
+    });
+
+    expect(mockGetAvailableSpeechLocales).toHaveBeenCalledTimes(1);
+    expect(
+      renderer!.root.findByProps({
+        testID: `${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-__auto_detect__`,
+      }),
+    ).toBeTruthy();
+    expect(
+      renderer!.root.findByProps({
+        testID: `${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-en-US`,
+      }),
+    ).toBeTruthy();
+    expect(
+      renderer!.root.findByProps({
+        testID: `${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-ru-RU`,
+      }),
+    ).toBeTruthy();
+  });
+
+  it('retries subtitle generation with the selected manual locale', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={failedProject} />,
+      );
+    });
+
+    await ReactTestRenderer.act(async () => {
+      renderer!.root
+        .findByProps({ testID: RETRY_SUBTITLE_BANNER_BUTTON_ID })
+        .props.onPress();
+      await Promise.resolve();
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer!.root
+        .findByProps({ testID: `${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-ru-RU` })
+        .props.onPress();
+    });
+
+    await ReactTestRenderer.act(async () => {
+      renderer!.root.findByProps({ testID: LOCALE_RETRY_BUTTON_ID }).props.onPress();
+      await Promise.resolve();
+    });
+
+    expect(mockRetryProjectSubtitles).toHaveBeenCalledWith(
+      expect.objectContaining({ id: failedProject.id }),
+      'ru-RU',
+      mockAppStoreState.setProcessingPhase,
+    );
+    expect(mockAppStoreState.beginProcessing).toHaveBeenCalledWith(failedProject.videoLocalURI);
+    expect(mockAppStoreState.finishProcessing).toHaveBeenCalledTimes(1);
+    expect(mockAppStoreState.upsertProject).toHaveBeenCalled();
   });
 });

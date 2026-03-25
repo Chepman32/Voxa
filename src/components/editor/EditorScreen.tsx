@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Alert,
   Keyboard,
   Pressable,
   ScrollView,
@@ -41,6 +42,7 @@ import Video, { type OnLoadData, type VideoRef } from 'react-native-video';
 import {
   applyManualSubtitleTextEdit,
   clamp,
+  countRenderableSubtitles,
   formatDuration,
   getRenderableSubtitleWords,
   getSubtitleVerticalBounds,
@@ -52,11 +54,13 @@ import {
   setSubtitlePositionPreset,
 } from '../../lib/project';
 import {
+  getAvailableSpeechLocales,
   exportProject,
   saveVideoToPhotos,
   type NativeSubtitleSegment,
 } from '../../services/native-voxa';
 import { haptics } from '../../services/haptics';
+import { retryProjectSubtitles } from '../../services/project-processor';
 import { useAppStore } from '../../store/app-store';
 import {
   activeSubtitleAtom,
@@ -84,6 +88,7 @@ import {
 import type {
   ExportResolution,
   Project,
+  SpeechLocaleOption,
   SubtitleBlock,
 } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
@@ -91,6 +96,10 @@ import { GlassPanel } from '../common/GlassPanel';
 import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
 import { ExportSheet } from './ExportSheet';
 import { calculateEditorVerticalLayout } from './layout';
+import {
+  AUTO_DETECT_LOCALE_VALUE,
+  LocaleRetrySheet,
+} from './LocaleRetrySheet';
 
 const MAX_TIMELINE_SURFACE_WIDTH = 8192;
 const TIMELINE_COLLAPSE_DURATION_MS = 220;
@@ -109,6 +118,7 @@ export const BOTTOM_EDITOR_STYLE_TAB_ID = 'bottom-editor-style-tab';
 export const EDITOR_TOP_BAR_ID = 'editor-top-bar';
 export const KEYBOARD_DISMISS_BUTTON_ID = 'keyboard-dismiss-button';
 export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
+export const RETRY_SUBTITLE_BANNER_BUTTON_ID = 'retry-subtitle-banner-button';
 
 export function resolveSubtitlePreviewTop({
   isDragging,
@@ -182,6 +192,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [bannerHeight, setBannerHeight] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [localeRetrySheetVisible, setLocaleRetrySheetVisible] = useState(false);
+  const [availableSpeechLocales, setAvailableSpeechLocales] = useState<SpeechLocaleOption[]>([]);
+  const [loadingSpeechLocales, setLoadingSpeechLocales] = useState(false);
+  const [selectedRetryLocale, setSelectedRetryLocale] = useState(AUTO_DETECT_LOCALE_VALUE);
+  const [retryingSubtitles, setRetryingSubtitles] = useState(false);
   const [draggedSubtitleSnapshot, setDraggedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
   const [navigationPinnedSubtitleSnapshot, setNavigationPinnedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
   const isSubtitleDraggingRef = useRef(false);
@@ -190,12 +205,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const dragStartTop = useSharedValue(0);
   const subtitleSwapProgress = useSharedValue(1);
 
-  const [project, setProject] = useAtom(editorProjectAtom);
+  const [editorProject, setProject] = useAtom(editorProjectAtom);
   const [playbackPosition, setPlaybackPosition] = useAtom(playbackPositionAtom);
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
   const [selectedSubtitleId, setSelectedSubtitleId] = useAtom(selectedSubtitleIdAtom);
   const [subtitles, setSubtitles] = useAtom(subtitlesAtom);
-  const [stylePreset, setStylePreset] = useAtom(globalStyleAtom);
+  const [stylePresetValue, setStylePreset] = useAtom(globalStyleAtom);
   const [timelineZoom, setTimelineZoom] = useAtom(timelineZoomAtom);
   const [isTextEditing, setIsTextEditing] = useAtom(isTextEditingAtom);
   const [isStylePanelOpen, setIsStylePanelOpen] = useAtom(isStylePanelOpenAtom);
@@ -203,6 +218,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const activeSubtitle = useAtomValue(activeSubtitleAtom);
   const selectedSubtitle = useAtomValue(selectedSubtitleAtom);
   const setPlayback = useSetAtom(playbackPositionAtom);
+  const project = editorProject as Project;
+  const stylePreset = stylePresetValue as Project['globalStyle'];
 
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -260,16 +277,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     });
   }, [isStylePanelOpen, width]);
 
-  const handleVideoTap = useCallback(() => {
-    if (isPlaying && !showControls) {
-      setShowControls(true);
-      scheduleHideControls();
-    } else {
-      togglePlayback();
-    }
-  }, [isPlaying, showControls, scheduleHideControls, togglePlayback]);
-
   const closeProject = useAppStore(state => state.closeProject);
+  const beginProcessing = useAppStore(state => state.beginProcessing);
+  const finishProcessing = useAppStore(state => state.finishProcessing);
+  const setProcessingPhase = useAppStore(state => state.setProcessingPhase);
   const upsertProject = useAppStore(state => state.upsertProject);
   const resolution = useAppStore(state => state.settings.preferredExportResolution);
   const highlightEditedWords = useAppStore(state => state.settings.highlightEditedWords);
@@ -295,11 +306,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     ? Math.max(0, keyboardHeight - insets.bottom)
     : 0;
   const isKeyboardEditing = keyboardVisible && isTextEditing;
+  const recognitionNeedsAttention = project.recognitionStatus !== 'ready';
   const editorLayout = calculateEditorVerticalLayout({
     screenHeight: height,
     topInset: insets.top,
     bottomInset: bottomInset + keyboardOverlapInset,
-    bannerHeight: project.importError ? Math.max(bannerHeight, 60) : 0,
+    bannerHeight: recognitionNeedsAttention ? Math.max(bannerHeight, 60) : 0,
     timelineCollapsed: false,
     topBarCollapsed: isKeyboardEditing,
   });
@@ -307,7 +319,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     screenHeight: height,
     topInset: insets.top,
     bottomInset: bottomInset + keyboardOverlapInset,
-    bannerHeight: project.importError ? Math.max(bannerHeight, 60) : 0,
+    bannerHeight: recognitionNeedsAttention ? Math.max(bannerHeight, 60) : 0,
     timelineCollapsed: true,
     topBarCollapsed: isKeyboardEditing,
   });
@@ -358,6 +370,111 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         allowSyntheticWords: highlightEditedWords,
       }),
   );
+  const hasRenderableSubtitleBlocks = countRenderableSubtitles(subtitles) > 0;
+  const normalizedImportError = project.importError?.replace(/[.\s]+$/, '');
+  const recognitionBannerText = project.importError
+    ? `${normalizedImportError}. Manual subtitle editing remains available.`
+    : hasRenderableSubtitleBlocks
+    ? 'Subtitles were created, but this project is still marked as requiring review.'
+    : 'No subtitles were generated for this clip. Try Auto Detect or pick a language manually.';
+  const recognitionBannerDetail = project.recognitionLocale
+    ? `Last attempt: ${project.recognitionLocale}${project.recognitionMode === 'manual' ? ' (manual)' : ' (auto)'}.`
+    : 'Choose Auto Detect or a specific on-device language to retry.';
+
+  const showRetryError = useCallback((error: unknown) => {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : 'Unable to regenerate subtitles right now.';
+
+    Alert.alert('Subtitle Retry Failed', message);
+  }, []);
+
+  const loadSpeechLocales = useCallback(async () => {
+    setLoadingSpeechLocales(true);
+    try {
+      const locales = await getAvailableSpeechLocales();
+      setAvailableSpeechLocales(locales);
+      return locales;
+    } catch (error) {
+      showRetryError(error);
+      return [];
+    } finally {
+      setLoadingSpeechLocales(false);
+    }
+  }, [showRetryError]);
+
+  const openLocaleRetrySheet = useCallback(async () => {
+    const initialLocale =
+      project.recognitionMode === 'manual' && project.recognitionLocale
+        ? project.recognitionLocale
+        : AUTO_DETECT_LOCALE_VALUE;
+    setSelectedRetryLocale(initialLocale);
+    setLocaleRetrySheetVisible(true);
+
+    if (availableSpeechLocales.length > 0) {
+      return;
+    }
+
+    await loadSpeechLocales();
+  }, [
+    availableSpeechLocales.length,
+    loadSpeechLocales,
+    project.recognitionLocale,
+    project.recognitionMode,
+  ]);
+
+  const closeLocaleRetrySheet = useCallback(() => {
+    if (retryingSubtitles) {
+      return;
+    }
+    setLocaleRetrySheetVisible(false);
+  }, [retryingSubtitles]);
+
+  const handleRetrySubtitleGeneration = useCallback(async () => {
+    const localeOverride =
+      selectedRetryLocale === AUTO_DETECT_LOCALE_VALUE ? null : selectedRetryLocale;
+
+    setRetryingSubtitles(true);
+    beginProcessing(project.videoLocalURI);
+
+    try {
+      const updatedProject = await retryProjectSubtitles(
+        project,
+        localeOverride,
+        setProcessingPhase,
+      );
+
+      setProject(updatedProject);
+      upsertProject(updatedProject);
+
+      if (updatedProject.recognitionStatus === 'ready') {
+        setLocaleRetrySheetVisible(false);
+        haptics.success();
+        return;
+      }
+
+      Alert.alert(
+        'No Subtitles Created',
+        updatedProject.importError ??
+          'No subtitles were generated with the selected language.',
+      );
+    } catch (error) {
+      showRetryError(error);
+    } finally {
+      finishProcessing();
+      setRetryingSubtitles(false);
+    }
+  }, [
+    beginProcessing,
+    finishProcessing,
+    project,
+    selectedRetryLocale,
+    setProcessingPhase,
+    setProject,
+    showRetryError,
+    upsertProject,
+  ]);
 
   const syncTimelineToPosition = (timeMs: number, animated = false) => {
     if (!timelineRef.current) {
@@ -552,6 +669,15 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
     setIsPlaying(current => !current);
   }, [isPlaying, playbackPosition, setIsPlaying]);
+
+  const handleVideoTap = useCallback(() => {
+    if (isPlaying && !showControls) {
+      setShowControls(true);
+      scheduleHideControls();
+    } else {
+      togglePlayback();
+    }
+  }, [isPlaying, scheduleHideControls, showControls, togglePlayback]);
 
   const flashSkip = (label: string) => {
     setSkipFlash(label);
@@ -802,7 +928,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         </View>
       </Animated.View>
 
-      {project.importError ? (
+      {recognitionNeedsAttention ? (
         <GlassPanel
           onLayout={event => {
             const nextHeight = event.nativeEvent.layout.height;
@@ -812,9 +938,22 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           }}
           style={styles.banner}>
           <Feather color={palette.amber} name="alert-triangle" size={16} />
-          <Text style={styles.bannerText}>
-            {project.importError}. Manual subtitle editing remains available.
-          </Text>
+          <View style={styles.bannerCopy}>
+            <Text style={styles.bannerText}>{recognitionBannerText}</Text>
+            <Text style={styles.bannerMeta}>{recognitionBannerDetail}</Text>
+          </View>
+          <Pressable
+            disabled={retryingSubtitles}
+            onPress={() => {
+              openLocaleRetrySheet().catch(showRetryError);
+            }}
+            style={[
+              styles.bannerAction,
+              retryingSubtitles ? styles.bannerActionDisabled : undefined,
+            ]}
+            testID={RETRY_SUBTITLE_BANNER_BUTTON_ID}>
+            <Text style={styles.bannerActionLabel}>Retry</Text>
+          </Pressable>
         </GlassPanel>
       ) : null}
 
@@ -1034,6 +1173,19 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         resolution={resolution}
         stylePreset={stylePreset}
         visible={isExportSheetOpen || exporting}
+      />
+
+      <LocaleRetrySheet
+        loading={loadingSpeechLocales}
+        localeOptions={availableSpeechLocales}
+        onClose={closeLocaleRetrySheet}
+        onRetry={() => {
+          handleRetrySubtitleGeneration().catch(showRetryError);
+        }}
+        onSelectLocale={setSelectedRetryLocale}
+        retrying={retryingSubtitles}
+        selectedLocale={selectedRetryLocale}
+        visible={localeRetrySheetVisible}
       />
     </Animated.View>
   );
@@ -1648,14 +1800,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
   },
-  bannerText: {
+  bannerCopy: {
     flex: 1,
+    gap: 6,
+  },
+  bannerText: {
     color: palette.textSecondary,
     fontSize: 13,
     lineHeight: 18,
+  },
+  bannerMeta: {
+    color: palette.textPrimary,
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  bannerAction: {
+    minHeight: 34,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 240, 255, 0.16)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0, 240, 255, 0.28)',
+  },
+  bannerActionDisabled: {
+    opacity: 0.55,
+  },
+  bannerActionLabel: {
+    color: palette.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
   },
   contentStack: {
     flex: 1,

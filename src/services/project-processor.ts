@@ -22,19 +22,37 @@ interface ProjectPhaseHandler {
   (phase: 'extracting' | 'recognizing' | 'composing', label: string): void;
 }
 
-export async function buildProjectFromAsset(
-  asset: Asset,
-  speechLocale: string,
-  onPhaseChange?: ProjectPhaseHandler,
-) {
-  const uri = normalizeVideoUri(asset.uri ?? asset.originalPath ?? '');
-  const fallbackDuration = Math.max(8000, Math.round((asset.duration ?? 12) * 1000));
+interface ProjectPreparationInput {
+  fallbackDuration: number;
+  localeOverride?: string | null;
+  onPhaseChange?: ProjectPhaseHandler;
+  videoURI: string;
+}
 
+function resolveRecognitionLabel(localeOverride?: string | null) {
+  if (localeOverride) {
+    return 'Transcribing with the selected language...';
+  }
+
+  return 'Detecting spoken language...';
+}
+
+async function prepareProjectResult({
+  fallbackDuration,
+  localeOverride = null,
+  onPhaseChange,
+  videoURI,
+}: ProjectPreparationInput) {
   onPhaseChange?.('extracting', 'Extracting audio...');
-  const nativeTask = prepareProject(uri, speechLocale, fallbackDuration);
+  const nativeTask = prepareProject(videoURI, localeOverride, fallbackDuration);
 
   await wait(220);
-  onPhaseChange?.('recognizing', 'Analyzing speech locally...');
+  onPhaseChange?.('recognizing', resolveRecognitionLabel(localeOverride));
+
+  if (!localeOverride) {
+    await wait(320);
+    onPhaseChange?.('recognizing', 'Transcribing with the best on-device language...');
+  }
 
   const result = await nativeTask;
 
@@ -65,6 +83,26 @@ export async function buildProjectFromAsset(
   );
 
   return {
+    ...result,
+    mergedSubtitles,
+  };
+}
+
+export async function buildProjectFromAsset(
+  asset: Asset,
+  localeOverride: string | null = null,
+  onPhaseChange?: ProjectPhaseHandler,
+) {
+  const uri = normalizeVideoUri(asset.uri ?? asset.originalPath ?? '');
+  const fallbackDuration = Math.max(8000, Math.round((asset.duration ?? 12) * 1000));
+  const result = await prepareProjectResult({
+    fallbackDuration,
+    localeOverride,
+    onPhaseChange,
+    videoURI: uri,
+  });
+
+  return {
     id: createId('project'),
     title: deriveProjectTitle(asset.fileName),
     sourceFileName: asset.fileName ?? 'Imported video',
@@ -73,16 +111,50 @@ export async function buildProjectFromAsset(
     duration: result.duration || fallbackDuration,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    subtitles: mergedSubtitles,
+    subtitles: result.mergedSubtitles,
     globalStyle: defaultSubtitleStyle,
     waveform: result.waveform.length > 0 ? result.waveform : buildProjectDefaults().waveform,
     recognitionStatus: result.recognitionStatus,
+    recognitionLocale: result.recognitionLocale,
+    recognitionMode: result.recognitionMode,
     importError: result.errorMessage,
     metrics: {
       width: result.width || 1080,
       height: result.height || 1920,
     },
-    lastEditedSubtitleId: mergedSubtitles[0]?.id,
+    lastEditedSubtitleId: result.mergedSubtitles[0]?.id,
+  } satisfies Project;
+}
+
+export async function retryProjectSubtitles(
+  project: Project,
+  localeOverride: string | null = null,
+  onPhaseChange?: ProjectPhaseHandler,
+) {
+  const fallbackDuration = Math.max(8000, Math.round(project.duration || 12000));
+  const result = await prepareProjectResult({
+    fallbackDuration,
+    localeOverride,
+    onPhaseChange,
+    videoURI: project.videoLocalURI,
+  });
+
+  return {
+    ...project,
+    thumbnailUri: result.thumbnailUri ?? project.thumbnailUri,
+    duration: result.duration || fallbackDuration,
+    updatedAt: Date.now(),
+    subtitles: result.mergedSubtitles,
+    waveform: result.waveform.length > 0 ? result.waveform : project.waveform,
+    recognitionStatus: result.recognitionStatus,
+    recognitionLocale: result.recognitionLocale,
+    recognitionMode: result.recognitionMode,
+    importError: result.errorMessage,
+    metrics: {
+      width: result.width || project.metrics.width || 1080,
+      height: result.height || project.metrics.height || 1920,
+    },
+    lastEditedSubtitleId: result.mergedSubtitles[0]?.id,
   } satisfies Project;
 }
 
@@ -104,6 +176,7 @@ export function buildManualFallbackProject(asset: Asset, error: unknown) {
     globalStyle: defaultSubtitleStyle,
     waveform: defaults.waveform,
     recognitionStatus: 'failed' as RecognitionStatus,
+    recognitionMode: 'auto',
     importError: message,
     metrics: {
       width: 1080,

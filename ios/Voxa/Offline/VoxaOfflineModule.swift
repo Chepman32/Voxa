@@ -10,9 +10,22 @@ private struct ExportSubtitleWord {
   let endTime: Double
 }
 
+private struct SpeechLocaleProbeScore {
+  let localeIdentifier: String
+  let segmentCount: Int
+  let coverage: Double
+  let averageConfidence: Double
+  let preferredRank: Int
+
+  var isUsable: Bool {
+    segmentCount > 0 && coverage > 0
+  }
+}
+
 @objc(VoxaOfflineModule)
 final class VoxaOfflineModule: NSObject {
   private let recognitionChunkDurationSeconds = 45.0
+  private let detectionProbeDurationSeconds = 8.0
 
   @objc
   static func requiresMainQueueSetup() -> Bool {
@@ -77,10 +90,24 @@ final class VoxaOfflineModule: NSObject {
     }
   }
 
+  @objc(getAvailableSpeechLocales:rejecter:)
+  func getAvailableSpeechLocales(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let locales = self.availableOnDeviceSpeechLocales().map { locale in
+      [
+        "label": self.label(for: locale),
+        "value": locale.identifier,
+      ]
+    }
+    resolve(locales)
+  }
+
   @objc(prepareProject:locale:resolver:rejecter:)
   func prepareProject(
     _ videoURI: String,
-    locale: String,
+    locale: String?,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -95,6 +122,8 @@ final class VoxaOfflineModule: NSObject {
         var waveform = Array(repeating: 0.16, count: 160)
         var subtitles: [[String: Any]] = []
         var recognitionStatus = "manual"
+        var recognitionLocale: String?
+        var recognitionMode = "auto"
         var errorMessage: String?
 
         if asset.tracks(withMediaType: .audio).isEmpty {
@@ -106,7 +135,18 @@ final class VoxaOfflineModule: NSObject {
           waveform = try self.generateWaveform(from: audioURL, bucketCount: 160)
 
           do {
-            subtitles = try await self.recognizeSpeech(from: asset, locale: locale)
+            let localeOverride = locale?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let resolvedLocale: String
+            if let localeOverride, localeOverride.isEmpty == false {
+              recognitionMode = "manual"
+              resolvedLocale = localeOverride
+            } else {
+              recognitionMode = "auto"
+              resolvedLocale = try await self.detectSpeechLocale(for: asset)
+            }
+
+            recognitionLocale = resolvedLocale
+            subtitles = try await self.recognizeSpeech(from: asset, locale: resolvedLocale)
             recognitionStatus = subtitles.isEmpty ? "manual" : "ready"
           } catch {
             recognitionStatus = "failed"
@@ -123,6 +163,8 @@ final class VoxaOfflineModule: NSObject {
           "subtitles": subtitles,
           "transcriptTimeOffsetMs": 0,
           "recognitionStatus": recognitionStatus,
+          "recognitionLocale": recognitionLocale as Any,
+          "recognitionMode": recognitionMode,
           "errorMessage": errorMessage as Any,
         ])
       } catch {
@@ -727,11 +769,212 @@ private extension VoxaOfflineModule {
     }
   }
 
-  func recognizeSpeech(from asset: AVAsset, locale: String) async throws -> [[String: Any]] {
-    guard string(from: SFSpeechRecognizer.authorizationStatus()) == "authorized" else {
-      throw VoxaOfflineError.speechAuthorizationDenied
+  func availableOnDeviceSpeechLocales() -> [Locale] {
+    SFSpeechRecognizer.supportedLocales()
+      .filter { locale in
+        guard let recognizer = SFSpeechRecognizer(locale: locale) else {
+          return false
+        }
+        return recognizer.supportsOnDeviceRecognition
+      }
+      .sorted { left, right in
+        let leftRank = preferredLanguageRank(for: left.identifier)
+        let rightRank = preferredLanguageRank(for: right.identifier)
+        if leftRank != rightRank {
+          return leftRank < rightRank
+        }
+
+        return label(for: left).localizedCaseInsensitiveCompare(label(for: right)) == .orderedAscending
+      }
+  }
+
+  func label(for locale: Locale) -> String {
+    if let localized = Locale.current.localizedString(forIdentifier: locale.identifier),
+       localized.isEmpty == false {
+      return localized.prefix(1).uppercased() + String(localized.dropFirst())
     }
 
+    return locale.identifier
+  }
+
+  func preferredLanguageRank(for localeIdentifier: String) -> Int {
+    let normalizedTarget = normalizedLocaleIdentifier(localeIdentifier)
+    let targetLanguage = baseLanguageIdentifier(from: normalizedTarget)
+
+    for (index, preferredLanguage) in Locale.preferredLanguages.enumerated() {
+      let normalizedPreferred = normalizedLocaleIdentifier(preferredLanguage)
+      if normalizedPreferred == normalizedTarget {
+        return index
+      }
+
+      if baseLanguageIdentifier(from: normalizedPreferred) == targetLanguage {
+        return index + 100
+      }
+    }
+
+    return Int.max
+  }
+
+  func normalizedLocaleIdentifier(_ value: String) -> String {
+    value
+      .replacingOccurrences(of: "_", with: "-")
+      .lowercased()
+  }
+
+  func baseLanguageIdentifier(from localeIdentifier: String) -> String {
+    normalizedLocaleIdentifier(localeIdentifier)
+      .split(separator: "-")
+      .first
+      .map(String.init) ?? normalizedLocaleIdentifier(localeIdentifier)
+  }
+
+  func detectionProbeRanges(for totalDurationSeconds: Double) -> [CMTimeRange] {
+    guard totalDurationSeconds > 0 else {
+      return []
+    }
+
+    let probeDuration = min(detectionProbeDurationSeconds, totalDurationSeconds)
+    let maxStart = max(0, totalDurationSeconds - probeDuration)
+    let candidateStarts: [Double]
+
+    if totalDurationSeconds <= probeDuration + 0.8 {
+      candidateStarts = [0]
+    } else if totalDurationSeconds <= probeDuration * 2.2 {
+      candidateStarts = [0, maxStart]
+    } else {
+      candidateStarts = [
+        0,
+        max(0, min(maxStart, totalDurationSeconds / 2 - probeDuration / 2)),
+        maxStart,
+      ]
+    }
+
+    var uniqueStarts: [Double] = []
+    for start in candidateStarts {
+      let normalizedStart = max(0, min(maxStart, start))
+      if uniqueStarts.contains(where: { abs($0 - normalizedStart) < 0.75 }) {
+        continue
+      }
+      uniqueStarts.append(normalizedStart)
+    }
+
+    return uniqueStarts.map { start in
+      CMTimeRange(
+        start: CMTime(seconds: start, preferredTimescale: 600),
+        duration: CMTime(seconds: probeDuration, preferredTimescale: 600)
+      )
+    }
+  }
+
+  func detectSpeechLocale(for asset: AVAsset) async throws -> String {
+    let availableLocales = availableOnDeviceSpeechLocales()
+    guard availableLocales.isEmpty == false else {
+      throw VoxaOfflineError.noSupportedSpeechLocales
+    }
+
+    let totalDurationSeconds = max(0, CMTimeGetSeconds(asset.duration))
+    let probeRanges = detectionProbeRanges(for: totalDurationSeconds)
+    guard probeRanges.isEmpty == false else {
+      throw VoxaOfflineError.noDetectableSpeechLocale
+    }
+
+    var bestScore: SpeechLocaleProbeScore?
+
+    for locale in availableLocales {
+      let score = try await scoreLocale(locale.identifier, for: asset, probeRanges: probeRanges)
+      if isBetter(score, than: bestScore) {
+        bestScore = score
+      }
+    }
+
+    guard let bestScore, bestScore.isUsable else {
+      throw VoxaOfflineError.noDetectableSpeechLocale
+    }
+
+    return bestScore.localeIdentifier
+  }
+
+  func scoreLocale(
+    _ localeIdentifier: String,
+    for asset: AVAsset,
+    probeRanges: [CMTimeRange]
+  ) async throws -> SpeechLocaleProbeScore {
+    var segmentCount = 0
+    var confidenceSum = 0.0
+    var confidenceCount = 0
+    var transcriptDurationSeconds = 0.0
+
+    for probeRange in probeRanges {
+      let chunkURL = try await exportAudioChunk(from: asset, timeRange: probeRange)
+      defer { try? FileManager.default.removeItem(at: chunkURL) }
+
+      do {
+        let result = try await recognizeSpeechResult(from: chunkURL, locale: localeIdentifier)
+        let segments = result.bestTranscription.segments
+        segmentCount += segments.count
+        confidenceCount += segments.count
+        confidenceSum += segments.reduce(0) { partialResult, segment in
+          partialResult + Double(segment.confidence)
+        }
+        transcriptDurationSeconds += segments.reduce(0) { partialResult, segment in
+          partialResult + segment.duration
+        }
+      } catch {
+        continue
+      }
+    }
+
+    let totalProbeDurationSeconds = probeRanges.reduce(0) { partialResult, range in
+      partialResult + CMTimeGetSeconds(range.duration)
+    }
+    let coverage = totalProbeDurationSeconds > 0
+      ? min(1, transcriptDurationSeconds / totalProbeDurationSeconds)
+      : 0
+    let averageConfidence = confidenceCount > 0
+      ? confidenceSum / Double(confidenceCount)
+      : 0
+
+    return SpeechLocaleProbeScore(
+      localeIdentifier: localeIdentifier,
+      segmentCount: segmentCount,
+      coverage: coverage,
+      averageConfidence: averageConfidence,
+      preferredRank: preferredLanguageRank(for: localeIdentifier)
+    )
+  }
+
+  func isBetter(
+    _ candidate: SpeechLocaleProbeScore,
+    than current: SpeechLocaleProbeScore?
+  ) -> Bool {
+    guard let current else {
+      return candidate.isUsable
+    }
+
+    if candidate.isUsable != current.isUsable {
+      return candidate.isUsable
+    }
+
+    if candidate.coverage != current.coverage {
+      return candidate.coverage > current.coverage
+    }
+
+    if candidate.segmentCount != current.segmentCount {
+      return candidate.segmentCount > current.segmentCount
+    }
+
+    if candidate.averageConfidence != current.averageConfidence {
+      return candidate.averageConfidence > current.averageConfidence
+    }
+
+    if candidate.preferredRank != current.preferredRank {
+      return candidate.preferredRank < current.preferredRank
+    }
+
+    return candidate.localeIdentifier < current.localeIdentifier
+  }
+
+  func onDeviceRecognizer(for locale: String) throws -> SFSpeechRecognizer {
     guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)) else {
       throw VoxaOfflineError.speechUnavailable
     }
@@ -739,6 +982,16 @@ private extension VoxaOfflineModule {
     guard recognizer.supportsOnDeviceRecognition else {
       throw VoxaOfflineError.onDeviceRecognitionUnavailable
     }
+
+    return recognizer
+  }
+
+  func recognizeSpeech(from asset: AVAsset, locale: String) async throws -> [[String: Any]] {
+    guard string(from: SFSpeechRecognizer.authorizationStatus()) == "authorized" else {
+      throw VoxaOfflineError.speechAuthorizationDenied
+    }
+
+    _ = try onDeviceRecognizer(for: locale)
 
     let totalDurationSeconds = max(0, CMTimeGetSeconds(asset.duration))
     guard totalDurationSeconds > 0 else {
@@ -782,36 +1035,7 @@ private extension VoxaOfflineModule {
     locale: String,
     chunkStartTimeMs: Int
   ) async throws -> [[String: Any]] {
-    guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)) else {
-      throw VoxaOfflineError.speechUnavailable
-    }
-
-    guard recognizer.supportsOnDeviceRecognition else {
-      throw VoxaOfflineError.onDeviceRecognitionUnavailable
-    }
-
-    let request = SFSpeechURLRecognitionRequest(url: audioURL)
-    request.requiresOnDeviceRecognition = true
-    request.shouldReportPartialResults = false
-
-    let result: SFSpeechRecognitionResult = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<SFSpeechRecognitionResult, Error>) in
-      var hasResumed = false
-      recognizer.recognitionTask(with: request) { result, error in
-        if hasResumed {
-          return
-        }
-        if let error {
-          hasResumed = true
-          continuation.resume(throwing: error)
-          return
-        }
-        guard let result, result.isFinal else {
-          return
-        }
-        hasResumed = true
-        continuation.resume(returning: result)
-      }
-    }
+    let result = try await recognizeSpeechResult(from: audioURL, locale: locale)
 
     let localOffsetMs = (try? readTranscriptTimeOffsetMs(from: audioURL)) ?? 0
 
@@ -838,6 +1062,35 @@ private extension VoxaOfflineModule {
         ]],
         "confidence": Double(segment.confidence),
       ]
+    }
+  }
+
+  func recognizeSpeechResult(
+    from audioURL: URL,
+    locale: String
+  ) async throws -> SFSpeechRecognitionResult {
+    let recognizer = try onDeviceRecognizer(for: locale)
+    let request = SFSpeechURLRecognitionRequest(url: audioURL)
+    request.requiresOnDeviceRecognition = true
+    request.shouldReportPartialResults = false
+
+    return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<SFSpeechRecognitionResult, Error>) in
+      var hasResumed = false
+      recognizer.recognitionTask(with: request) { result, error in
+        if hasResumed {
+          return
+        }
+        if let error {
+          hasResumed = true
+          continuation.resume(throwing: error)
+          return
+        }
+        guard let result, result.isFinal else {
+          return
+        }
+        hasResumed = true
+        continuation.resume(returning: result)
+      }
     }
   }
 
@@ -1069,6 +1322,8 @@ private extension VoxaOfflineModule {
 private enum VoxaOfflineError: LocalizedError {
   case invalidPayload(String)
   case noAudioTrack
+  case noSupportedSpeechLocales
+  case noDetectableSpeechLocale
   case onDeviceRecognitionUnavailable
   case speechAuthorizationDenied
   case speechUnavailable
@@ -1082,6 +1337,10 @@ private enum VoxaOfflineError: LocalizedError {
       return message
     case .noAudioTrack:
       return "The selected video does not contain an audio track."
+    case .noSupportedSpeechLocales:
+      return "This device does not currently expose any on-device speech recognition locales."
+    case .noDetectableSpeechLocale:
+      return "No supported on-device speech locale could transcribe this video."
     case .onDeviceRecognitionUnavailable:
       return "On-device speech recognition is unavailable for the selected locale."
     case .speechAuthorizationDenied:

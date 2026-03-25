@@ -241,9 +241,3 @@ export const exportResolutions: Array<{
   { label: '1080p', value: '1080p' },
   { label: '4K', value: '4k' },
 ];
-
-export const speechLocales = [
-  { label: 'US English', value: 'en-US' },
-  { label: 'UK English', value: 'en-GB' },
-  { label: 'Russian', value: 'ru-RU' },
-];

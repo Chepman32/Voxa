@@ -1,8 +1,14 @@
 export type SubtitlePosition = 'top' | 'middle' | 'bottom';
 export type SubtitleCasing = 'sentence' | 'uppercase';
 export type RecognitionStatus = 'ready' | 'manual' | 'failed';
+export type RecognitionMode = 'auto' | 'manual';
 export type ExportResolution = '720p' | '1080p' | '4k';
 export type AppRoute = 'home' | 'editor';
+
+export interface SpeechLocaleOption {
+  label: string;
+  value: string;
+}
 
 export interface SubtitleStyle {
   fontPresetId: string;
@@ -55,6 +61,8 @@ export interface Project {
   globalStyle: SubtitleStyle;
   waveform: number[];
   recognitionStatus: RecognitionStatus;
+  recognitionLocale?: string;
+  recognitionMode?: RecognitionMode;
   importError?: string;
   metrics: ProjectMetrics;
   lastEditedSubtitleId?: string;
@@ -68,7 +76,6 @@ export interface ProcessingState {
 }
 
 export interface UserSettings {
-  speechLocale: string;
   preferredExportResolution: ExportResolution;
   highlightEditedWords: boolean;
 }

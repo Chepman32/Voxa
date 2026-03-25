@@ -53,7 +53,6 @@ export function AppRoot() {
   const finishProcessing = useAppStore(state => state.finishProcessing);
   const openSettings = useAppStore(state => state.openSettings);
   const closeSettings = useAppStore(state => state.closeSettings);
-  const setSpeechLocale = useAppStore(state => state.setSpeechLocale);
   const setPreferredExportResolution = useAppStore(
     state => state.setPreferredExportResolution,
   );
@@ -110,11 +109,7 @@ export function AppRoot() {
     beginProcessing(asset.uri);
 
     try {
-      const project = await buildProjectFromAsset(
-        asset,
-        settings.speechLocale,
-        setProcessingPhase,
-      );
+      const project = await buildProjectFromAsset(asset, null, setProcessingPhase);
       addProject(project);
       haptics.success();
       startTransition(() => {
@@ -135,7 +130,6 @@ export function AppRoot() {
     finishProcessing,
     openProject,
     setProcessingPhase,
-    settings.speechLocale,
   ]);
 
   const continueWithManualSubtitles = useCallback(() => {
@@ -283,10 +277,8 @@ export function AppRoot() {
           resetOnboarding();
         }}
         onResolutionChange={setPreferredExportResolution}
-        onSpeechLocaleChange={setSpeechLocale}
         highlightEditedWords={settings.highlightEditedWords}
         preferredExportResolution={settings.preferredExportResolution}
-        speechLocale={settings.speechLocale}
         visible={settingsOpen}
       />
 

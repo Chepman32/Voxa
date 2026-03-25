@@ -4,6 +4,8 @@ import { createId } from '../lib/id';
 import type {
   ExportResolution,
   PermissionSummary,
+  RecognitionMode,
+  SpeechLocaleOption,
   SubtitleStyle,
   SubtitleWord,
 } from '../types/models';
@@ -28,6 +30,8 @@ interface PrepareProjectResponse {
   subtitles: NativeSubtitleSegment[];
   transcriptTimeOffsetMs: number;
   recognitionStatus: 'ready' | 'manual' | 'failed';
+  recognitionLocale?: string;
+  recognitionMode: RecognitionMode;
   errorMessage?: string;
 }
 
@@ -43,7 +47,11 @@ interface VoxaNativeModule {
   requestAuthorizations(): Promise<PermissionSummary>;
   getSpeechAuthorizationStatus(): Promise<PermissionSummary['speech']>;
   requestSpeechAuthorization(): Promise<PermissionSummary['speech']>;
-  prepareProject(videoURI: string, locale: string): Promise<PrepareProjectResponse>;
+  getAvailableSpeechLocales(): Promise<SpeechLocaleOption[]>;
+  prepareProject(
+    videoURI: string,
+    localeOverride: string | null,
+  ): Promise<PrepareProjectResponse>;
   exportProject(payload: {
     videoURI: string;
     subtitles: NativeSubtitleSegment[];
@@ -131,7 +139,23 @@ export async function requestSpeechAuthorization() {
   return requireNativeMethod('requestSpeechAuthorization')();
 }
 
-export async function prepareProject(videoURI: string, locale: string, fallbackDuration = 12000) {
+export async function getAvailableSpeechLocales() {
+  if (Platform.OS !== 'ios') {
+    return [
+      { label: 'English (United States)', value: 'en-US' },
+      { label: 'English (United Kingdom)', value: 'en-GB' },
+      { label: 'Russian', value: 'ru-RU' },
+    ] satisfies SpeechLocaleOption[];
+  }
+
+  return requireNativeMethod('getAvailableSpeechLocales')();
+}
+
+export async function prepareProject(
+  videoURI: string,
+  localeOverride: string | null,
+  fallbackDuration = 12000,
+) {
   if (Platform.OS !== 'ios') {
     return {
       duration: fallbackDuration,
@@ -140,11 +164,13 @@ export async function prepareProject(videoURI: string, locale: string, fallbackD
       waveform: createMockWaveform(),
       subtitles: createMockSubtitles(fallbackDuration),
       transcriptTimeOffsetMs: 0,
-      recognitionStatus: 'manual',
+      recognitionStatus: 'ready',
+      recognitionLocale: localeOverride ?? 'en-US',
+      recognitionMode: localeOverride ? 'manual' : 'auto',
     } satisfies PrepareProjectResponse;
   }
 
-  return requireNativeMethod('prepareProject')(videoURI, locale);
+  return requireNativeMethod('prepareProject')(videoURI, localeOverride);
 }
 
 export async function exportProject(payload: {

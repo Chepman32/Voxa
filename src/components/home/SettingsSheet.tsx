@@ -21,7 +21,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import {
   exportResolutions,
   palette,
-  speechLocales,
   springConfig,
 } from '../../theme/tokens';
 import type { ExportResolution } from '../../types/models';
@@ -29,11 +28,9 @@ import { GlassPanel } from '../common/GlassPanel';
 
 interface SettingsSheetProps {
   visible: boolean;
-  speechLocale: string;
   preferredExportResolution: ExportResolution;
   highlightEditedWords: boolean;
   onClose: () => void;
-  onSpeechLocaleChange: (locale: string) => void;
   onResolutionChange: (resolution: ExportResolution) => void;
   onHighlightEditedWordsChange: (value: boolean) => void;
   onResetOnboarding: () => void;
@@ -41,11 +38,9 @@ interface SettingsSheetProps {
 
 export function SettingsSheet({
   visible,
-  speechLocale,
   preferredExportResolution,
   highlightEditedWords,
   onClose,
-  onSpeechLocaleChange,
   onResolutionChange,
   onHighlightEditedWordsChange,
   onResetOnboarding,
@@ -113,30 +108,6 @@ export function SettingsSheet({
                 <Feather color={palette.textSecondary} name="x" size={18} />
               </Pressable>
             </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Speech Locale</Text>
-              <View style={styles.pillRow}>
-                {speechLocales.map(locale => (
-                  <Pressable
-                    key={locale.value}
-                    onPress={() => onSpeechLocaleChange(locale.value)}
-                    style={[
-                      styles.pill,
-                      speechLocale === locale.value ? styles.pillActive : undefined,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.pillText,
-                        speechLocale === locale.value ? styles.pillTextActive : undefined,
-                      ]}>
-                      {locale.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>Default Export</Text>
               <View style={styles.pillRow}>
