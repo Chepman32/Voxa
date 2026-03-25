@@ -376,7 +376,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   });
   const displaySubtitle =
     isTextEditing && resolvedDisplaySubtitle && draftTextPreview !== null
-      ? { ...resolvedDisplaySubtitle, text: draftTextPreview }
+      ? {
+          ...resolvedDisplaySubtitle,
+          text: draftTextPreview,
+          words: undefined,
+        }
       : resolvedDisplaySubtitle;
   const wordHighlightAvailable = subtitles.some(
     subtitle =>

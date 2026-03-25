@@ -851,6 +851,47 @@ describe('EditorScreen', () => {
     expect(inputStyle.padding).toBe(0);
   });
 
+  it('updates the preview subtitle immediately while typing in the active subtitle input', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+    });
+
+    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+
+    await ReactTestRenderer.act(() => {
+      textInput.props.onChangeText('instant preview text');
+    });
+
+    const firstWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
+    });
+    const secondWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-1`,
+    });
+    const thirdWord = renderer!.root.findByProps({
+      testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-2`,
+    });
+
+    expect(firstWord.props.children.join('')).toBe('instant');
+    expect(secondWord.props.children.join('')).toBe(' preview');
+    expect(thirdWord.props.children.join('')).toBe(' text');
+  });
+
   it('keeps active word highlighting after a real manual subtitle edit', async () => {
     jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
       width: 390,
