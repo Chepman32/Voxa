@@ -775,7 +775,11 @@ private extension VoxaOfflineModule {
         guard let recognizer = SFSpeechRecognizer(locale: locale) else {
           return false
         }
+        #if targetEnvironment(simulator)
+        return recognizer.isAvailable
+        #else
         return recognizer.supportsOnDeviceRecognition
+        #endif
       }
       .sorted { left, right in
         let leftRank = preferredLanguageRank(for: left.identifier)
@@ -878,10 +882,32 @@ private extension VoxaOfflineModule {
       throw VoxaOfflineError.noDetectableSpeechLocale
     }
 
+    // Split into preferred (user's languages) and other locales
+    let preferred = availableLocales.filter { preferredLanguageRank(for: $0.identifier) < Int.max }
+    let other = availableLocales.filter { preferredLanguageRank(for: $0.identifier) == Int.max }
+
     var bestScore: SpeechLocaleProbeScore?
 
-    for locale in availableLocales {
+    // Phase 1: Try preferred locales with full probes — early exit when confident
+    for locale in preferred {
       let score = try await scoreLocale(locale.identifier, for: asset, probeRanges: probeRanges)
+      if isBetter(score, than: bestScore) {
+        bestScore = score
+      }
+      if score.coverage >= 0.10, score.segmentCount >= 2 {
+        return score.localeIdentifier
+      }
+    }
+
+    // If any preferred locale is usable, use it without checking others
+    if let bestScore, bestScore.isUsable {
+      return bestScore.localeIdentifier
+    }
+
+    // Phase 2: Fallback — try up to 5 non-preferred locales with only 1 probe each
+    let fallbackProbeRanges = Array(probeRanges.prefix(1))
+    for locale in other.prefix(5) {
+      let score = try await scoreLocale(locale.identifier, for: asset, probeRanges: fallbackProbeRanges)
       if isBetter(score, than: bestScore) {
         bestScore = score
       }
@@ -955,20 +981,23 @@ private extension VoxaOfflineModule {
       return candidate.isUsable
     }
 
-    if candidate.coverage != current.coverage {
+    let coverageTolerance = 0.05
+    let confidenceTolerance = 0.05
+
+    if abs(candidate.coverage - current.coverage) > coverageTolerance {
       return candidate.coverage > current.coverage
+    }
+
+    if candidate.preferredRank != current.preferredRank {
+      return candidate.preferredRank < current.preferredRank
     }
 
     if candidate.segmentCount != current.segmentCount {
       return candidate.segmentCount > current.segmentCount
     }
 
-    if candidate.averageConfidence != current.averageConfidence {
+    if abs(candidate.averageConfidence - current.averageConfidence) > confidenceTolerance {
       return candidate.averageConfidence > current.averageConfidence
-    }
-
-    if candidate.preferredRank != current.preferredRank {
-      return candidate.preferredRank < current.preferredRank
     }
 
     return candidate.localeIdentifier < current.localeIdentifier
@@ -979,9 +1008,11 @@ private extension VoxaOfflineModule {
       throw VoxaOfflineError.speechUnavailable
     }
 
+    #if !targetEnvironment(simulator)
     guard recognizer.supportsOnDeviceRecognition else {
       throw VoxaOfflineError.onDeviceRecognitionUnavailable
     }
+    #endif
 
     return recognizer
   }
@@ -1071,7 +1102,9 @@ private extension VoxaOfflineModule {
   ) async throws -> SFSpeechRecognitionResult {
     let recognizer = try onDeviceRecognizer(for: locale)
     let request = SFSpeechURLRecognitionRequest(url: audioURL)
+    #if !targetEnvironment(simulator)
     request.requiresOnDeviceRecognition = true
+    #endif
     request.shouldReportPartialResults = false
 
     return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<SFSpeechRecognitionResult, Error>) in
@@ -1085,11 +1118,21 @@ private extension VoxaOfflineModule {
           continuation.resume(throwing: error)
           return
         }
+        #if targetEnvironment(simulator)
+        guard let result else {
+          return
+        }
+        if result.isFinal || !result.bestTranscription.formattedString.isEmpty {
+          hasResumed = true
+          continuation.resume(returning: result)
+        }
+        #else
         guard let result, result.isFinal else {
           return
         }
         hasResumed = true
         continuation.resume(returning: result)
+        #endif
       }
     }
   }

@@ -115,6 +115,7 @@ export const TIMELINE_SECTION_ID = 'timeline-section';
 export const BOTTOM_EDITOR_PAGER_ID = 'bottom-editor-pager';
 export const BOTTOM_EDITOR_PRIMARY_TAB_ID = 'bottom-editor-primary-tab';
 export const BOTTOM_EDITOR_STYLE_TAB_ID = 'bottom-editor-style-tab';
+export const BOTTOM_EDITOR_LANGUAGE_TAB_ID = 'bottom-editor-language-tab';
 export const EDITOR_TOP_BAR_ID = 'editor-top-bar';
 export const KEYBOARD_DISMISS_BUTTON_ID = 'keyboard-dismiss-button';
 export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
@@ -221,6 +222,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const project = editorProject as Project;
   const stylePreset = stylePresetValue as Project['globalStyle'];
 
+  const [activeTab, setActiveTab] = useState<'subtitle' | 'style' | 'language'>('subtitle');
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -271,11 +273,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => {
+    const pageIndex = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : 2;
     bottomEditorPagerRef.current?.scrollTo?.({
-      x: isStylePanelOpen ? width : 0,
+      x: pageIndex * width,
       animated: true,
     });
-  }, [isStylePanelOpen, width]);
+  }, [activeTab, width]);
 
   const closeProject = useAppStore(state => state.closeProject);
   const beginProcessing = useAppStore(state => state.beginProcessing);
@@ -430,6 +433,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
     setLocaleRetrySheetVisible(false);
   }, [retryingSubtitles]);
+
+  useEffect(() => {
+    loadSpeechLocales();
+  }, [loadSpeechLocales]);
 
   const handleRetrySubtitleGeneration = useCallback(async () => {
     const localeOverride =
@@ -1086,9 +1093,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           style={[styles.bottomEditorShell, bottomEditorAnimatedStyle]}
           testID={BOTTOM_EDITOR_SHELL_ID}>
           <BottomEditorTabs
-            isStylePageActive={isStylePanelOpen}
-            onSelectPrimary={() => setIsStylePanelOpen(false)}
-            onSelectStyle={() => setIsStylePanelOpen(true)}
+            activeTab={activeTab}
+            onSelectTab={tab => {
+              setActiveTab(tab);
+              setIsStylePanelOpen(tab === 'style');
+            }}
           />
           <ScrollView
             bounces={false}
@@ -1097,8 +1106,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             directionalLockEnabled
             decelerationRate="fast"
             onMomentumScrollEnd={event => {
-              const nextPageIndex = event.nativeEvent.contentOffset.x >= width / 2 ? 1 : 0;
-              setIsStylePanelOpen(nextPageIndex === 1);
+              const pageIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+              const newTab = pageIndex === 0 ? 'subtitle' : pageIndex === 1 ? 'style' : 'language';
+              setActiveTab(newTab);
+              setIsStylePanelOpen(newTab === 'style');
             }}
             pagingEnabled
             ref={bottomEditorPagerRef}
@@ -1140,6 +1151,21 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 currentStyle={stylePreset}
                 onChangeStyle={setStylePreset}
                 onUpdatePositionPreset={applyPositionPreset}
+              />
+            </View>
+
+            <View style={[styles.bottomEditorPage, { width }]}>
+              <LanguagePanel
+                availableLocales={availableSpeechLocales}
+                currentLocale={project.recognitionLocale}
+                loading={loadingSpeechLocales}
+                onRetry={locale => {
+                  setSelectedRetryLocale(locale);
+                  handleRetrySubtitleGeneration().catch(showRetryError);
+                }}
+                retrying={retryingSubtitles}
+                selectedLocale={selectedRetryLocale}
+                onSelectLocale={setSelectedRetryLocale}
               />
             </View>
           </ScrollView>
@@ -1335,20 +1361,111 @@ function TimelineControlsPanel({
   );
 }
 
-function BottomEditorTabs({
-  isStylePageActive,
-  onSelectPrimary,
-  onSelectStyle,
+function LanguagePanel({
+  availableLocales,
+  currentLocale,
+  loading,
+  onRetry,
+  retrying,
+  selectedLocale,
+  onSelectLocale,
 }: {
-  isStylePageActive: boolean;
-  onSelectPrimary: () => void;
-  onSelectStyle: () => void;
+  availableLocales: SpeechLocaleOption[];
+  currentLocale?: string;
+  loading: boolean;
+  onRetry: (locale: string) => void;
+  retrying: boolean;
+  selectedLocale: string;
+  onSelectLocale: (locale: string) => void;
+}) {
+  return (
+    <ScrollView
+      bounces={false}
+      contentContainerStyle={styles.languagePanel}
+      showsVerticalScrollIndicator={false}>
+      <View style={styles.languagePanelHeader}>
+        <Text style={styles.languagePanelTitle}>Recognition Language</Text>
+        <Text style={styles.languagePanelHint}>
+          {currentLocale
+            ? `Current: ${availableLocales.find(l => l.value === currentLocale)?.label || currentLocale}`
+            : 'Choose a language to regenerate subtitles'}
+        </Text>
+      </View>
+
+      <View style={styles.localeOptions}>
+        <Pressable
+          onPress={() => onSelectLocale(AUTO_DETECT_LOCALE_VALUE)}
+          style={[
+            styles.localeOption,
+            selectedLocale === AUTO_DETECT_LOCALE_VALUE && styles.localeOptionActive,
+          ]}>
+          <Text
+            style={[
+              styles.localeOptionLabel,
+              selectedLocale === AUTO_DETECT_LOCALE_VALUE && styles.localeOptionLabelActive,
+            ]}>
+            Auto Detect
+          </Text>
+          {selectedLocale === AUTO_DETECT_LOCALE_VALUE && (
+            <Feather color={palette.cyan} name="check" size={16} />
+          )}
+        </Pressable>
+
+        {availableLocales.map(option => (
+          <Pressable
+            key={option.value}
+            onPress={() => onSelectLocale(option.value)}
+            style={[
+              styles.localeOption,
+              selectedLocale === option.value && styles.localeOptionActive,
+            ]}>
+            <Text
+              style={[
+                styles.localeOptionLabel,
+                selectedLocale === option.value && styles.localeOptionLabelActive,
+              ]}>
+              {option.label}
+            </Text>
+            {selectedLocale === option.value && (
+              <Feather color={palette.cyan} name="check" size={16} />
+            )}
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.languagePanelFootnote}>
+        {loading
+          ? 'Loading on-device languages...'
+          : `${availableLocales.length} on-device languages available`}
+      </Text>
+
+      <Pressable
+        disabled={loading || retrying || availableLocales.length === 0}
+        onPress={() => onRetry(selectedLocale)}
+        style={[
+          styles.retryButton,
+          (loading || retrying || availableLocales.length === 0) && styles.retryButtonDisabled,
+        ]}>
+        <Text style={styles.retryButtonText}>
+          {retrying ? 'Regenerating...' : 'Regenerate Subtitles'}
+        </Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+function BottomEditorTabs({
+  activeTab,
+  onSelectTab,
+}: {
+  activeTab: 'subtitle' | 'style' | 'language';
+  onSelectTab: (tab: 'subtitle' | 'style' | 'language') => void;
 }) {
   const [tabTrackWidth, setTabTrackWidth] = useState(0);
-  const activeTabProgress = useSharedValue(isStylePageActive ? 1 : 0);
+  const activeTabProgress = useSharedValue(activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : 2);
 
   useEffect(() => {
-    const nextProgress = isStylePageActive ? 1 : 0;
+    const nextProgress = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : 2;
     const direction = nextProgress - activeTabProgress.value;
 
     activeTabProgress.value = withSpring(nextProgress, {
@@ -1357,9 +1474,9 @@ function BottomEditorTabs({
       mass: 0.78,
       velocity: direction === 0 ? 0 : direction * 3.6,
     });
-  }, [activeTabProgress, isStylePageActive]);
+  }, [activeTabProgress, activeTab]);
 
-  const tabIndicatorWidth = tabTrackWidth > 12 ? (tabTrackWidth - 12) / 2 : 0;
+  const tabIndicatorWidth = tabTrackWidth > 12 ? (tabTrackWidth - 12) / 3 : 0;
   const tabIndicatorTravel = tabIndicatorWidth + 4;
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
     const bounceDistance = Math.abs(activeTabProgress.value - Math.round(activeTabProgress.value));
@@ -1379,7 +1496,7 @@ function BottomEditorTabs({
     };
   });
   const subtitleLabelAnimatedStyle = useAnimatedStyle(() => {
-    const emphasis = 1 - activeTabProgress.value;
+    const emphasis = Math.max(0, 1 - Math.abs(activeTabProgress.value));
 
     return {
       opacity: 0.64 + emphasis * 0.36,
@@ -1394,7 +1511,22 @@ function BottomEditorTabs({
     };
   });
   const styleLabelAnimatedStyle = useAnimatedStyle(() => {
-    const emphasis = activeTabProgress.value;
+    const emphasis = Math.max(0, 1 - Math.abs(activeTabProgress.value - 1));
+
+    return {
+      opacity: 0.64 + emphasis * 0.36,
+      transform: [
+        {
+          scale: 0.965 + emphasis * 0.035,
+        },
+        {
+          translateY: (1 - emphasis) * 1.5,
+        },
+      ],
+    };
+  });
+  const languageLabelAnimatedStyle = useAnimatedStyle(() => {
+    const emphasis = Math.max(0, 1 - Math.abs(activeTabProgress.value - 2));
 
     return {
       opacity: 0.64 + emphasis * 0.36,
@@ -1424,15 +1556,15 @@ function BottomEditorTabs({
       />
       <Pressable
         accessibilityRole="tab"
-        accessibilityState={{ selected: !isStylePageActive }}
-        onPress={onSelectPrimary}
+        accessibilityState={{ selected: activeTab === 'subtitle' }}
+        onPress={() => onSelectTab('subtitle')}
         style={styles.bottomEditorTab}
         testID={BOTTOM_EDITOR_PRIMARY_TAB_ID}>
         <Animated.View style={subtitleLabelAnimatedStyle}>
           <Text
             style={[
               styles.bottomEditorTabLabel,
-              !isStylePageActive && styles.bottomEditorTabLabelActive,
+              activeTab === 'subtitle' && styles.bottomEditorTabLabelActive,
             ]}>
             Subtitle
           </Text>
@@ -1440,17 +1572,33 @@ function BottomEditorTabs({
       </Pressable>
       <Pressable
         accessibilityRole="tab"
-        accessibilityState={{ selected: isStylePageActive }}
-        onPress={onSelectStyle}
+        accessibilityState={{ selected: activeTab === 'style' }}
+        onPress={() => onSelectTab('style')}
         style={styles.bottomEditorTab}
         testID={BOTTOM_EDITOR_STYLE_TAB_ID}>
         <Animated.View style={styleLabelAnimatedStyle}>
           <Text
             style={[
               styles.bottomEditorTabLabel,
-              isStylePageActive && styles.bottomEditorTabLabelActive,
+              activeTab === 'style' && styles.bottomEditorTabLabelActive,
             ]}>
             Style
+          </Text>
+        </Animated.View>
+      </Pressable>
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === 'language' }}
+        onPress={() => onSelectTab('language')}
+        style={styles.bottomEditorTab}
+        testID={BOTTOM_EDITOR_LANGUAGE_TAB_ID}>
+        <Animated.View style={languageLabelAnimatedStyle}>
+          <Text
+            style={[
+              styles.bottomEditorTabLabel,
+              activeTab === 'language' && styles.bottomEditorTabLabelActive,
+            ]}>
+            Language
           </Text>
         </Animated.View>
       </Pressable>
@@ -2212,5 +2360,72 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.2,
+  },
+  languagePanel: {
+    paddingHorizontal: 12,
+    paddingTop: 18,
+    paddingBottom: 18,
+    gap: 16,
+  },
+  languagePanelHeader: {
+    gap: 6,
+  },
+  languagePanelTitle: {
+    color: palette.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  languagePanelHint: {
+    color: palette.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  localeOptions: {
+    gap: 10,
+  },
+  localeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  localeOptionActive: {
+    borderColor: 'rgba(0, 240, 255, 0.3)',
+    backgroundColor: 'rgba(0, 240, 255, 0.12)',
+  },
+  localeOptionLabel: {
+    flex: 1,
+    color: palette.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  localeOptionLabelActive: {
+    color: palette.textPrimary,
+  },
+  languagePanelFootnote: {
+    color: palette.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  retryButton: {
+    minHeight: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.textPrimary,
+  },
+  retryButtonText: {
+    color: palette.canvas,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  retryButtonDisabled: {
+    opacity: 0.55,
   },
 });
