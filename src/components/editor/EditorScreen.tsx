@@ -1147,6 +1147,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 onSetEditing={setIsTextEditing}
                 onUpdateText={updateSelectedSubtitleText}
                 selectedSubtitle={selectedSubtitle}
+                playbackPosition={playbackPosition}
+                stylePreset={stylePreset}
               />
             </View>
 
@@ -1715,6 +1717,8 @@ function TextEditorSection({
   onSetEditing,
   onUpdateText,
   onNavigate,
+  playbackPosition,
+  stylePreset,
 }: {
   canNavigateNext: boolean;
   canNavigatePrev: boolean;
@@ -1726,6 +1730,8 @@ function TextEditorSection({
   onSetEditing: (value: boolean) => void;
   onUpdateText: (text: string) => void;
   onNavigate: (direction: -1 | 1, keepEditing: boolean) => void;
+  playbackPosition: number;
+  stylePreset: Project['globalStyle'];
 }) {
   const [draftText, setDraftText] = useState(selectedSubtitle?.text ?? '');
 
@@ -1743,6 +1749,8 @@ function TextEditorSection({
     onUpdateText(draftText);
   }, [draftText, onUpdateText, selectedSubtitle]);
 
+  const textInputRef = useRef<TextInput>(null);
+
   const handlePanelPress = () => {
     if (keyboardVisible) {
       Keyboard.dismiss();
@@ -1750,6 +1758,7 @@ function TextEditorSection({
     }
 
     onSelectText();
+    textInputRef.current?.focus();
   };
   const handleNavigate = (direction: -1 | 1) => {
     if (isEditing) {
@@ -1813,11 +1822,16 @@ function TextEditorSection({
           style={styles.textPanelBody}
           contentContainerStyle={styles.textPanelBodyContent}>
           {selectedSubtitle ? (
-            isEditing ? (
+            <View>
               <TextInput
-                defaultValue={selectedSubtitle.text}
-                key={selectedSubtitle.id}
+                ref={textInputRef}
                 multiline
+                value={draftText}
+                onFocus={() => {
+                  if (!isEditing) {
+                    onSelectText();
+                  }
+                }}
                 onBlur={() => {
                   commitDraftTextIfChanged();
                   onSetEditing(false);
@@ -1827,13 +1841,17 @@ function TextEditorSection({
                 }}
                 placeholder="Rewrite subtitle text"
                 placeholderTextColor={palette.textSecondary}
-                style={[styles.subtitlePreview, styles.textInput]}
+                style={[styles.subtitlePreview, styles.textInput, styles.textInputTransparent]}
               />
-            ) : (
-              <Pressable onPress={onSelectText}>
-                <Text style={styles.subtitlePreview}>{selectedSubtitle.text}</Text>
-              </Pressable>
-            )
+              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <HighlightedSubtitleText
+                  playheadPosition={playbackPosition}
+                  style={styles.subtitlePreview}
+                  stylePreset={stylePreset}
+                  subtitle={{ ...selectedSubtitle, text: draftText }}
+                />
+              </View>
+            </View>
           ) : (
             <Text style={styles.subtitlePreview}>Select a subtitle block to edit.</Text>
           )}
@@ -2366,6 +2384,9 @@ const styles = StyleSheet.create({
     margin: 0,
     padding: 0,
     textAlignVertical: 'top',
+  },
+  textInputTransparent: {
+    color: 'transparent',
   },
   subtitleNavRow: {
     flexDirection: 'row',
