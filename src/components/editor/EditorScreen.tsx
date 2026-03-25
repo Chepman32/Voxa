@@ -43,6 +43,7 @@ import {
   applyManualSubtitleTextEdit,
   clamp,
   countRenderableSubtitles,
+  findActiveSubtitleWordIndex,
   formatDuration,
   getRenderableSubtitleWords,
   getSubtitleVerticalBounds,
@@ -1740,6 +1741,10 @@ function TextEditorSection({
     setDraftText(selectedSubtitle?.text ?? '');
   }, [selectedSubtitle?.id, selectedSubtitle?.text]);
 
+  const [cursorIndex, setCursorIndex] = useState<number | null>(null);
+
+  const activeEditWordIndexRef = useRef(-1);
+
   const commitDraftTextIfChanged = useCallback(() => {
     if (!selectedSubtitle) {
       return;
@@ -1831,26 +1836,57 @@ function TextEditorSection({
                 onFocus={() => {
                   if (!isEditing) {
                     onSelectText();
+                    activeEditWordIndexRef.current = findActiveSubtitleWordIndex(
+                      selectedSubtitle,
+                      playbackPosition,
+                    );
                   }
                 }}
                 onBlur={() => {
                   commitDraftTextIfChanged();
                   onSetEditing(false);
+                  activeEditWordIndexRef.current = -1;
                 }}
                 onChangeText={text => {
                   setDraftText(text);
+                }}
+                onSelectionChange={e => {
+                  setCursorIndex(e.nativeEvent.selection.start);
                 }}
                 placeholder="Rewrite subtitle text"
                 placeholderTextColor={palette.textSecondary}
                 style={[styles.subtitlePreview, styles.textInput, styles.textInputTransparent]}
               />
               <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                <HighlightedSubtitleText
-                  playheadPosition={playbackPosition}
-                  style={styles.subtitlePreview}
-                  stylePreset={stylePreset}
-                  subtitle={{ ...selectedSubtitle, text: draftText }}
-                />
+                {isEditing ? (
+                  <Text style={[styles.subtitlePreview, styles.textInput]}>
+                    {draftText.split(/(\s+)/).reduce<{ nodes: React.ReactNode[]; wordIdx: number }>(
+                      (acc, token) => {
+                        if (/\S/.test(token)) {
+                          acc.nodes.push(
+                            <Text
+                              key={acc.wordIdx}
+                              style={acc.wordIdx === activeEditWordIndexRef.current ? { color: stylePreset.accentColor } : undefined}>
+                              {token}
+                            </Text>,
+                          );
+                          acc.wordIdx++;
+                        } else {
+                          acc.nodes.push(token);
+                        }
+                        return acc;
+                      },
+                      { nodes: [], wordIdx: 0 },
+                    ).nodes}
+                  </Text>
+                ) : (
+                  <HighlightedSubtitleText
+                    playheadPosition={playbackPosition}
+                    style={styles.subtitlePreview}
+                    stylePreset={stylePreset}
+                    subtitle={{ ...selectedSubtitle, text: draftText }}
+                  />
+                )}
               </View>
             </View>
           ) : (
