@@ -681,13 +681,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }, [isPlaying, playbackPosition, setIsPlaying]);
 
   const handleVideoTap = useCallback(() => {
-    if (isPlaying && !showControls) {
+    if (!showControls) {
       setShowControls(true);
       scheduleHideControls();
-    } else {
-      togglePlayback();
     }
-  }, [isPlaying, scheduleHideControls, showControls, togglePlayback]);
+    togglePlayback();
+  }, [scheduleHideControls, showControls, togglePlayback]);
 
   const flashSkip = (label: string) => {
     setSkipFlash(label);
