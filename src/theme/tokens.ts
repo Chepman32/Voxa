@@ -201,12 +201,35 @@ export const subtitleHighlightColorOptions = [
   },
 ];
 
-export const subtitleSizeOptions = [
+export const subtitleBackgroundColorOptions = [
   {
-    id: 'compact',
-    label: '28',
-    fontSize: 28,
+    id: 'dark',
+    label: 'Dark',
+    backgroundColor: 'rgba(10, 10, 12, 0.62)',
   },
+  {
+    id: 'none',
+    label: 'None',
+    backgroundColor: 'transparent',
+  },
+  {
+    id: 'black',
+    label: 'Black',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+  },
+  {
+    id: 'white',
+    label: 'White',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+  },
+  {
+    id: 'navy',
+    label: 'Navy',
+    backgroundColor: 'rgba(10, 20, 60, 0.80)',
+  },
+];
+
+export const subtitleSizeOptions = [
   {
     id: 'default',
     label: '34',

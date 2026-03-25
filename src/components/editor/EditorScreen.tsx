@@ -81,6 +81,7 @@ import {
   palette,
   subtitleFontOptions,
   subtitleHighlightColorOptions,
+  subtitleBackgroundColorOptions,
   subtitlePositionOptions,
   subtitleSizeOptions,
   subtitleTextColorOptions,
@@ -1935,6 +1936,21 @@ function StyleSelectorsPanel({
               onChangeStyle({
                 ...currentStyle,
                 accentColor: option.accentColor,
+              }),
+          }))}
+        />
+
+        <StyleRow
+          label="Background"
+          options={subtitleBackgroundColorOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            active: currentStyle.backgroundColor === option.backgroundColor,
+            swatch: option.backgroundColor === 'transparent' ? undefined : option.backgroundColor,
+            onPress: () =>
+              onChangeStyle({
+                ...currentStyle,
+                backgroundColor: option.backgroundColor,
               }),
           }))}
         />

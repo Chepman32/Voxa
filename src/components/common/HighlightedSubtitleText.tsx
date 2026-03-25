@@ -76,7 +76,11 @@ export function HighlightedSubtitleText({
     );
   }
 
-  const activeWordIndex = findActiveSubtitleWordIndex(subtitle, playheadPosition, {
+  const clampedPosition = Math.min(
+    Math.max(playheadPosition, subtitle.startTime),
+    subtitle.endTime,
+  );
+  const activeWordIndex = findActiveSubtitleWordIndex(subtitle, clampedPosition, {
     allowSyntheticWords,
   });
 
