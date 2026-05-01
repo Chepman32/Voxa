@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { defaultSubtitleStyle } from '../theme/tokens';
 import type {
   AppRoute,
+  OnboardingAnswers,
   ProcessingState,
   Project,
   UserSettings,
@@ -17,12 +18,16 @@ interface AppState {
   activeProjectId: string | null;
   settingsOpen: boolean;
   hasCompletedOnboarding: boolean;
+  onboardingStep: number;
+  onboardingAnswers: OnboardingAnswers;
   processing: ProcessingState;
   settings: UserSettings;
   projects: Project[];
   setHydrated: (value: boolean) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
+  setOnboardingStep: (step: number) => void;
+  setOnboardingAnswers: (answers: Partial<OnboardingAnswers>) => void;
   openSettings: () => void;
   closeSettings: () => void;
   openProject: (projectId: string) => void;
@@ -39,7 +44,7 @@ interface AppState {
 }
 
 type PersistedAppState = Partial<
-  Pick<AppState, 'hasCompletedOnboarding' | 'projects' | 'settings'>
+  Pick<AppState, 'hasCompletedOnboarding' | 'onboardingStep' | 'onboardingAnswers' | 'projects' | 'settings'>
 >;
 
 const defaultSettings: UserSettings = {
@@ -51,6 +56,16 @@ const defaultProcessing: ProcessingState = {
   visible: false,
   phase: 'extracting',
   label: 'Extracting audio...',
+};
+
+const defaultOnboardingAnswers: OnboardingAnswers = {
+  goal: null,
+  painPoints: [],
+  preferences: {
+    stylePreset: null,
+    fontPreset: null,
+    effect: null,
+  },
 };
 
 function isTemporaryFileUri(uri?: string) {
@@ -120,12 +135,24 @@ export const useAppStore = create<AppState>()(
       activeProjectId: null,
       settingsOpen: false,
       hasCompletedOnboarding: false,
+      onboardingStep: 0,
+      onboardingAnswers: defaultOnboardingAnswers,
       processing: defaultProcessing,
       settings: defaultSettings,
       projects: [],
       setHydrated: value => set({ hydrated: value }),
-      completeOnboarding: () => set({ hasCompletedOnboarding: true }),
-      resetOnboarding: () => set({ hasCompletedOnboarding: false }),
+      completeOnboarding: () => set({ hasCompletedOnboarding: true, onboardingStep: 0 }),
+      resetOnboarding: () =>
+        set({
+          hasCompletedOnboarding: false,
+          onboardingStep: 0,
+          onboardingAnswers: defaultOnboardingAnswers,
+        }),
+      setOnboardingStep: step => set({ onboardingStep: step }),
+      setOnboardingAnswers: answers =>
+        set(state => ({
+          onboardingAnswers: { ...state.onboardingAnswers, ...answers },
+        })),
       openSettings: () => set({ settingsOpen: true }),
       closeSettings: () => set({ settingsOpen: false }),
       openProject: projectId => set({ activeProjectId: projectId, route: 'editor' }),
@@ -202,6 +229,8 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => zustandStorage),
       partialize: state => ({
         hasCompletedOnboarding: state.hasCompletedOnboarding,
+        onboardingStep: state.onboardingStep,
+        onboardingAnswers: state.onboardingAnswers,
         settings: state.settings,
         projects: state.projects,
       }),
@@ -209,7 +238,7 @@ export const useAppStore = create<AppState>()(
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 6,
+      version: 7,
     },
   ),
 );

@@ -89,3 +89,15 @@ export interface PermissionSummary {
   photoAddOnly: string;
   speech: string;
 }
+
+export interface OnboardingPreferences {
+  stylePreset: string | null;
+  fontPreset: string | null;
+  effect: string | null;
+}
+
+export interface OnboardingAnswers {
+  goal: string | null;
+  painPoints: string[];
+  preferences: OnboardingPreferences;
+}

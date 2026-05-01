@@ -33,7 +33,7 @@ import { emptyStateImage, onboardingCards, palette } from './theme/tokens';
 import { EditorScreen } from './components/editor/EditorScreen';
 import { HomeScreen } from './components/home/HomeScreen';
 import { SettingsSheet } from './components/home/SettingsSheet';
-import { OnboardingCarousel } from './components/onboarding/OnboardingCarousel';
+import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
 import { ProcessingOverlay } from './components/processing/ProcessingOverlay';
 import { SplashSequence } from './components/splash/SplashSequence';
 import type { PermissionSummary } from './types/models';
@@ -269,12 +269,7 @@ export function AppRoot() {
   return (
     <View style={styles.root}>
       {!hasCompletedOnboarding ? (
-        <OnboardingCarousel
-          onGrantAccess={handleGrantAccess}
-          onSkip={completeOnboarding}
-          pending={permissionsPending}
-          permissionSummary={permissionSummary}
-        />
+        <OnboardingFlow />
       ) : route === 'editor' && activeProject ? (
         <EditorScreen
           onClose={() => {}}
