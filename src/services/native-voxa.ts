@@ -62,6 +62,7 @@ interface VoxaNativeModule {
   requestAuthorizations(): Promise<PermissionSummary>;
   getSpeechAuthorizationStatus(): Promise<PermissionSummary['speech']>;
   requestSpeechAuthorization(): Promise<PermissionSummary['speech']>;
+  getDeviceLocale(): Promise<string>;
   getAvailableSpeechLocales(): Promise<SpeechLocaleOption[]>;
   prepareProject(
     videoURI: string,
@@ -159,6 +160,14 @@ export async function requestSpeechAuthorization() {
   }
 
   return requireNativeMethod('requestSpeechAuthorization')();
+}
+
+export async function getDeviceLocale() {
+  if (Platform.OS !== 'ios') {
+    return 'en-US';
+  }
+
+  return requireNativeMethod('getDeviceLocale')();
 }
 
 export async function getAvailableSpeechLocales() {
