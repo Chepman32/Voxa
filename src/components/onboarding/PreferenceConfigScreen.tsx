@@ -304,12 +304,12 @@ const styles = StyleSheet.create({
   },
   colorRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     marginBottom: 16,
   },
   colorCircle: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 999,
     borderWidth: 3,
     borderColor: 'transparent',

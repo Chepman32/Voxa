@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   colorRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     marginBottom: 4,
   },
   colorCircle: {

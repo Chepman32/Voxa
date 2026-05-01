@@ -190,6 +190,11 @@ export const subtitleHighlightColorOptions = [
     accentColor: '#FFB340',
   },
   {
+    id: 'red',
+    label: 'Red',
+    accentColor: '#FF453A',
+  },
+  {
     id: 'clean',
     label: 'Silver',
     accentColor: '#C7C7CC',
