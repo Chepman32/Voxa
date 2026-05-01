@@ -2,10 +2,14 @@ import type { Asset } from 'react-native-image-picker';
 
 jest.mock('../src/services/native-voxa', () => ({
   prepareProject: jest.fn(),
+  persistProjectVideo: jest.fn(),
+  resolveProjectMedia: jest.fn(),
 }));
 
 import {
+  buildPersistedManualFallbackProject,
   buildProjectFromAsset,
+  repairProjectMedia,
   retryProjectSubtitles,
 } from '../src/services/project-processor';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
@@ -13,6 +17,12 @@ import type { Project } from '../src/types/models';
 
 const mockPrepareProject = jest.mocked(
   require('../src/services/native-voxa').prepareProject,
+);
+const mockPersistProjectVideo = jest.mocked(
+  require('../src/services/native-voxa').persistProjectVideo,
+);
+const mockResolveProjectMedia = jest.mocked(
+  require('../src/services/native-voxa').resolveProjectMedia,
 );
 
 describe('project processor', () => {
@@ -24,12 +34,17 @@ describe('project processor', () => {
 
   afterEach(() => {
     mockPrepareProject.mockReset();
+    mockPersistProjectVideo.mockReset();
+    mockResolveProjectMedia.mockReset();
   });
 
   it('builds a project with the detected recognition locale', async () => {
     mockPrepareProject.mockResolvedValue({
       duration: 12000,
+      videoUri: 'file:///app-support/project-media/detect-language.mov',
+      videoFileName: 'detect-language.mov',
       thumbnailUri: 'file:///tmp/thumb.jpg',
+      thumbnailFileName: 'thumb.jpg',
       width: 1080,
       height: 1920,
       waveform: [0.2, 0.5],
@@ -60,6 +75,11 @@ describe('project processor', () => {
     expect(project.recognitionStatus).toBe('ready');
     expect(project.recognitionLocale).toBe('en-US');
     expect(project.recognitionMode).toBe('auto');
+    expect(project.videoLocalURI).toBe(
+      'file:///app-support/project-media/detect-language.mov',
+    );
+    expect(project.videoFileName).toBe('detect-language.mov');
+    expect(project.thumbnailFileName).toBe('thumb.jpg');
     expect(project.subtitles[0]).toMatchObject({
       text: 'hello',
       startTime: 0,
@@ -91,6 +111,66 @@ describe('project processor', () => {
     );
     expect(project.subtitles).toHaveLength(1);
     expect(project.subtitles[0]?.isPlaceholder).toBe(true);
+  });
+
+  it('persists a manual fallback project video before storing it', async () => {
+    mockPersistProjectVideo.mockResolvedValue({
+      videoUri: 'file:///app-support/project-media/manual.mov',
+      videoFileName: 'manual.mov',
+    });
+
+    const project = await buildPersistedManualFallbackProject(
+      asset,
+      new Error('Speech permission has not been granted.'),
+    );
+
+    expect(mockPersistProjectVideo).toHaveBeenCalledWith(
+      'file:///tmp/detect-language.mov',
+    );
+    expect(project.videoLocalURI).toBe('file:///app-support/project-media/manual.mov');
+    expect(project.videoFileName).toBe('manual.mov');
+    expect(project.recognitionStatus).toBe('failed');
+  });
+
+  it('repairs stale project media paths from stable stored file names', async () => {
+    mockResolveProjectMedia.mockResolvedValue({
+      videoUri: 'file:///current-container/ProjectMedia/video.mov',
+      videoFileName: 'video.mov',
+      thumbnailUri: 'file:///current-container/ProjectMedia/thumb.jpg',
+      thumbnailFileName: 'thumb.jpg',
+    });
+
+    const project = await repairProjectMedia({
+      id: 'project-1',
+      title: 'Detect Language',
+      sourceFileName: 'detect-language.mov',
+      videoLocalURI: 'file:///old-container/ProjectMedia/video.mov',
+      videoFileName: 'video.mov',
+      thumbnailUri: 'file:///old-container/ProjectMedia/thumb.jpg',
+      thumbnailFileName: 'thumb.jpg',
+      duration: 12000,
+      createdAt: 1,
+      updatedAt: 1,
+      subtitles: [],
+      globalStyle: defaultSubtitleStyle,
+      waveform: [0.1, 0.2],
+      recognitionStatus: 'ready',
+      recognitionMode: 'auto',
+      metrics: { width: 1080, height: 1920 },
+    });
+
+    expect(mockResolveProjectMedia).toHaveBeenCalledWith({
+      videoURI: 'file:///old-container/ProjectMedia/video.mov',
+      videoFileName: 'video.mov',
+      thumbnailUri: 'file:///old-container/ProjectMedia/thumb.jpg',
+      thumbnailFileName: 'thumb.jpg',
+    });
+    expect(project.videoLocalURI).toBe(
+      'file:///current-container/ProjectMedia/video.mov',
+    );
+    expect(project.thumbnailUri).toBe(
+      'file:///current-container/ProjectMedia/thumb.jpg',
+    );
   });
 
   it('retries subtitle generation for an existing failed project with a manual locale', async () => {

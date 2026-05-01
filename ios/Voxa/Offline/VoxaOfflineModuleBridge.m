@@ -30,6 +30,18 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+  persistProjectVideo:(NSString *)videoURI
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+  resolveProjectMedia:(NSDictionary *)payload
+  resolver:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
   exportProject:(NSDictionary *)payload
   resolver:(RCTPromiseResolveBlock)resolve
   rejecter:(RCTPromiseRejectBlock)reject

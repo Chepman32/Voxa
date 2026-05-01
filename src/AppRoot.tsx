@@ -2,6 +2,7 @@ import React, {
   startTransition,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -14,7 +15,11 @@ import {
 } from 'react-native';
 import type { Asset } from 'react-native-image-picker';
 
-import { buildManualFallbackProject, buildProjectFromAsset } from './services/project-processor';
+import {
+  buildPersistedManualFallbackProject,
+  buildProjectFromAsset,
+  repairProjectMedia,
+} from './services/project-processor';
 import {
   getSpeechAuthorizationStatus,
   requestAuthorizations,
@@ -57,8 +62,10 @@ export function AppRoot() {
     state => state.setPreferredExportResolution,
   );
   const setHighlightEditedWords = useAppStore(state => state.setHighlightEditedWords);
+  const replaceProject = useAppStore(state => state.replaceProject);
 
   const [showSplash, setShowSplash] = useState(true);
+  const repairedProjectIdsRef = useRef(new Set<string>());
   const [permissionSummary, setPermissionSummary] =
     useState<PermissionSummary | null>(null);
   const [permissionsPending, setPermissionsPending] = useState(false);
@@ -85,6 +92,27 @@ export function AppRoot() {
       Image.prefetch(uri).catch(() => {});
     });
   }, []);
+
+  useEffect(() => {
+    if (!hydrated || projects.length === 0) {
+      return;
+    }
+
+    projects.forEach(project => {
+      if (repairedProjectIdsRef.current.has(project.id)) {
+        return;
+      }
+
+      repairedProjectIdsRef.current.add(project.id);
+      repairProjectMedia(project)
+        .then(repairedProject => {
+          if (repairedProject !== project) {
+            replaceProject(repairedProject);
+          }
+        })
+        .catch(() => {});
+    });
+  }, [hydrated, projects, replaceProject]);
 
   const activeProject =
     projects.find(project => project.id === activeProjectId) ?? null;
@@ -116,7 +144,7 @@ export function AppRoot() {
         openProject(project.id);
       });
     } catch (error) {
-      const fallbackProject = buildManualFallbackProject(asset, error);
+      const fallbackProject = await buildPersistedManualFallbackProject(asset, error);
       addProject(fallbackProject);
       startTransition(() => {
         openProject(fallbackProject.id);
@@ -132,7 +160,7 @@ export function AppRoot() {
     setProcessingPhase,
   ]);
 
-  const continueWithManualSubtitles = useCallback(() => {
+  const continueWithManualSubtitles = useCallback(async () => {
     if (!pendingSpeechAsset) {
       return;
     }
@@ -144,7 +172,7 @@ export function AppRoot() {
         : new Error('Speech recognition permission has not been granted.');
 
     closeSpeechAccessSheet();
-    const fallbackProject = buildManualFallbackProject(asset, error);
+    const fallbackProject = await buildPersistedManualFallbackProject(asset, error);
     addProject(fallbackProject);
     startTransition(() => {
       openProject(fallbackProject.id);

@@ -34,6 +34,7 @@ interface AppState {
   setHighlightEditedWords: (value: boolean) => void;
   addProject: (project: Project) => void;
   upsertProject: (project: Project) => void;
+  replaceProject: (project: Project) => void;
   deleteProject: (projectId: string) => void;
 }
 
@@ -52,6 +53,26 @@ const defaultProcessing: ProcessingState = {
   label: 'Extracting audio...',
 };
 
+function isTemporaryFileUri(uri?: string) {
+  if (!uri?.startsWith('file://')) {
+    return false;
+  }
+
+  const normalizedUri = uri.toLowerCase();
+  return normalizedUri.includes('/tmp/') || normalizedUri.includes('/temporaryitems/');
+}
+
+function getFileNameFromUri(uri?: string) {
+  if (!uri?.startsWith('file://')) {
+    return undefined;
+  }
+
+  const path = decodeURIComponent(uri.replace(/^file:\/\//, ''));
+  const pathParts = path.split('/').filter(Boolean);
+  const fileName = pathParts[pathParts.length - 1];
+  return fileName || undefined;
+}
+
 function normalizeStoredProject(project: Project): Project {
   const subtitles = ensureSubtitles(project.subtitles ?? [], project.duration ?? 0);
   const hasSelectedSubtitle = subtitles.some(
@@ -61,6 +82,12 @@ function normalizeStoredProject(project: Project): Project {
   return {
     ...project,
     globalStyle: normalizeSubtitleStyle(project.globalStyle ?? defaultSubtitleStyle),
+    videoFileName: project.videoFileName ?? getFileNameFromUri(project.videoLocalURI),
+    thumbnailUri: isTemporaryFileUri(project.thumbnailUri)
+      ? undefined
+      : project.thumbnailUri,
+    thumbnailFileName:
+      project.thumbnailFileName ?? getFileNameFromUri(project.thumbnailUri),
     subtitles,
     recognitionMode: project.recognitionMode ?? 'auto',
     lastEditedSubtitleId: hasSelectedSubtitle ? project.lastEditedSubtitleId : undefined,
@@ -148,6 +175,17 @@ export const useAppStore = create<AppState>()(
           nextProjects[existingIndex] = nextProject;
           return { projects: nextProjects };
         }),
+      replaceProject: project =>
+        set(state => {
+          const existingIndex = state.projects.findIndex(item => item.id === project.id);
+          if (existingIndex === -1) {
+            return { projects: [normalizeStoredProject(project), ...state.projects] };
+          }
+
+          const nextProjects = [...state.projects];
+          nextProjects[existingIndex] = normalizeStoredProject(project);
+          return { projects: nextProjects };
+        }),
       deleteProject: projectId =>
         set(state => ({
           activeProjectId:
@@ -171,7 +209,7 @@ export const useAppStore = create<AppState>()(
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 5,
+      version: 6,
     },
   ),
 );

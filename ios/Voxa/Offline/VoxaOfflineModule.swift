@@ -26,6 +26,7 @@ private struct SpeechLocaleProbeScore {
 final class VoxaOfflineModule: NSObject {
   private let recognitionChunkDurationSeconds = 45.0
   private let detectionProbeDurationSeconds = 8.0
+  private let projectMediaDirectoryName = "ProjectMedia"
 
   @objc
   static func requiresMainQueueSetup() -> Bool {
@@ -114,7 +115,8 @@ final class VoxaOfflineModule: NSObject {
     Task.detached(priority: .userInitiated) {
       do {
         let videoURL = try self.normalizedFileURL(from: videoURI)
-        let asset = AVURLAsset(url: videoURL)
+        let persistedVideoURL = try self.persistProjectMediaFile(from: videoURL)
+        let asset = AVURLAsset(url: persistedVideoURL)
         let durationMs = max(0, Int(CMTimeGetSeconds(asset.duration) * 1000))
         let videoSize = try self.renderSize(for: asset)
         let thumbnailURL = try self.generateThumbnail(for: asset)
@@ -156,7 +158,10 @@ final class VoxaOfflineModule: NSObject {
 
         resolve([
           "duration": durationMs,
+          "videoUri": persistedVideoURL.absoluteString,
+          "videoFileName": persistedVideoURL.lastPathComponent,
           "thumbnailUri": thumbnailURL.absoluteString,
+          "thumbnailFileName": thumbnailURL.lastPathComponent,
           "width": Int(videoSize.width),
           "height": Int(videoSize.height),
           "waveform": waveform,
@@ -169,6 +174,64 @@ final class VoxaOfflineModule: NSObject {
         ])
       } catch {
         reject("prepare_failed", error.localizedDescription, error)
+      }
+    }
+  }
+
+  @objc(persistProjectVideo:resolver:rejecter:)
+  func persistProjectVideo(
+    _ videoURI: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task.detached(priority: .userInitiated) {
+      do {
+        let videoURL = try self.normalizedFileURL(from: videoURI)
+        let persistedVideoURL = try self.persistProjectMediaFile(from: videoURL)
+        resolve([
+          "videoUri": persistedVideoURL.absoluteString,
+          "videoFileName": persistedVideoURL.lastPathComponent,
+        ])
+      } catch {
+        reject("persist_video_failed", error.localizedDescription, error)
+      }
+    }
+  }
+
+  @objc(resolveProjectMedia:resolver:rejecter:)
+  func resolveProjectMedia(
+    _ payload: NSDictionary,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task.detached(priority: .userInitiated) {
+      do {
+        let videoFileName = payload["videoFileName"] as? String
+        let thumbnailFileName = payload["thumbnailFileName"] as? String
+        let videoURI = payload["videoURI"] as? String
+        let thumbnailUri = payload["thumbnailUri"] as? String
+
+        let videoURL = try self.resolveProjectMediaURL(
+          fileName: videoFileName,
+          uri: videoURI
+        )
+        var thumbnailURL = try self.resolveProjectMediaURL(
+          fileName: thumbnailFileName,
+          uri: thumbnailUri
+        )
+
+        if thumbnailURL == nil, let videoURL {
+          thumbnailURL = try self.generateThumbnail(for: AVURLAsset(url: videoURL))
+        }
+
+        resolve([
+          "videoUri": videoURL?.absoluteString as Any,
+          "videoFileName": videoURL?.lastPathComponent as Any,
+          "thumbnailUri": thumbnailURL?.absoluteString as Any,
+          "thumbnailFileName": thumbnailURL?.lastPathComponent as Any,
+        ])
+      } catch {
+        reject("resolve_media_failed", error.localizedDescription, error)
       }
     }
   }
@@ -1227,8 +1290,9 @@ private extension VoxaOfflineModule {
       throw VoxaOfflineError.thumbnailFailed
     }
 
-    let outputURL = temporaryURL(extension: "jpg")
+    let outputURL = try persistentProjectMediaURL(extension: "jpg")
     try data.write(to: outputURL, options: .atomic)
+    try? excludeFromBackup(outputURL)
     return outputURL
   }
 
@@ -1273,6 +1337,104 @@ private extension VoxaOfflineModule {
       .appendingPathExtension(ext)
     try? FileManager.default.removeItem(at: url)
     return url
+  }
+
+  func persistentProjectMediaDirectory() throws -> URL {
+    guard let supportDirectory = FileManager.default.urls(
+      for: .applicationSupportDirectory,
+      in: .userDomainMask
+    ).first else {
+      throw VoxaOfflineError.invalidPayload("Unable to open app media storage.")
+    }
+
+    let directory = supportDirectory
+      .appendingPathComponent("Voxa", isDirectory: true)
+      .appendingPathComponent(projectMediaDirectoryName, isDirectory: true)
+    try FileManager.default.createDirectory(
+      at: directory,
+      withIntermediateDirectories: true
+    )
+    try? excludeFromBackup(directory)
+    return directory
+  }
+
+  func persistentProjectMediaURL(extension ext: String) throws -> URL {
+    let safeExtension = ext.trimmingCharacters(in: .whitespacesAndNewlines)
+    let fileExtension = safeExtension.isEmpty ? "dat" : safeExtension
+    let url = try persistentProjectMediaDirectory()
+      .appendingPathComponent(UUID().uuidString)
+      .appendingPathExtension(fileExtension)
+    try? FileManager.default.removeItem(at: url)
+    return url
+  }
+
+  func persistProjectMediaFile(from sourceURL: URL) throws -> URL {
+    let mediaDirectory = try persistentProjectMediaDirectory()
+    if isFileURL(sourceURL, inside: mediaDirectory) {
+      return sourceURL
+    }
+
+    let sourceExtension = sourceURL.pathExtension.trimmingCharacters(in: .whitespacesAndNewlines)
+    let outputURL = try persistentProjectMediaURL(
+      extension: sourceExtension.isEmpty ? "mov" : sourceExtension
+    )
+    try FileManager.default.copyItem(at: sourceURL, to: outputURL)
+    try? excludeFromBackup(outputURL)
+    return outputURL
+  }
+
+  func resolveProjectMediaURL(fileName: String?, uri: String?) throws -> URL? {
+    let mediaDirectory = try persistentProjectMediaDirectory()
+
+    if let fileName = sanitizedProjectMediaFileName(fileName) {
+      let mediaURL = mediaDirectory.appendingPathComponent(fileName)
+      if FileManager.default.fileExists(atPath: mediaURL.path) {
+        return mediaURL
+      }
+    }
+
+    if let uri, uri.isEmpty == false {
+      let url = try normalizedFileURL(from: uri)
+      if FileManager.default.fileExists(atPath: url.path) {
+        if isFileURL(url, inside: mediaDirectory) {
+          return url
+        }
+
+        return try persistProjectMediaFile(from: url)
+      }
+
+      let fallbackName = url.lastPathComponent
+      if let fallbackName = sanitizedProjectMediaFileName(fallbackName) {
+        let fallbackURL = mediaDirectory.appendingPathComponent(fallbackName)
+        if FileManager.default.fileExists(atPath: fallbackURL.path) {
+          return fallbackURL
+        }
+      }
+    }
+
+    return nil
+  }
+
+  func sanitizedProjectMediaFileName(_ fileName: String?) -> String? {
+    guard let fileName else {
+      return nil
+    }
+
+    let candidate = URL(fileURLWithPath: fileName).lastPathComponent
+    return candidate.isEmpty ? nil : candidate
+  }
+
+  func isFileURL(_ fileURL: URL, inside directoryURL: URL) -> Bool {
+    let filePath = fileURL.resolvingSymlinksInPath().standardizedFileURL.path
+    let directoryPath = directoryURL.resolvingSymlinksInPath().standardizedFileURL.path
+    return filePath == directoryPath || filePath.hasPrefix(directoryPath + "/")
+  }
+
+  func excludeFromBackup(_ url: URL) throws {
+    var resourceURL = url
+    var values = URLResourceValues()
+    values.isExcludedFromBackup = true
+    try resourceURL.setResourceValues(values)
   }
 
   func normalizedFileURL(from value: String) throws -> URL {

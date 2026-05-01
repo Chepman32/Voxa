@@ -24,6 +24,7 @@ describe('app store migration', () => {
           title: 'Stored',
           sourceFileName: 'stored.mov',
           videoLocalURI: 'file:///tmp/stored.mov',
+          thumbnailUri: 'file:///private/var/mobile/Containers/Data/Application/id/tmp/thumb.jpg',
           duration: 4200,
           createdAt: 1,
           updatedAt: 1,
@@ -45,6 +46,9 @@ describe('app store migration', () => {
     expect(migrated.projects[0]).toMatchObject({
       id: 'project-1',
       recognitionMode: 'auto',
+      videoFileName: 'stored.mov',
+      thumbnailUri: undefined,
+      thumbnailFileName: 'thumb.jpg',
     });
     expect(migrated.projects[0]?.subtitles).toHaveLength(1);
     expect(migrated.projects[0]?.subtitles[0]?.isPlaceholder).toBe(true);

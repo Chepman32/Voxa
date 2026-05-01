@@ -55,7 +55,9 @@ export interface Project {
   title: string;
   sourceFileName: string;
   videoLocalURI: string;
+  videoFileName?: string;
   thumbnailUri?: string;
+  thumbnailFileName?: string;
   duration: number;
   createdAt: number;
   updatedAt: number;

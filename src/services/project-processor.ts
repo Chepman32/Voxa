@@ -9,7 +9,11 @@ import {
   normalizeVideoUri,
 } from '../lib/project';
 import { defaultSubtitleStyle } from '../theme/tokens';
-import { prepareProject } from './native-voxa';
+import {
+  persistProjectVideo,
+  prepareProject,
+  resolveProjectMedia,
+} from './native-voxa';
 import type { Project, RecognitionStatus } from '../types/models';
 
 function wait(duration: number) {
@@ -88,12 +92,16 @@ async function prepareProjectResult({
   };
 }
 
+function getAssetVideoUri(asset: Asset) {
+  return normalizeVideoUri(asset.uri ?? asset.originalPath ?? '');
+}
+
 export async function buildProjectFromAsset(
   asset: Asset,
   localeOverride: string | null = null,
   onPhaseChange?: ProjectPhaseHandler,
 ) {
-  const uri = normalizeVideoUri(asset.uri ?? asset.originalPath ?? '');
+  const uri = getAssetVideoUri(asset);
   const fallbackDuration = Math.max(8000, Math.round((asset.duration ?? 12) * 1000));
   const result = await prepareProjectResult({
     fallbackDuration,
@@ -106,8 +114,10 @@ export async function buildProjectFromAsset(
     id: createId('project'),
     title: deriveProjectTitle(asset.fileName),
     sourceFileName: asset.fileName ?? 'Imported video',
-    videoLocalURI: uri,
+    videoLocalURI: result.videoUri ?? uri,
+    videoFileName: result.videoFileName,
     thumbnailUri: result.thumbnailUri,
+    thumbnailFileName: result.thumbnailFileName,
     duration: result.duration || fallbackDuration,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -141,7 +151,10 @@ export async function retryProjectSubtitles(
 
   return {
     ...project,
+    videoLocalURI: result.videoUri ?? project.videoLocalURI,
+    videoFileName: result.videoFileName ?? project.videoFileName,
     thumbnailUri: result.thumbnailUri ?? project.thumbnailUri,
+    thumbnailFileName: result.thumbnailFileName ?? project.thumbnailFileName,
     duration: result.duration || fallbackDuration,
     updatedAt: Date.now(),
     subtitles: result.mergedSubtitles,
@@ -162,12 +175,13 @@ export function buildManualFallbackProject(asset: Asset, error: unknown) {
   const defaults = buildProjectDefaults();
   const duration = Math.max(8000, Math.round((asset.duration ?? 12) * 1000));
   const message = error instanceof Error ? error.message : 'Subtitle generation failed.';
+  const videoUri = getAssetVideoUri(asset);
 
   return {
     id: createId('project'),
     title: deriveProjectTitle(asset.fileName),
     sourceFileName: asset.fileName ?? 'Imported video',
-    videoLocalURI: normalizeVideoUri(asset.uri ?? asset.originalPath ?? ''),
+    videoLocalURI: videoUri,
     thumbnailUri: undefined,
     duration,
     createdAt: Date.now(),
@@ -183,4 +197,40 @@ export function buildManualFallbackProject(asset: Asset, error: unknown) {
       height: 1920,
     },
   } satisfies Project;
+}
+
+export async function buildPersistedManualFallbackProject(asset: Asset, error: unknown) {
+  const project = buildManualFallbackProject(asset, error);
+  const media = await persistProjectVideo(project.videoLocalURI).catch(() => null);
+
+  return {
+    ...project,
+    videoLocalURI: media?.videoUri ?? project.videoLocalURI,
+    videoFileName: media?.videoFileName,
+  } satisfies Project;
+}
+
+export async function repairProjectMedia(project: Project) {
+  const media = await resolveProjectMedia({
+    videoURI: project.videoLocalURI,
+    videoFileName: project.videoFileName,
+    thumbnailUri: project.thumbnailUri,
+    thumbnailFileName: project.thumbnailFileName,
+  });
+
+  const repairedProject = {
+    ...project,
+    videoLocalURI: media.videoUri ?? project.videoLocalURI,
+    videoFileName: media.videoFileName ?? project.videoFileName,
+    thumbnailUri: media.thumbnailUri ?? project.thumbnailUri,
+    thumbnailFileName: media.thumbnailFileName ?? project.thumbnailFileName,
+  } satisfies Project;
+
+  const changed =
+    repairedProject.videoLocalURI !== project.videoLocalURI ||
+    repairedProject.videoFileName !== project.videoFileName ||
+    repairedProject.thumbnailUri !== project.thumbnailUri ||
+    repairedProject.thumbnailFileName !== project.thumbnailFileName;
+
+  return changed ? repairedProject : project;
 }

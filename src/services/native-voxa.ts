@@ -23,7 +23,10 @@ export interface NativeSubtitleSegment {
 
 interface PrepareProjectResponse {
   duration: number;
+  videoUri?: string;
+  videoFileName?: string;
   thumbnailUri?: string;
+  thumbnailFileName?: string;
   width: number;
   height: number;
   waveform: number[];
@@ -43,6 +46,18 @@ interface SaveResponse {
   localIdentifier: string;
 }
 
+interface PersistVideoResponse {
+  videoUri: string;
+  videoFileName?: string;
+}
+
+interface ResolveProjectMediaResponse {
+  videoUri?: string;
+  videoFileName?: string;
+  thumbnailUri?: string;
+  thumbnailFileName?: string;
+}
+
 interface VoxaNativeModule {
   requestAuthorizations(): Promise<PermissionSummary>;
   getSpeechAuthorizationStatus(): Promise<PermissionSummary['speech']>;
@@ -52,6 +67,13 @@ interface VoxaNativeModule {
     videoURI: string,
     localeOverride: string | null,
   ): Promise<PrepareProjectResponse>;
+  persistProjectVideo(videoURI: string): Promise<PersistVideoResponse>;
+  resolveProjectMedia(payload: {
+    videoURI?: string;
+    videoFileName?: string;
+    thumbnailUri?: string;
+    thumbnailFileName?: string;
+  }): Promise<ResolveProjectMediaResponse>;
   exportProject(payload: {
     videoURI: string;
     subtitles: NativeSubtitleSegment[];
@@ -159,6 +181,8 @@ export async function prepareProject(
   if (Platform.OS !== 'ios') {
     return {
       duration: fallbackDuration,
+      videoUri: videoURI,
+      videoFileName: undefined,
       width: 1080,
       height: 1920,
       waveform: createMockWaveform(),
@@ -171,6 +195,34 @@ export async function prepareProject(
   }
 
   return requireNativeMethod('prepareProject')(videoURI, localeOverride);
+}
+
+export async function persistProjectVideo(videoURI: string) {
+  if (Platform.OS !== 'ios') {
+    return {
+      videoUri: videoURI,
+    } satisfies PersistVideoResponse;
+  }
+
+  return requireNativeMethod('persistProjectVideo')(videoURI);
+}
+
+export async function resolveProjectMedia(payload: {
+  videoURI?: string;
+  videoFileName?: string;
+  thumbnailUri?: string;
+  thumbnailFileName?: string;
+}) {
+  if (Platform.OS !== 'ios') {
+    return {
+      videoUri: payload.videoURI,
+      videoFileName: payload.videoFileName,
+      thumbnailUri: payload.thumbnailUri,
+      thumbnailFileName: payload.thumbnailFileName,
+    } satisfies ResolveProjectMediaResponse;
+  }
+
+  return requireNativeMethod('resolveProjectMedia')(payload);
 }
 
 export async function exportProject(payload: {
