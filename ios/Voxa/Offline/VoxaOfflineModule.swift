@@ -15,17 +15,38 @@ private struct SpeechLocaleProbeScore {
   let segmentCount: Int
   let coverage: Double
   let averageConfidence: Double
+  let distinctiveScriptMatchRatio: Double
+  let usesDistinctiveScript: Bool
   let preferredRank: Int
 
   var isUsable: Bool {
-    segmentCount > 0 && coverage > 0
+    segmentCount > 0 &&
+      coverage > 0 &&
+      (!usesDistinctiveScript || distinctiveScriptMatchRatio >= 0.35)
+  }
+
+  var quality: Double {
+    let coverageScore = min(1, max(0, coverage))
+    let confidenceScore = min(1, max(0, averageConfidence))
+    let segmentScore = min(1, Double(segmentCount) / 10)
+    let scriptScore = usesDistinctiveScript ? distinctiveScriptMatchRatio : 0
+
+    return coverageScore * 0.45 +
+      confidenceScore * 0.30 +
+      segmentScore * 0.15 +
+      scriptScore * 0.10
   }
 }
 
 @objc(VoxaOfflineModule)
 final class VoxaOfflineModule: NSObject {
   private let recognitionChunkDurationSeconds = 45.0
-  private let detectionProbeDurationSeconds = 8.0
+  private let detectionProbeDurationSeconds = 12.0
+  private let maxAdditionalDetectionLocales = 8
+  private let maxFinalDetectionLocales = 5
+  private let primaryDetectionLanguageCodes: Set<String> = [
+    "en", "es", "pt", "fr", "de", "it", "ru", "ja", "ko", "zh", "ar",
+  ]
   private let projectMediaDirectoryName = "ProjectMedia"
 
   @objc
@@ -955,32 +976,36 @@ private extension VoxaOfflineModule {
       throw VoxaOfflineError.noDetectableSpeechLocale
     }
 
-    // Split into preferred (user's languages) and other locales
-    let preferred = availableLocales.filter { preferredLanguageRank(for: $0.identifier) < Int.max }
-    let other = availableLocales.filter { preferredLanguageRank(for: $0.identifier) == Int.max }
+    let candidateLocales = detectionCandidateLocales(from: availableLocales)
+    let quickProbeRanges = Array(probeRanges.prefix(min(2, probeRanges.count)))
+    var quickScores: [SpeechLocaleProbeScore] = []
+
+    for locale in candidateLocales {
+      let score = try await scoreLocale(
+        locale.identifier,
+        for: asset,
+        probeRanges: quickProbeRanges
+      )
+      if score.isUsable {
+        quickScores.append(score)
+      }
+    }
+
+    let finalCandidates = Array(
+      quickScores
+        .sorted { left, right in
+          isBetter(left, than: right)
+        }
+        .prefix(maxFinalDetectionLocales)
+    )
 
     var bestScore: SpeechLocaleProbeScore?
-
-    // Phase 1: Try preferred locales with full probes — early exit when confident
-    for locale in preferred {
-      let score = try await scoreLocale(locale.identifier, for: asset, probeRanges: probeRanges)
-      if isBetter(score, than: bestScore) {
-        bestScore = score
-      }
-      if score.coverage >= 0.10, score.segmentCount >= 2 {
-        return score.localeIdentifier
-      }
-    }
-
-    // If any preferred locale is usable, use it without checking others
-    if let bestScore, bestScore.isUsable {
-      return bestScore.localeIdentifier
-    }
-
-    // Phase 2: Fallback — try up to 5 non-preferred locales with only 1 probe each
-    let fallbackProbeRanges = Array(probeRanges.prefix(1))
-    for locale in other.prefix(5) {
-      let score = try await scoreLocale(locale.identifier, for: asset, probeRanges: fallbackProbeRanges)
+    for candidate in finalCandidates {
+      let score = try await scoreLocale(
+        candidate.localeIdentifier,
+        for: asset,
+        probeRanges: probeRanges
+      )
       if isBetter(score, than: bestScore) {
         bestScore = score
       }
@@ -993,6 +1018,42 @@ private extension VoxaOfflineModule {
     return bestScore.localeIdentifier
   }
 
+  func detectionCandidateLocales(from locales: [Locale]) -> [Locale] {
+    var result: [Locale] = []
+    var seen = Set<String>()
+
+    func appendIfNeeded(_ locale: Locale) {
+      let normalizedIdentifier = normalizedLocaleIdentifier(locale.identifier)
+      guard seen.contains(normalizedIdentifier) == false else {
+        return
+      }
+      seen.insert(normalizedIdentifier)
+      result.append(locale)
+    }
+
+    locales
+      .filter { preferredLanguageRank(for: $0.identifier) < Int.max }
+      .forEach(appendIfNeeded)
+
+    locales
+      .filter { primaryDetectionLanguageCodes.contains(baseLanguageIdentifier(from: $0.identifier)) }
+      .forEach(appendIfNeeded)
+
+    var additionalCount = 0
+    for locale in locales {
+      guard additionalCount < maxAdditionalDetectionLocales else {
+        break
+      }
+      let beforeCount = result.count
+      appendIfNeeded(locale)
+      if result.count > beforeCount {
+        additionalCount += 1
+      }
+    }
+
+    return result
+  }
+
   func scoreLocale(
     _ localeIdentifier: String,
     for asset: AVAsset,
@@ -1002,6 +1063,10 @@ private extension VoxaOfflineModule {
     var confidenceSum = 0.0
     var confidenceCount = 0
     var transcriptDurationSeconds = 0.0
+    var scriptMatchedCharacterCount = 0
+    var scriptRelevantCharacterCount = 0
+    let languageIdentifier = baseLanguageIdentifier(from: localeIdentifier)
+    let usesDistinctiveScript = usesDistinctiveScript(for: languageIdentifier)
 
     for probeRange in probeRanges {
       let chunkURL = try await exportAudioChunk(from: asset, timeRange: probeRange)
@@ -1018,6 +1083,16 @@ private extension VoxaOfflineModule {
         transcriptDurationSeconds += segments.reduce(0) { partialResult, segment in
           partialResult + segment.duration
         }
+        if usesDistinctiveScript {
+          for segment in segments {
+            let scriptCounts = distinctiveScriptCounts(
+              in: segment.substring,
+              languageIdentifier: languageIdentifier
+            )
+            scriptMatchedCharacterCount += scriptCounts.matched
+            scriptRelevantCharacterCount += scriptCounts.relevant
+          }
+        }
       } catch {
         continue
       }
@@ -1032,12 +1107,17 @@ private extension VoxaOfflineModule {
     let averageConfidence = confidenceCount > 0
       ? confidenceSum / Double(confidenceCount)
       : 0
+    let distinctiveScriptMatchRatio = scriptRelevantCharacterCount > 0
+      ? Double(scriptMatchedCharacterCount) / Double(scriptRelevantCharacterCount)
+      : 0
 
     return SpeechLocaleProbeScore(
       localeIdentifier: localeIdentifier,
       segmentCount: segmentCount,
       coverage: coverage,
       averageConfidence: averageConfidence,
+      distinctiveScriptMatchRatio: distinctiveScriptMatchRatio,
+      usesDistinctiveScript: usesDistinctiveScript,
       preferredRank: preferredLanguageRank(for: localeIdentifier)
     )
   }
@@ -1054,11 +1134,11 @@ private extension VoxaOfflineModule {
       return candidate.isUsable
     }
 
-    let coverageTolerance = 0.05
+    let qualityTolerance = 0.03
     let confidenceTolerance = 0.05
 
-    if abs(candidate.coverage - current.coverage) > coverageTolerance {
-      return candidate.coverage > current.coverage
+    if abs(candidate.quality - current.quality) > qualityTolerance {
+      return candidate.quality > current.quality
     }
 
     if candidate.preferredRank != current.preferredRank {
@@ -1074,6 +1154,81 @@ private extension VoxaOfflineModule {
     }
 
     return candidate.localeIdentifier < current.localeIdentifier
+  }
+
+  func usesDistinctiveScript(for languageIdentifier: String) -> Bool {
+    switch languageIdentifier {
+    case "ru", "ja", "ko", "zh", "ar":
+      return true
+    default:
+      return false
+    }
+  }
+
+  func distinctiveScriptCounts(
+    in text: String,
+    languageIdentifier: String
+  ) -> (matched: Int, relevant: Int) {
+    var matched = 0
+    var relevant = 0
+
+    for scalar in text.unicodeScalars {
+      guard CharacterSet.letters.contains(scalar) else {
+        continue
+      }
+
+      relevant += 1
+      if scalarMatchesExpectedScript(scalar, languageIdentifier: languageIdentifier) {
+        matched += 1
+      }
+    }
+
+    return (matched: matched, relevant: relevant)
+  }
+
+  func scalarMatchesExpectedScript(
+    _ scalar: UnicodeScalar,
+    languageIdentifier: String
+  ) -> Bool {
+    switch languageIdentifier {
+    case "ru":
+      switch scalar.value {
+      case 0x0400...0x052F:
+        return true
+      default:
+        return false
+      }
+    case "ja":
+      switch scalar.value {
+      case 0x3040...0x30FF, 0x31F0...0x31FF, 0x3400...0x4DBF, 0x4E00...0x9FFF:
+        return true
+      default:
+        return false
+      }
+    case "ko":
+      switch scalar.value {
+      case 0x1100...0x11FF, 0x3130...0x318F, 0xAC00...0xD7AF:
+        return true
+      default:
+        return false
+      }
+    case "zh":
+      switch scalar.value {
+      case 0x3400...0x4DBF, 0x4E00...0x9FFF, 0x20000...0x2A6DF:
+        return true
+      default:
+        return false
+      }
+    case "ar":
+      switch scalar.value {
+      case 0x0600...0x06FF, 0x0750...0x077F, 0x08A0...0x08FF:
+        return true
+      default:
+        return false
+      }
+    default:
+      return false
+    }
   }
 
   func onDeviceRecognizer(for locale: String) throws -> SFSpeechRecognizer {
@@ -1179,6 +1334,10 @@ private extension VoxaOfflineModule {
     request.requiresOnDeviceRecognition = true
     #endif
     request.shouldReportPartialResults = false
+    request.taskHint = .dictation
+    if #available(iOS 16.0, *) {
+      request.addsPunctuation = true
+    }
 
     return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<SFSpeechRecognitionResult, Error>) in
       var hasResumed = false

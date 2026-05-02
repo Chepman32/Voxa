@@ -55,7 +55,7 @@ type PersistedAppState = Partial<
 const defaultSettings: UserSettings = {
   preferredExportResolution: '1080p',
   highlightEditedWords: true,
-  transcriptionLanguageMode: 'app',
+  transcriptionLanguageMode: 'auto',
   rememberLastTranscriptionLanguage: false,
   lastTranscriptionLocale: null,
 };
@@ -117,6 +117,12 @@ function normalizeStoredProject(project: Project): Project {
   };
 }
 
+function normalizeTranscriptionLanguageMode(
+  mode?: string,
+): UserSettings['transcriptionLanguageMode'] {
+  return mode === 'ask' ? 'ask' : defaultSettings.transcriptionLanguageMode;
+}
+
 export function migratePersistedAppState(persistedState?: PersistedAppState | null) {
   const state = (persistedState ?? {}) as PersistedAppState & {
     settings?: Partial<UserSettings> & { speechLocale?: string };
@@ -131,8 +137,7 @@ export function migratePersistedAppState(persistedState?: PersistedAppState | nu
       highlightEditedWords:
         state.settings?.highlightEditedWords ?? defaultSettings.highlightEditedWords,
       transcriptionLanguageMode:
-        state.settings?.transcriptionLanguageMode ??
-        defaultSettings.transcriptionLanguageMode,
+        normalizeTranscriptionLanguageMode(state.settings?.transcriptionLanguageMode),
       rememberLastTranscriptionLanguage:
         state.settings?.rememberLastTranscriptionLanguage ??
         defaultSettings.rememberLastTranscriptionLanguage,

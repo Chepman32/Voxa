@@ -720,11 +720,13 @@ describe('EditorScreen', () => {
 
     let prevButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_PREV_BUTTON_ID });
     let nextButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_NEXT_BUTTON_ID });
+    const activeSubtitleInput = () =>
+      renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
 
     expect(prevButton.props.disabled).toBe(true);
     expect(nextButton.props.disabled).toBe(false);
     expect(renderer!.root.findByProps({ children: '0:00 - 0:03' })).toBeTruthy();
-    expect(renderer!.root.findByProps({ children: 'first bright line' })).toBeTruthy();
+    expect(activeSubtitleInput().props.value).toBe('first bright line');
 
     await ReactTestRenderer.act(() => {
       nextButton.props.onPress();
@@ -736,14 +738,14 @@ describe('EditorScreen', () => {
     expect(prevButton.props.disabled).toBe(false);
     expect(nextButton.props.disabled).toBe(true);
     expect(renderer!.root.findByProps({ children: '0:03 - 0:05' })).toBeTruthy();
-    expect(renderer!.root.findByProps({ children: 'second bright line' })).toBeTruthy();
+    expect(activeSubtitleInput().props.value).toBe('second bright line');
 
     await ReactTestRenderer.act(() => {
       prevButton.props.onPress();
     });
 
     expect(renderer!.root.findByProps({ children: '0:00 - 0:03' })).toBeTruthy();
-    expect(renderer!.root.findByProps({ children: 'first bright line' })).toBeTruthy();
+    expect(activeSubtitleInput().props.value).toBe('first bright line');
   });
 
   it('highlights the active subtitle word during playback', async () => {

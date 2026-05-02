@@ -40,6 +40,9 @@ describe('app store migration', () => {
     expect(migrated.settings).toEqual({
       preferredExportResolution: '4k',
       highlightEditedWords: false,
+      transcriptionLanguageMode: 'auto',
+      rememberLastTranscriptionLanguage: false,
+      lastTranscriptionLocale: 'ru-RU',
     });
     expect(migrated.settings).not.toHaveProperty('speechLocale');
     expect(migrated.projects).toHaveLength(1);
@@ -52,5 +55,15 @@ describe('app store migration', () => {
     });
     expect(migrated.projects[0]?.subtitles).toHaveLength(1);
     expect(migrated.projects[0]?.subtitles[0]?.isPlaceholder).toBe(true);
+  });
+
+  it('preserves ask-before-transcription during migration', () => {
+    const migrated = migratePersistedAppState({
+      settings: {
+        transcriptionLanguageMode: 'ask',
+      } as any,
+    });
+
+    expect(migrated.settings.transcriptionLanguageMode).toBe('ask');
   });
 });

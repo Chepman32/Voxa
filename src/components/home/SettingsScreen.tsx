@@ -127,11 +127,11 @@ export function SettingsScreen({
           <Text style={styles.sectionLabel}>{t('transcribingLanguageTitle')}</Text>
           <View style={styles.optionStack}>
             <SettingsOption
-              active={transcriptionLanguageMode === 'app'}
-              description={t('settingsUseAppLanguageDescription')}
-              icon="smartphone"
-              onPress={() => onTranscriptionLanguageModeChange('app')}
-              title={t('settingsUseAppLanguage')}
+              active={transcriptionLanguageMode === 'auto'}
+              description={t('retrySubtitlesBody')}
+              icon="zap"
+              onPress={() => onTranscriptionLanguageModeChange('auto')}
+              title={t('autoDetect')}
             />
             <SettingsOption
               active={transcriptionLanguageMode === 'ask'}

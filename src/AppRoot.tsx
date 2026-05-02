@@ -31,9 +31,8 @@ import { haptics } from './services/haptics';
 import { resolveLocale } from './i18n/translations';
 import { useTranslation } from './i18n/useTranslation';
 import {
-  APP_LANGUAGE_LOCALE_VALUE,
+  AUTO_DETECT_LOCALE_VALUE,
   findSpeechLocaleOption,
-  resolveAppSpeechLocale,
   resolveRememberedSpeechLocale,
 } from './lib/speech-locale';
 import { useAppStore } from './store/app-store';
@@ -116,7 +115,7 @@ export function AppRoot() {
   >([]);
   const [speechLocalesLoading, setSpeechLocalesLoading] = useState(false);
   const [selectedTranscriptionLocale, setSelectedTranscriptionLocale] = useState(
-    APP_LANGUAGE_LOCALE_VALUE,
+    AUTO_DETECT_LOCALE_VALUE,
   );
 
   const showSpeechAccessError = useCallback((error: unknown) => {
@@ -192,12 +191,6 @@ export function AppRoot() {
   const activeProject =
     projects.find(project => project.id === activeProjectId) ?? null;
 
-  const appSpeechLocale = uiLocale
-    ? resolveAppSpeechLocale(uiLocale, availableSpeechLocales)
-    : null;
-  const appSpeechLocaleLabel = appSpeechLocale
-    ? findSpeechLocaleOption(appSpeechLocale, availableSpeechLocales)?.label
-    : null;
   const lastTranscriptionLanguageLabel =
     findSpeechLocaleOption(
       settings.lastTranscriptionLocale,
@@ -205,9 +198,6 @@ export function AppRoot() {
     )?.label ??
     settings.lastTranscriptionLocale ??
     undefined;
-  const transcriptionAppLanguageLabel = appSpeechLocaleLabel
-    ? `${t('appLanguageLabel')} (${appSpeechLocaleLabel})`
-    : `${t('appLanguageLabel')} (${uiLocale ? uiLocale.toUpperCase() : t('appLanguageFallback')})`;
 
   const closeSpeechAccessSheet = useCallback(() => {
     setPendingSpeechAsset(null);
@@ -228,11 +218,10 @@ export function AppRoot() {
       }
     }
 
-    return uiLocale ? resolveAppSpeechLocale(uiLocale, locales) : null;
+    return null;
   }, [
     settings.lastTranscriptionLocale,
     settings.rememberLastTranscriptionLanguage,
-    uiLocale,
   ]);
 
   const processAsset = useCallback(async (
@@ -282,7 +271,7 @@ export function AppRoot() {
       : null;
 
     setSelectedTranscriptionLocale(
-      rememberedLocale ?? APP_LANGUAGE_LOCALE_VALUE,
+      rememberedLocale ?? AUTO_DETECT_LOCALE_VALUE,
     );
     setPendingTranscriptionAsset(asset);
   }, [
@@ -318,25 +307,17 @@ export function AppRoot() {
     }
 
     const asset = pendingTranscriptionAsset;
-    const locales = availableSpeechLocales.length > 0
-      ? availableSpeechLocales
-      : await loadSpeechLocales();
     const localeOverride =
-      selectedTranscriptionLocale === APP_LANGUAGE_LOCALE_VALUE
-        ? uiLocale
-          ? resolveAppSpeechLocale(uiLocale, locales)
-          : null
+      selectedTranscriptionLocale === AUTO_DETECT_LOCALE_VALUE
+        ? null
         : selectedTranscriptionLocale;
 
     setPendingTranscriptionAsset(null);
     await processAsset(asset, localeOverride);
   }, [
-    availableSpeechLocales,
-    loadSpeechLocales,
     pendingTranscriptionAsset,
     processAsset,
     selectedTranscriptionLocale,
-    uiLocale,
   ]);
 
   const continueWithManualSubtitles = useCallback(async () => {
@@ -496,7 +477,6 @@ export function AppRoot() {
       )}
 
       <TranscriptionLanguageSheet
-        appLanguageLabel={transcriptionAppLanguageLabel}
         loading={speechLocalesLoading}
         localeOptions={availableSpeechLocales}
         onClose={closeTranscriptionLanguageSheet}

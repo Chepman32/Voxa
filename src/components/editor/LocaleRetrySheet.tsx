@@ -15,6 +15,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { AUTO_DETECT_LOCALE_VALUE } from '../../lib/speech-locale';
 import { palette } from '../../theme/tokens';
 import type { SpeechLocaleOption } from '../../types/models';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -23,7 +24,7 @@ import { GlassPanel } from '../common/GlassPanel';
 export const LOCALE_RETRY_SHEET_ID = 'locale-retry-sheet';
 export const LOCALE_RETRY_BUTTON_ID = 'locale-retry-button';
 export const LOCALE_RETRY_OPTION_TEST_ID_PREFIX = 'locale-retry-option';
-export const AUTO_DETECT_LOCALE_VALUE = '__auto_detect__';
+export { AUTO_DETECT_LOCALE_VALUE };
 
 interface LocaleRetrySheetProps {
   visible: boolean;

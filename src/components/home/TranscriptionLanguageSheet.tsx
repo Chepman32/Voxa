@@ -15,7 +15,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { APP_LANGUAGE_LOCALE_VALUE } from '../../lib/speech-locale';
+import { AUTO_DETECT_LOCALE_VALUE } from '../../lib/speech-locale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { palette } from '../../theme/tokens';
 import type { SpeechLocaleOption } from '../../types/models';
@@ -24,7 +24,6 @@ import { GlassPanel } from '../common/GlassPanel';
 interface TranscriptionLanguageSheetProps {
   visible: boolean;
   loading: boolean;
-  appLanguageLabel: string;
   localeOptions: SpeechLocaleOption[];
   selectedLocale: string;
   onClose: () => void;
@@ -35,7 +34,6 @@ interface TranscriptionLanguageSheetProps {
 export function TranscriptionLanguageSheet({
   visible,
   loading,
-  appLanguageLabel,
   localeOptions,
   selectedLocale,
   onClose,
@@ -95,9 +93,9 @@ export function TranscriptionLanguageSheet({
             contentContainerStyle={styles.localeList}
             showsVerticalScrollIndicator={false}>
             <LocaleOptionRow
-              active={selectedLocale === APP_LANGUAGE_LOCALE_VALUE}
-              label={appLanguageLabel}
-              onPress={() => onSelectLocale(APP_LANGUAGE_LOCALE_VALUE)}
+              active={selectedLocale === AUTO_DETECT_LOCALE_VALUE}
+              label={t('autoDetect')}
+              onPress={() => onSelectLocale(AUTO_DETECT_LOCALE_VALUE)}
             />
 
             {localeOptions.map(option => (
