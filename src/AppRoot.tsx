@@ -23,7 +23,6 @@ import {
 import {
   getDeviceLocale,
   getSpeechAuthorizationStatus,
-  requestAuthorizations,
   requestSpeechAuthorization,
 } from './services/native-voxa';
 import { pickVideoAsset } from './services/media-picker';
@@ -52,7 +51,6 @@ export function AppRoot() {
   const uiLocale = useAppStore(state => state.uiLocale);
   const setUiLocale = useAppStore(state => state.setUiLocale);
 
-  const completeOnboarding = useAppStore(state => state.completeOnboarding);
   const resetOnboarding = useAppStore(state => state.resetOnboarding);
   const openProject = useAppStore(state => state.openProject);
   const addProject = useAppStore(state => state.addProject);
@@ -71,6 +69,10 @@ export function AppRoot() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
     if (uiLocale !== null) {
       return;
     }
@@ -83,11 +85,8 @@ export function AppRoot() {
       .catch(() => {
         setUiLocale('en');
       });
-  }, [uiLocale, setUiLocale]);
+  }, [hydrated, uiLocale, setUiLocale]);
   const repairedProjectIdsRef = useRef(new Set<string>());
-  const [permissionSummary, setPermissionSummary] =
-    useState<PermissionSummary | null>(null);
-  const [permissionsPending, setPermissionsPending] = useState(false);
   const [pendingSpeechAsset, setPendingSpeechAsset] = useState<Asset | null>(null);
   const [speechAccessStatus, setSpeechAccessStatus] =
     useState<PermissionSummary['speech'] | null>(null);
@@ -141,16 +140,6 @@ export function AppRoot() {
     setSpeechAccessStatus(null);
     setSpeechAccessPending(false);
   }, []);
-
-  const handleGrantAccess = async () => {
-    setPermissionsPending(true);
-    try {
-      const summary = await requestAuthorizations();
-      setPermissionSummary(summary);
-    } finally {
-      setPermissionsPending(false);
-    }
-  };
 
   const processAsset = useCallback(async (asset: Asset) => {
     beginProcessing(asset.uri);
@@ -281,7 +270,7 @@ export function AppRoot() {
     await Linking.openSettings();
   }, []);
 
-  if (!hydrated) {
+  if (!hydrated || uiLocale === null) {
     return <View style={styles.root} />;
   }
 

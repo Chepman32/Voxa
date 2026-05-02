@@ -85,9 +85,9 @@ export function ValueDeliveryScreen({
                 <Feather color={palette.canvas} name="check" size={28} />
               </View>
             </View>
-            <Text style={styles.cardTitle}>You are all set</Text>
+            <Text style={styles.cardTitle}>{t('valueTitle')}</Text>
             <Text style={styles.cardBody}>
-              We have customized Voxa to help you{"\n"}
+              {t('valueBody')}{"\n"}
               <Text style={styles.cardHighlight}>{goalLabel}</Text>.
             </Text>
           </GlassPanel>

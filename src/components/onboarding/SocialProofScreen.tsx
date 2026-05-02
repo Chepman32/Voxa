@@ -22,29 +22,31 @@ interface SocialProofScreenProps {
   progress: number;
 }
 
-const TESTIMONIALS = [
-  {
-    id: '1',
-    name: 'Maya K.',
-    tag: 'TikTok Creator',
-    text: 'I used to spend 45 minutes on captions for every video. Now it is literally under a minute. The neon style gets me so many comments.',
-    stars: 5,
-  },
-  {
-    id: '2',
-    name: 'Jordan T.',
-    tag: 'YouTuber',
-    text: 'Finally an app that does not upload my raw footage somewhere. Everything stays on my phone and the quality is unreal.',
-    stars: 5,
-  },
-  {
-    id: '3',
-    name: 'Sofia R.',
-    tag: 'Brand Manager',
-    text: 'We batch-create Reels for three brands. Voxa cut our subtitle workflow by 80%. The gesture editing feels like magic.',
-    stars: 5,
-  },
-];
+function getTestimonials(t: (key: string) => string) {
+  return [
+    {
+      id: '1',
+      name: t('socialTestimonial1Name'),
+      tag: t('socialTestimonial1Tag'),
+      text: t('socialTestimonial1Text'),
+      stars: 5,
+    },
+    {
+      id: '2',
+      name: t('socialTestimonial2Name'),
+      tag: t('socialTestimonial2Tag'),
+      text: t('socialTestimonial2Text'),
+      stars: 5,
+    },
+    {
+      id: '3',
+      name: t('socialTestimonial3Name'),
+      tag: t('socialTestimonial3Tag'),
+      text: t('socialTestimonial3Text'),
+      stars: 5,
+    },
+  ];
+}
 
 export function SocialProofScreen({
   onNext,
@@ -53,6 +55,7 @@ export function SocialProofScreen({
   progress,
 }: SocialProofScreenProps) {
   const { t } = useTranslation();
+  const testimonials = getTestimonials(t);
   const insets = useSafeAreaInsets();
   const card1Y = useSharedValue(30);
   const card1Opacity = useSharedValue(0);
@@ -96,21 +99,21 @@ export function SocialProofScreen({
         </Text>
 
         <View style={styles.cards}>
-          {TESTIMONIALS.map((t, i) => (
-            <Animated.View key={t.id} style={cardStyles[i]}>
+          {testimonials.map((testimonial, i) => (
+            <Animated.View key={testimonial.id} style={cardStyles[i]}>
               <GlassPanel style={styles.card} blurAmount={18}>
                 <View style={styles.cardHeader}>
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
-                      {t.name.charAt(0)}
+                      {testimonial.name.charAt(0)}
                     </Text>
                   </View>
                   <View style={styles.meta}>
-                    <Text style={styles.name}>{t.name}</Text>
-                    <Text style={styles.tag}>{t.tag}</Text>
+                    <Text style={styles.name}>{testimonial.name}</Text>
+                    <Text style={styles.tag}>{testimonial.tag}</Text>
                   </View>
                   <View style={styles.stars}>
-                    {Array.from({ length: t.stars }).map((_, si) => (
+                    {Array.from({ length: testimonial.stars }).map((_, si) => (
                       <Feather
                         key={si}
                         color={palette.amber}
@@ -120,7 +123,7 @@ export function SocialProofScreen({
                     ))}
                   </View>
                 </View>
-                <Text style={styles.quote}>"{t.text}"</Text>
+                <Text style={styles.quote}>"{testimonial.text}"</Text>
               </GlassPanel>
             </Animated.View>
           ))}

@@ -23,6 +23,11 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+  getDeviceLocale:(RCTPromiseResolveBlock)resolve
+  rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
   prepareProject:(NSString *)videoURI
   locale:(NSString * _Nullable)locale
   resolver:(RCTPromiseResolveBlock)resolve

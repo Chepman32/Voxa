@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
-import {
-  getSpeechAuthorizationStatus,
-  requestAuthorizations,
-} from '../../services/native-voxa';
-import { palette, springConfig } from '../../theme/tokens';
+import { requestAuthorizations } from '../../services/native-voxa';
+import { palette } from '../../theme/tokens';
 import { GlassPanel } from '../common/GlassPanel';
 import { OnboardingHeader } from './OnboardingHeader';
 
@@ -23,6 +19,23 @@ interface PermissionPrimingScreenProps {
   onBack: () => void;
   onSkip: () => void;
   progress: number;
+}
+
+function getPermissionStatusLabel(status: string, t: (key: string) => string) {
+  switch (status) {
+    case 'authorized':
+      return t('permGranted');
+    case 'limited':
+      return t('permLimited');
+    case 'denied':
+      return t('permDenied');
+    case 'restricted':
+      return t('permRestricted');
+    case 'not_determined':
+      return t('permNotDetermined');
+    default:
+      return t('permUnavailable');
+  }
 }
 
 export function PermissionPrimingScreen({
@@ -52,7 +65,7 @@ export function PermissionPrimingScreen({
       } else {
         haptics.light();
       }
-    } catch (error) {
+    } catch {
       Alert.alert(t('permHeadline'), t('permSubheadline'));
     } finally {
       setRequesting(false);
@@ -105,7 +118,7 @@ export function PermissionPrimingScreen({
                     styles.statusText,
                     photoStatus === 'authorized' && styles.statusTextGranted,
                   ]}>
-                  {photoStatus === 'authorized' ? t('permGranted') : photoStatus}
+                  {getPermissionStatusLabel(photoStatus, t)}
                 </Text>
               </View>
             )}
@@ -135,7 +148,7 @@ export function PermissionPrimingScreen({
                     styles.statusText,
                     speechStatus === 'authorized' && styles.statusTextGranted,
                   ]}>
-                  {speechStatus === 'authorized' ? t('permGranted') : speechStatus}
+                  {getPermissionStatusLabel(speechStatus, t)}
                 </Text>
               </View>
             )}

@@ -313,6 +313,16 @@ final class VoxaOfflineModule: NSObject {
       )
     }
   }
+
+  @objc(getDeviceLocale:rejecter:)
+  func getDeviceLocale(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let preferred = Locale.preferredLanguages.first ?? Locale.current.identifier
+    let normalized = preferred.replacingOccurrences(of: "_", with: "-")
+    resolve(normalized)
+  }
 }
 
 private extension VoxaOfflineModule {
@@ -1559,17 +1569,5 @@ private enum VoxaOfflineError: LocalizedError {
     case let .exportFailed(message):
       return message
     }
-  }
-
-  // MARK: - Device Locale for UI Translation
-
-  @objc(getDeviceLocale:rejecter:)
-  func getDeviceLocale(
-    _ resolve: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
-    let preferred = Locale.preferredLanguages.first ?? Locale.current.identifier
-    let normalized = preferred.replacingOccurrences(of: "_", with: "-")
-    resolve(normalized)
   }
 }

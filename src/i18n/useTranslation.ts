@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useAppStore } from '../store/app-store';
-import { translations, resolveLocale, type SupportedLocale } from './translations';
+import { translations, type SupportedLocale } from './translations';
 
 export function useTranslation() {
   const uiLocale = useAppStore(state => state.uiLocale);
