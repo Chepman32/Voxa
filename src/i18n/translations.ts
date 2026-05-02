@@ -299,6 +299,9 @@ const en: Translations = {
   transcribeVideo: 'Transcribe Video',
 
   settingsTitle: 'Settings',
+  settingsAppLanguage: 'App Language',
+  settingsAppLanguageDescription:
+    'Choose the interface language. This overrides the phone language for Voxa.',
   settingsDefaultExport: 'Default Export',
   settingsUseAppLanguage: 'Use app language',
   settingsUseAppLanguageDescription:
@@ -401,6 +404,29 @@ const en: Translations = {
   casing: 'Casing',
   sentence: 'Sentence',
   uppercase: 'Uppercase',
+
+  languageName_en: 'English',
+  languageName_es: 'Spanish',
+  languageName_pt: 'Portuguese',
+  languageName_fr: 'French',
+  languageName_de: 'German',
+  languageName_it: 'Italian',
+  languageName_ru: 'Russian',
+  languageName_ja: 'Japanese',
+  languageName_ko: 'Korean',
+  languageName_zh: 'Chinese',
+  languageName_ar: 'Arabic',
+  languageNative_en: 'English',
+  languageNative_es: 'Español',
+  languageNative_pt: 'Português',
+  languageNative_fr: 'Français',
+  languageNative_de: 'Deutsch',
+  languageNative_it: 'Italiano',
+  languageNative_ru: 'Русский',
+  languageNative_ja: '日本語',
+  languageNative_ko: '한국어',
+  languageNative_zh: '中文',
+  languageNative_ar: 'العربية',
 };
 
 const es: Translations = {
@@ -1265,6 +1291,9 @@ const ru: Translations = {
   transcribeVideo: 'Транскрибировать видео',
 
   settingsTitle: 'Настройки',
+  settingsAppLanguage: 'Язык приложения',
+  settingsAppLanguageDescription:
+    'Выбери язык интерфейса. Эта настройка переопределяет язык телефона для Voxa.',
   settingsDefaultExport: 'Экспорт по умолчанию',
   settingsUseAppLanguage: 'Использовать язык приложения',
   settingsUseAppLanguageDescription:
@@ -1367,6 +1396,29 @@ const ru: Translations = {
   casing: 'Регистр',
   sentence: 'Обычный',
   uppercase: 'Верхний регистр',
+
+  languageName_en: 'Английский',
+  languageName_es: 'Испанский',
+  languageName_pt: 'Португальский',
+  languageName_fr: 'Французский',
+  languageName_de: 'Немецкий',
+  languageName_it: 'Итальянский',
+  languageName_ru: 'Русский',
+  languageName_ja: 'Японский',
+  languageName_ko: 'Корейский',
+  languageName_zh: 'Китайский',
+  languageName_ar: 'Арабский',
+  languageNative_en: 'English',
+  languageNative_es: 'Español',
+  languageNative_pt: 'Português',
+  languageNative_fr: 'Français',
+  languageNative_de: 'Deutsch',
+  languageNative_it: 'Italiano',
+  languageNative_ru: 'Русский',
+  languageNative_ja: '日本語',
+  languageNative_ko: '한국어',
+  languageNative_zh: '中文',
+  languageNative_ar: 'العربية',
 };
 
 const ja: Translations = {

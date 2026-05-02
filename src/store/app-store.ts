@@ -17,7 +17,6 @@ interface AppState {
   hydrated: boolean;
   route: AppRoute;
   activeProjectId: string | null;
-  settingsOpen: boolean;
   hasCompletedOnboarding: boolean;
   onboardingStep: number;
   onboardingAnswers: OnboardingAnswers;
@@ -150,7 +149,6 @@ export const useAppStore = create<AppState>()(
       hydrated: false,
       route: 'home',
       activeProjectId: null,
-      settingsOpen: false,
       hasCompletedOnboarding: false,
       onboardingStep: 0,
       onboardingAnswers: defaultOnboardingAnswers,
@@ -172,8 +170,8 @@ export const useAppStore = create<AppState>()(
           onboardingAnswers: { ...state.onboardingAnswers, ...answers },
         })),
       setUiLocale: locale => set({ uiLocale: locale }),
-      openSettings: () => set({ settingsOpen: true }),
-      closeSettings: () => set({ settingsOpen: false }),
+      openSettings: () => set({ route: 'settings' }),
+      closeSettings: () => set({ route: 'home' }),
       openProject: projectId => set({ activeProjectId: projectId, route: 'editor' }),
       closeProject: () => set({ activeProjectId: null, route: 'home' }),
       beginProcessing: assetUri =>

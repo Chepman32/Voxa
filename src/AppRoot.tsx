@@ -41,7 +41,7 @@ import { SpeechAccessSheet } from './components/permissions/SpeechAccessSheet';
 import { emptyStateImage, onboardingCards, palette } from './theme/tokens';
 import { EditorScreen } from './components/editor/EditorScreen';
 import { HomeScreen } from './components/home/HomeScreen';
-import { SettingsSheet } from './components/home/SettingsSheet';
+import { SettingsScreen } from './components/home/SettingsScreen';
 import { TranscriptionLanguageSheet } from './components/home/TranscriptionLanguageSheet';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
 import { ProcessingOverlay } from './components/processing/ProcessingOverlay';
@@ -56,7 +56,6 @@ export function AppRoot() {
   const settings = useAppStore(state => state.settings);
   const route = useAppStore(state => state.route);
   const activeProjectId = useAppStore(state => state.activeProjectId);
-  const settingsOpen = useAppStore(state => state.settingsOpen);
   const hasCompletedOnboarding = useAppStore(state => state.hasCompletedOnboarding);
   const uiLocale = useAppStore(state => state.uiLocale);
   const setUiLocale = useAppStore(state => state.setUiLocale);
@@ -453,6 +452,29 @@ export function AppRoot() {
           onClose={() => {}}
           project={activeProject}
         />
+      ) : route === 'settings' ? (
+        <SettingsScreen
+          onClose={closeSettings}
+          onHighlightEditedWordsChange={setHighlightEditedWords}
+          onRememberLastTranscriptionLanguageChange={
+            setRememberLastTranscriptionLanguage
+          }
+          onResetOnboarding={() => {
+            closeSettings();
+            resetOnboarding();
+          }}
+          onResolutionChange={setPreferredExportResolution}
+          onTranscriptionLanguageModeChange={setTranscriptionLanguageMode}
+          onUiLocaleChange={setUiLocale}
+          highlightEditedWords={settings.highlightEditedWords}
+          lastTranscriptionLanguageLabel={lastTranscriptionLanguageLabel}
+          preferredExportResolution={settings.preferredExportResolution}
+          rememberLastTranscriptionLanguage={
+            settings.rememberLastTranscriptionLanguage
+          }
+          transcriptionLanguageMode={settings.transcriptionLanguageMode}
+          uiLocale={uiLocale}
+        />
       ) : (
         <HomeScreen
           onCreateProject={() => {
@@ -469,28 +491,6 @@ export function AppRoot() {
           projects={projects}
         />
       )}
-
-      <SettingsSheet
-        onClose={closeSettings}
-        onHighlightEditedWordsChange={setHighlightEditedWords}
-        onRememberLastTranscriptionLanguageChange={
-          setRememberLastTranscriptionLanguage
-        }
-        onResetOnboarding={() => {
-          closeSettings();
-          resetOnboarding();
-        }}
-        onResolutionChange={setPreferredExportResolution}
-        onTranscriptionLanguageModeChange={setTranscriptionLanguageMode}
-        highlightEditedWords={settings.highlightEditedWords}
-        lastTranscriptionLanguageLabel={lastTranscriptionLanguageLabel}
-        preferredExportResolution={settings.preferredExportResolution}
-        rememberLastTranscriptionLanguage={
-          settings.rememberLastTranscriptionLanguage
-        }
-        transcriptionLanguageMode={settings.transcriptionLanguageMode}
-        visible={settingsOpen}
-      />
 
       <TranscriptionLanguageSheet
         appLanguageLabel={transcriptionAppLanguageLabel}
