@@ -16,6 +16,7 @@ import Animated, {
 import Feather from 'react-native-vector-icons/Feather';
 
 import { haptics } from '../../services/haptics';
+import { useTranslation } from '../../i18n/useTranslation';
 import { emptyStateImage, palette, springConfig } from '../../theme/tokens';
 import type { Project } from '../../types/models';
 import { countRenderableSubtitles, formatDuration } from '../../lib/project';
@@ -36,6 +37,7 @@ export function ProjectCard({
   onDelete,
   onOpen,
 }: ProjectCardProps) {
+  const { t } = useTranslation();
   const translateX = useSharedValue(0);
   const subtitleCount = countRenderableSubtitles(project.subtitles);
 
@@ -76,7 +78,7 @@ export function ProjectCard({
     <View style={{ width, height }}>
       <Animated.View style={[styles.deleteAction, deleteStyle]}>
         <Feather color={palette.textPrimary} name="trash-2" size={18} />
-        <Text style={styles.deleteText}>Delete</Text>
+        <Text style={styles.deleteText}>{t('projectDelete')}</Text>
       </Animated.View>
 
       <GestureDetector gesture={Gesture.Simultaneous(panGesture, tapGesture)}>
@@ -109,7 +111,7 @@ export function ProjectCard({
                 {project.title}
               </Text>
               <Text style={styles.subtitleMeta}>
-                {subtitleCount} subtitle blocks
+                {subtitleCount} {subtitleCount === 1 ? t('projectSubtitleBlock') : t('projectSubtitleBlocks')}
               </Text>
             </View>
           </GlassPanel>

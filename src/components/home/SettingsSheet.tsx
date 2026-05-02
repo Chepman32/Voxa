@@ -24,6 +24,7 @@ import {
   palette,
   springConfig,
 } from '../../theme/tokens';
+import { useTranslation } from '../../i18n/useTranslation';
 import type { ExportResolution } from '../../types/models';
 import type { TranscriptionLanguageMode } from '../../types/models';
 import { GlassPanel } from '../common/GlassPanel';
@@ -57,6 +58,7 @@ export function SettingsSheet({
   onRememberLastTranscriptionLanguageChange,
   onResetOnboarding,
 }: SettingsSheetProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const progress = useSharedValue(0);
   const dragY = useSharedValue(0);
@@ -115,7 +117,7 @@ export function SettingsSheet({
           <GlassPanel style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Settings</Text>
+              <Text style={styles.headerTitle}>{t('settingsTitle')}</Text>
               <Pressable onPress={onClose} style={styles.closeButton}>
                 <Feather color={palette.textSecondary} name="x" size={18} />
               </Pressable>
@@ -126,7 +128,7 @@ export function SettingsSheet({
               contentContainerStyle={styles.sheetContent}
               showsVerticalScrollIndicator={false}>
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Default Export</Text>
+                <Text style={styles.sectionLabel}>{t('settingsDefaultExport')}</Text>
                 <View style={styles.pillRow}>
                   {exportResolutions.map(option => (
                     <Pressable
@@ -153,31 +155,31 @@ export function SettingsSheet({
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Transcribing Language</Text>
+                <Text style={styles.sectionLabel}>{t('transcribingLanguageTitle')}</Text>
                 <View style={styles.optionStack}>
                   <SettingsOption
                     active={transcriptionLanguageMode === 'app'}
-                    description="New videos use the same language as the app when that speech locale is available."
+                    description={t('settingsUseAppLanguageDescription')}
                     icon="smartphone"
                     onPress={() => onTranscriptionLanguageModeChange('app')}
-                    title="Use app language"
+                    title={t('settingsUseAppLanguage')}
                   />
                   <SettingsOption
                     active={transcriptionLanguageMode === 'ask'}
-                    description="Show a language picker before each new transcription."
+                    description={t('settingsAskBeforeTranscriptionDescription')}
                     icon="message-square"
                     onPress={() => onTranscriptionLanguageModeChange('ask')}
-                    title="Ask before each transcription"
+                    title={t('settingsAskBeforeTranscription')}
                   />
                 </View>
 
                 <View style={styles.toggleCard}>
                   <View style={styles.toggleCopy}>
-                    <Text style={styles.toggleLabel}>Remember last used language</Text>
+                    <Text style={styles.toggleLabel}>{t('settingsRememberLastLanguage')}</Text>
                     <Text style={styles.toggleHint}>
                       {lastTranscriptionLanguageLabel
-                        ? `Last used: ${lastTranscriptionLanguageLabel}.`
-                        : 'Preselect and reuse the last language you transcribed with.'}
+                        ? `${t('settingsLastUsed')}: ${lastTranscriptionLanguageLabel}.`
+                        : t('settingsRememberLastLanguageDescription')}
                     </Text>
                   </View>
                   <Switch
@@ -194,12 +196,12 @@ export function SettingsSheet({
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Subtitle Highlighting</Text>
+                <Text style={styles.sectionLabel}>{t('settingsSubtitleHighlighting')}</Text>
                 <View style={styles.toggleCard}>
                   <View style={styles.toggleCopy}>
-                    <Text style={styles.toggleLabel}>Highlight edited words</Text>
+                    <Text style={styles.toggleLabel}>{t('settingsHighlightEditedWords')}</Text>
                     <Text style={styles.toggleHint}>
-                      Approximate word timing after manual subtitle edits.
+                      {t('settingsHighlightEditedWordsDescription')}
                     </Text>
                   </View>
                   <Switch
@@ -216,17 +218,15 @@ export function SettingsSheet({
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Privacy</Text>
+                <Text style={styles.sectionLabel}>{t('settingsPrivacy')}</Text>
                 <Text style={styles.bodyText}>
-                  Voxa keeps extraction, speech recognition, subtitle editing, and
-                  export entirely on-device. Remote media is only used for visual
-                  placeholders.
+                  {t('settingsPrivacyBody')}
                 </Text>
               </View>
 
               <Pressable onPress={onResetOnboarding} style={styles.resetRow}>
                 <Feather color={palette.cyan} name="refresh-ccw" size={16} />
-                <Text style={styles.resetText}>Replay onboarding</Text>
+                <Text style={styles.resetText}>{t('settingsReplayOnboarding')}</Text>
               </Pressable>
             </ScrollView>
           </GlassPanel>

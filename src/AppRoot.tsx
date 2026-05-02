@@ -29,6 +29,7 @@ import {
 import { pickVideoAsset } from './services/media-picker';
 import { haptics } from './services/haptics';
 import { resolveLocale } from './i18n/translations';
+import { useTranslation } from './i18n/useTranslation';
 import {
   APP_LANGUAGE_LOCALE_VALUE,
   findSpeechLocaleOption,
@@ -48,6 +49,7 @@ import { SplashSequence } from './components/splash/SplashSequence';
 import type { PermissionSummary, SpeechLocaleOption } from './types/models';
 
 export function AppRoot() {
+  const { t } = useTranslation();
   const hydrated = useAppStore(state => state.hydrated);
   const projects = useAppStore(state => state.projects);
   const processing = useAppStore(state => state.processing);
@@ -122,19 +124,19 @@ export function AppRoot() {
     const message =
       error instanceof Error && error.message
         ? error.message
-        : 'Unable to request Speech Recognition access right now.';
+        : t('speechAccessFailedBody');
 
-    Alert.alert('Speech Access Failed', message);
-  }, []);
+    Alert.alert(t('speechAccessFailedTitle'), message);
+  }, [t]);
 
   const showLanguageListError = useCallback((error: unknown) => {
     const message =
       error instanceof Error && error.message
         ? error.message
-        : 'Unable to load on-device transcription languages right now.';
+        : t('languageListFailedBody');
 
-    Alert.alert('Language List Failed', message);
-  }, []);
+    Alert.alert(t('languageListFailedTitle'), message);
+  }, [t]);
 
   const loadSpeechLocales = useCallback(async () => {
     if (availableSpeechLocales.length > 0) {
@@ -202,8 +204,8 @@ export function AppRoot() {
     settings.lastTranscriptionLocale ??
     undefined;
   const transcriptionAppLanguageLabel = appSpeechLocaleLabel
-    ? `App language (${appSpeechLocaleLabel})`
-    : `App language (${uiLocale ? uiLocale.toUpperCase() : 'app'})`;
+    ? `${t('appLanguageLabel')} (${appSpeechLocaleLabel})`
+    : `${t('appLanguageLabel')} (${uiLocale ? uiLocale.toUpperCase() : t('appLanguageFallback')})`;
 
   const closeSpeechAccessSheet = useCallback(() => {
     setPendingSpeechAsset(null);
@@ -343,8 +345,8 @@ export function AppRoot() {
     const asset = pendingSpeechAsset;
     const error =
       speechAccessStatus === 'restricted'
-        ? new Error('Speech recognition is restricted on this device.')
-        : new Error('Speech recognition permission has not been granted.');
+        ? new Error(t('permRestricted'))
+        : new Error(t('permDenied'));
 
     closeSpeechAccessSheet();
     const fallbackProject = await buildPersistedManualFallbackProject(asset, error);
@@ -358,6 +360,7 @@ export function AppRoot() {
     openProject,
     pendingSpeechAsset,
     speechAccessStatus,
+    t,
   ]);
 
   const refreshSpeechAccess = useCallback(async () => {
@@ -503,7 +506,7 @@ export function AppRoot() {
       />
 
       <SpeechAccessSheet
-        assetName={pendingSpeechAsset?.fileName ?? 'Selected video'}
+        assetName={pendingSpeechAsset?.fileName ?? t('selectedVideo')}
         onClose={closeSpeechAccessSheet}
         onContinueManually={continueWithManualSubtitles}
         onGrantAccess={() => {

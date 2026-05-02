@@ -61,6 +61,7 @@ import {
   type NativeSubtitleSegment,
 } from '../../services/native-voxa';
 import { haptics } from '../../services/haptics';
+import { useTranslation } from '../../i18n/useTranslation';
 import { retryProjectSubtitles } from '../../services/project-processor';
 import { useAppStore } from '../../store/app-store';
 import {
@@ -182,6 +183,7 @@ export function EditorScreen({ project, onClose }: EditorScreenProps) {
 }
 
 function EditorScreenContent({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const videoRef = useRef<VideoRef>(null);
@@ -398,22 +400,22 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const hasRenderableSubtitleBlocks = countRenderableSubtitles(subtitles) > 0;
   const normalizedImportError = project.importError?.replace(/[.\s]+$/, '');
   const recognitionBannerText = project.importError
-    ? `${normalizedImportError}. Manual subtitle editing remains available.`
+    ? `${normalizedImportError}. ${t('manualEditingAvailable')}`
     : hasRenderableSubtitleBlocks
-    ? 'Subtitles were created, but this project is still marked as requiring review.'
-    : 'No subtitles were generated for this clip. Try Auto Detect or pick a language manually.';
+    ? t('subtitlesCreatedNeedsReview')
+    : t('noSubtitlesGenerated');
   const recognitionBannerDetail = project.recognitionLocale
-    ? `Last attempt: ${project.recognitionLocale}${project.recognitionMode === 'manual' ? ' (manual)' : ' (auto)'}.`
-    : 'Choose Auto Detect or a specific on-device language to retry.';
+    ? `${t('lastAttempt')}: ${project.recognitionLocale}${project.recognitionMode === 'manual' ? ` (${t('manual')})` : ` (${t('auto')})`}.`
+    : t('chooseLanguageToRetry');
 
   const showRetryError = useCallback((error: unknown) => {
     const message =
       error instanceof Error && error.message
         ? error.message
-        : 'Unable to regenerate subtitles right now.';
+        : t('subtitleRetryFailedBody');
 
-    Alert.alert('Subtitle Retry Failed', message);
-  }, []);
+    Alert.alert(t('subtitleRetryFailedTitle'), message);
+  }, [t]);
 
   const loadSpeechLocales = useCallback(async () => {
     setLoadingSpeechLocales(true);
@@ -488,9 +490,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       }
 
       Alert.alert(
-        'No Subtitles Created',
+        t('noSubtitlesCreatedTitle'),
         updatedProject.importError ??
-          'No subtitles were generated with the selected language.',
+          t('noSubtitlesSelectedLanguage'),
       );
     } catch (error) {
       showRetryError(error);
@@ -508,6 +510,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     setProcessingPhase,
     setProject,
     showRetryError,
+    t,
     upsertProject,
   ]);
 
@@ -986,7 +989,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
               retryingSubtitles ? styles.bannerActionDisabled : undefined,
             ]}
             testID={RETRY_SUBTITLE_BANNER_BUTTON_ID}>
-            <Text style={styles.bannerActionLabel}>Retry</Text>
+            <Text style={styles.bannerActionLabel}>{t('retry')}</Text>
           </Pressable>
         </GlassPanel>
       ) : null}
@@ -1236,7 +1239,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
               (retryingSubtitles || availableSpeechLocales.length === 0) && styles.regenerateButtonDisabled,
             ]}>
             <Text style={styles.regenerateButtonText}>
-              {retryingSubtitles ? 'Regenerating...' : 'Regenerate Subtitles'}
+              {retryingSubtitles ? t('regenerating') : t('regenerateSubtitles')}
             </Text>
           </Pressable>
         </Animated.View>
@@ -1249,7 +1252,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             style={styles.keyboardDismissButton}
             testID={KEYBOARD_DISMISS_BUTTON_ID}>
             <Feather color={palette.textPrimary} name="chevron-down" size={16} />
-            <Text style={styles.keyboardDismissLabel}>Done</Text>
+            <Text style={styles.keyboardDismissLabel}>{t('done')}</Text>
           </Pressable>
         </Animated.View>
       ) : null}
@@ -1393,16 +1396,17 @@ function TimelineControlsPanel({
   wordHighlightAvailable: boolean;
   onToggleWordHighlight: (value: boolean) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.timelineControlsCard}>
       <View style={styles.timelineControlDock}>
         <View style={styles.timelineControlRow}>
           <View style={styles.timelineControlCopy}>
-            <Text style={styles.timelineControlLabel}>Word Highlight</Text>
+            <Text style={styles.timelineControlLabel}>{t('wordHighlight')}</Text>
             <Text style={styles.timelineControlHint}>
               {wordHighlightAvailable
-                ? 'Accent the currently spoken word.'
-                : 'Word timing unavailable'}
+                ? t('wordHighlightAvailable')
+                : t('wordTimingUnavailable')}
             </Text>
           </View>
           <Switch
@@ -1432,17 +1436,18 @@ function FXPanel({
   currentEffect: string;
   onSelectEffect: (effect: SubtitleEffect) => void;
 }) {
+  const { t } = useTranslation();
   const effects: Array<{ value: SubtitleEffect; label: string }> = [
-    { value: 'none', label: 'None' },
-    { value: 'neon', label: 'Neon' },
-    { value: 'chrome', label: 'Chrome' },
-    { value: 'glow', label: 'Glow' },
-    { value: 'shadow', label: 'Shadow' },
+    { value: 'none', label: t('effectNone') },
+    { value: 'neon', label: t('effectNeon') },
+    { value: 'chrome', label: t('effectChrome') },
+    { value: 'glow', label: t('effectGlow') },
+    { value: 'shadow', label: t('effectShadow') },
   ];
 
   return (
     <View style={styles.fxPanel}>
-      <Text style={styles.fxPanelTitle}>Text Effects</Text>
+      <Text style={styles.fxPanelTitle}>{t('textEffects')}</Text>
       <View style={styles.fxOptions}>
         {effects.map(effect => (
           <Pressable
@@ -1484,17 +1489,18 @@ function LanguagePanel({
   selectedLocale: string;
   onSelectLocale: (locale: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <ScrollView
       bounces={false}
       contentContainerStyle={styles.languagePanel}
       showsVerticalScrollIndicator={false}>
       <View style={styles.languagePanelHeader}>
-        <Text style={styles.languagePanelTitle}>Recognition Language</Text>
+        <Text style={styles.languagePanelTitle}>{t('recognitionLanguage')}</Text>
         <Text style={styles.languagePanelHint}>
           {currentLocale
-            ? `Current: ${availableLocales.find(l => l.value === currentLocale)?.label || currentLocale}`
-            : 'Choose a language to regenerate subtitles'}
+            ? `${t('current')}: ${availableLocales.find(l => l.value === currentLocale)?.label || currentLocale}`
+            : t('chooseLanguageToRetry')}
         </Text>
       </View>
 
@@ -1510,7 +1516,7 @@ function LanguagePanel({
               styles.localeOptionLabel,
               selectedLocale === AUTO_DETECT_LOCALE_VALUE && styles.localeOptionLabelActive,
             ]}>
-            Auto Detect
+            {t('autoDetect')}
           </Text>
           {selectedLocale === AUTO_DETECT_LOCALE_VALUE && (
             <Feather color={palette.cyan} name="check" size={16} />
@@ -1541,8 +1547,8 @@ function LanguagePanel({
 
       <Text style={styles.languagePanelFootnote}>
         {loading
-          ? 'Loading on-device languages...'
-          : `${availableLocales.length} on-device languages available`}
+          ? t('loadingOnDeviceLanguages')
+          : `${availableLocales.length} ${t('onDeviceLanguagesAvailableShort')}`}
       </Text>
     </ScrollView>
   );
@@ -1555,6 +1561,7 @@ function BottomEditorTabs({
   activeTab: 'subtitle' | 'style' | 'language' | 'fx';
   onSelectTab: (tab: 'subtitle' | 'style' | 'language' | 'fx') => void;
 }) {
+  const { t } = useTranslation();
   const [tabTrackWidth, setTabTrackWidth] = useState(0);
   const activeTabProgress = useSharedValue(
     activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : activeTab === 'language' ? 2 : 3
@@ -1677,7 +1684,7 @@ function BottomEditorTabs({
               styles.bottomEditorTabLabel,
               activeTab === 'subtitle' && styles.bottomEditorTabLabelActive,
             ]}>
-            Subtitle
+            {t('subtitleTab')}
           </Text>
         </Animated.View>
       </Pressable>
@@ -1693,7 +1700,7 @@ function BottomEditorTabs({
               styles.bottomEditorTabLabel,
               activeTab === 'style' && styles.bottomEditorTabLabelActive,
             ]}>
-            Style
+            {t('styleTab')}
           </Text>
         </Animated.View>
       </Pressable>
@@ -1709,7 +1716,7 @@ function BottomEditorTabs({
               styles.bottomEditorTabLabel,
               activeTab === 'language' && styles.bottomEditorTabLabelActive,
             ]}>
-            Language
+            {t('languageTab')}
           </Text>
         </Animated.View>
       </Pressable>
@@ -1725,7 +1732,7 @@ function BottomEditorTabs({
               styles.bottomEditorTabLabel,
               activeTab === 'fx' && styles.bottomEditorTabLabelActive,
             ]}>
-            FX
+            {t('fxTab')}
           </Text>
         </Animated.View>
       </Pressable>
@@ -1762,6 +1769,7 @@ function TextEditorSection({
   playbackPosition: number;
   stylePreset: Project['globalStyle'];
 }) {
+  const { t } = useTranslation();
   const [draftText, setDraftText] = useState(selectedSubtitle?.text ?? '');
   const [activeEditWordIndex, setActiveEditWordIndex] = useState(-1);
 
@@ -1825,11 +1833,11 @@ function TextEditorSection({
             style={styles.textPanelHeaderCopy}
             testID={ACTIVE_SUBTITLE_HEADER_ID}>
             <View>
-              <Text style={styles.textLabel}>Active Subtitle</Text>
+              <Text style={styles.textLabel}>{t('activeSubtitle')}</Text>
               <Text style={styles.textTiming}>
                 {selectedSubtitle
                   ? `${formatDuration(selectedSubtitle.startTime)} - ${formatDuration(selectedSubtitle.endTime)}`
-                  : 'No subtitle selected'}
+                  : t('noSubtitleSelected')}
               </Text>
             </View>
           </Pressable>
@@ -1886,7 +1894,7 @@ function TextEditorSection({
                   setDraftText(text);
                   onDraftChange(text);
                 }}
-                placeholder="Rewrite subtitle text"
+                placeholder={t('rewriteSubtitleText')}
                 placeholderTextColor={palette.textSecondary}
                 style={[styles.subtitlePreview, styles.textInput, styles.textInputTransparent]}
               />
@@ -1923,7 +1931,7 @@ function TextEditorSection({
               </View>
             </View>
           ) : (
-            <Text style={styles.subtitlePreview}>Select a subtitle block to edit.</Text>
+            <Text style={styles.subtitlePreview}>{t('selectSubtitleToEdit')}</Text>
           )}
         </ScrollView>
       </GlassPanel>
@@ -1940,16 +1948,17 @@ function StyleSelectorsPanel({
   onChangeStyle: (style: Project['globalStyle']) => void;
   onUpdatePositionPreset: (position: Project['globalStyle']['position']) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <GlassPanel style={styles.styleSelectorsCard}>
-      <Text style={styles.styleSelectorsTitle}>Style Controls</Text>
+      <Text style={styles.styleSelectorsTitle}>{t('styleControls')}</Text>
       <ScrollView
         bounces
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.styleSelectorsContent}>
         <StyleRow
-          label="Fonts"
+          label={t('fonts')}
           options={subtitleFontOptions.map(option => ({
             id: option.id,
             label: option.label,
@@ -1966,7 +1975,7 @@ function StyleSelectorsPanel({
         />
 
         <StyleRow
-          label="Size"
+          label={t('size')}
           options={subtitleSizeOptions.map(option => ({
             id: option.id,
             label: option.label,
@@ -1980,7 +1989,7 @@ function StyleSelectorsPanel({
         />
 
         <StyleRow
-          label="Text Color"
+          label={t('textColor')}
           options={subtitleTextColorOptions.map(option => ({
             id: option.id,
             label: option.label,
@@ -1995,7 +2004,7 @@ function StyleSelectorsPanel({
         />
 
         <StyleRow
-          label="Highlight"
+          label={t('highlight')}
           options={subtitleHighlightColorOptions.map(option => ({
             id: option.id,
             label: option.label,
@@ -2010,7 +2019,7 @@ function StyleSelectorsPanel({
         />
 
         <StyleRow
-          label="Background"
+          label={t('background')}
           options={subtitleBackgroundColorOptions.map(option => ({
             id: option.id,
             label: option.label,
@@ -2025,7 +2034,7 @@ function StyleSelectorsPanel({
         />
 
         <StyleRow
-          label="Positions"
+          label={t('positions')}
           options={subtitlePositionOptions.map(option => ({
             id: option.value,
             label: option.label,
@@ -2035,11 +2044,11 @@ function StyleSelectorsPanel({
         />
 
         <StyleRow
-          label="Casing"
+          label={t('casing')}
           options={[
             {
               id: 'sentence',
-              label: 'Sentence',
+              label: t('sentence'),
               active: currentStyle.casing === 'sentence',
               onPress: () =>
                 onChangeStyle({
@@ -2049,7 +2058,7 @@ function StyleSelectorsPanel({
             },
             {
               id: 'uppercase',
-              label: 'Uppercase',
+              label: t('uppercase'),
               active: currentStyle.casing === 'uppercase',
               onPress: () =>
                 onChangeStyle({

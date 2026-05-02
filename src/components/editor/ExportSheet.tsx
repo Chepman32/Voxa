@@ -26,6 +26,7 @@ import {
   isPlaceholderSubtitle,
 } from '../../lib/project';
 import { haptics } from '../../services/haptics';
+import { useTranslation } from '../../i18n/useTranslation';
 import { exportResolutions, palette, springConfig } from '../../theme/tokens';
 import type { ExportResolution, Project, SubtitleStyle } from '../../types/models';
 import { GlassPanel } from '../common/GlassPanel';
@@ -54,9 +55,10 @@ export function ExportSheet({
   onChangeResolution,
   onExport,
 }: ExportSheetProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [previewTime, setPreviewTime] = useState(0);
-  const [statusMessage, setStatusMessage] = useState('Press and hold to export');
+  const [statusMessage, setStatusMessage] = useState(t('exportHold'));
   const [working, setWorking] = useState(false);
   const [previewSubtitleHeight, setPreviewSubtitleHeight] = useState(0);
 
@@ -69,10 +71,10 @@ export function ExportSheet({
     if (!visible) {
       dragOffset.value = 0;
       holdProgress.value = 0;
-      setStatusMessage('Press and hold to export');
+      setStatusMessage(t('exportHold'));
       setWorking(false);
     }
-  }, [dragOffset, holdProgress, sheetProgress, visible]);
+  }, [dragOffset, holdProgress, sheetProgress, t, visible]);
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: sheetProgress.value,
@@ -112,15 +114,15 @@ export function ExportSheet({
       return;
     }
     setWorking(true);
-    setStatusMessage('Exporting to Photos...');
+    setStatusMessage(t('exportingToPhotos'));
 
     try {
       await onExport();
       haptics.heavy();
-      setStatusMessage('Saved to Photos');
+      setStatusMessage(t('exportSaved'));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Export failed. Please try again.';
+        error instanceof Error ? error.message : t('exportFailed');
       setStatusMessage(message);
     } finally {
       setWorking(false);
@@ -184,7 +186,7 @@ export function ExportSheet({
           <GlassPanel style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Export</Text>
+              <Text style={styles.headerTitle}>{t('exportTitle')}</Text>
               <Pressable onPress={onClose} style={styles.closeButton}>
                 <Feather color={palette.textSecondary} name="x" size={18} />
               </Pressable>
@@ -235,7 +237,7 @@ export function ExportSheet({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Resolution</Text>
+              <Text style={styles.sectionLabel}>{t('exportResolution')}</Text>
               <View style={styles.resolutionRow}>
                 {exportResolutions.map(option => (
                   <Pressable
@@ -264,7 +266,7 @@ export function ExportSheet({
               <Animated.View style={[styles.holdFill, fillStyle]} />
               <View style={styles.holdContent}>
                 <Feather color={palette.textPrimary} name="download" size={18} />
-                <Text style={styles.holdTitle}>Export to Photos</Text>
+                <Text style={styles.holdTitle}>{t('exportToPhotos')}</Text>
                 <Text style={styles.holdSubtitle}>{statusMessage}</Text>
               </View>
             </Pressable>

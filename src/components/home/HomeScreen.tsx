@@ -17,7 +17,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { getGreeting, sortProjects } from '../../lib/project';
+import { sortProjects } from '../../lib/project';
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { emptyStateImage, palette } from '../../theme/tokens';
 import type { Project } from '../../types/models';
@@ -41,6 +42,7 @@ export function HomeScreen({
   onOpenProject,
   onOpenSettings,
 }: HomeScreenProps) {
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
@@ -52,6 +54,12 @@ export function HomeScreen({
   const headerTop = insets.top + 8;
   const contentTop = headerTop + 100;
   const pullIndicatorTop = insets.top + 12;
+  const hour = new Date().getHours();
+  const greeting = hour < 12
+    ? t('greetingMorning')
+    : hour < 18
+    ? t('greetingAfternoon')
+    : t('greetingEvening');
 
   const headerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(scrollY.value, [0, 90], [1, 0.84]) }],
@@ -99,14 +107,14 @@ export function HomeScreen({
 
       <Animated.View style={[styles.header, { top: headerTop }, headerStyle]}>
         <View>
-          <Text style={styles.greeting}>{getGreeting()}</Text>
-          <Text style={styles.heading}>Projects</Text>
+          <Text style={styles.greeting}>{greeting}</Text>
+          <Text style={styles.heading}>{t('homeProjects')}</Text>
         </View>
 
         <View style={styles.headerActions}>
           <Pressable
-            accessibilityHint="Create a new project"
-            accessibilityLabel="Create project"
+            accessibilityHint={t('homeCreateProjectHint')}
+            accessibilityLabel={t('homeCreateProjectLabel')}
             disabled={processingVisible}
             onPress={onCreateProject}
             style={[
@@ -117,8 +125,8 @@ export function HomeScreen({
           </Pressable>
 
           <Pressable
-            accessibilityHint="Open app settings"
-            accessibilityLabel="Open settings"
+            accessibilityHint={t('homeOpenSettingsHint')}
+            accessibilityLabel={t('homeOpenSettingsLabel')}
             onPress={onOpenSettings}
             style={styles.settingsButton}>
             <Feather color={palette.textPrimary} name="settings" size={18} />
@@ -151,8 +159,8 @@ export function HomeScreen({
               onOpen={() => {}}
               project={{
                 id: 'empty-card',
-                title: 'Pull down to create',
-                sourceFileName: 'Empty',
+                title: t('homeEmptyProjectTitle'),
+                sourceFileName: t('homeEmptyProjectFileName'),
                 videoLocalURI: emptyStateImage,
                 thumbnailUri: emptyStateImage,
                 duration: 18000,
@@ -179,11 +187,8 @@ export function HomeScreen({
               }}
               width={Math.min(cardWidth * 2 + 12, width - 40)}
             />
-            <Text style={styles.emptyTitle}>Tap + to create.</Text>
-            <Text style={styles.emptyText}>
-              Import a local video and Voxa will build the subtitle timeline offline. You
-              can still pull down for a quick create gesture.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('homeEmptyTitle')}</Text>
+            <Text style={styles.emptyText}>{t('homeEmptyText')}</Text>
           </View>
         }
         scrollEventThrottle={16}

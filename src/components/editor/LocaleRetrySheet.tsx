@@ -17,6 +17,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { palette } from '../../theme/tokens';
 import type { SpeechLocaleOption } from '../../types/models';
+import { useTranslation } from '../../i18n/useTranslation';
 import { GlassPanel } from '../common/GlassPanel';
 
 export const LOCALE_RETRY_SHEET_ID = 'locale-retry-sheet';
@@ -45,6 +46,7 @@ export function LocaleRetrySheet({
   onRetry,
   onSelectLocale,
 }: LocaleRetrySheetProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const progress = useSharedValue(0);
 
@@ -84,11 +86,8 @@ export function LocaleRetrySheet({
         <GlassPanel style={styles.sheet}>
           <View style={styles.header}>
             <View style={styles.titleWrap}>
-              <Text style={styles.title}>Retry Subtitles</Text>
-              <Text style={styles.body}>
-                Auto Detect picks the best on-device language. Choose a locale manually
-                if detection missed the clip.
-              </Text>
+              <Text style={styles.title}>{t('retrySubtitles')}</Text>
+              <Text style={styles.body}>{t('retrySubtitlesBody')}</Text>
             </View>
 
             <Pressable onPress={onClose} style={styles.closeButton}>
@@ -102,7 +101,7 @@ export function LocaleRetrySheet({
             showsVerticalScrollIndicator={false}>
             <LocaleOptionRow
               active={selectedLocale === AUTO_DETECT_LOCALE_VALUE}
-              label="Auto Detect"
+              label={t('autoDetect')}
               onPress={() => onSelectLocale(AUTO_DETECT_LOCALE_VALUE)}
               testID={`${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-${AUTO_DETECT_LOCALE_VALUE}`}
             />
@@ -120,10 +119,10 @@ export function LocaleRetrySheet({
 
           <Text style={styles.footnote}>
             {loading
-              ? 'Loading on-device languages...'
+              ? t('loadingOnDeviceLanguages')
               : localeOptions.length > 0
-              ? `${localeOptions.length} on-device languages available on this device.`
-              : 'No on-device languages are currently available.'}
+              ? `${localeOptions.length} ${t('onDeviceLanguagesAvailable')}`
+              : t('noOnDeviceLanguages')}
           </Text>
 
           <Pressable
@@ -135,7 +134,7 @@ export function LocaleRetrySheet({
             ]}
             testID={LOCALE_RETRY_BUTTON_ID}>
             <Text style={styles.retryButtonText}>
-              {retrying ? 'Retrying...' : 'Retry Subtitles'}
+              {retrying ? t('retrying') : t('retrySubtitles')}
             </Text>
           </Pressable>
         </GlassPanel>

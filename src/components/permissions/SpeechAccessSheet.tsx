@@ -16,6 +16,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import type { PermissionSummary } from '../../types/models';
 import { palette } from '../../theme/tokens';
+import { useTranslation } from '../../i18n/useTranslation';
 import { GlassPanel } from '../common/GlassPanel';
 
 interface SpeechAccessSheetProps {
@@ -39,6 +40,7 @@ export function SpeechAccessSheet({
   onGrantAccess,
   onOpenSettings,
 }: SpeechAccessSheetProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const progress = useSharedValue(0);
 
@@ -66,12 +68,12 @@ export function SpeechAccessSheet({
   const shouldOpenSettings =
     speechStatus === 'denied' || speechStatus === 'restricted';
   const title = shouldOpenSettings
-    ? 'Enable Speech Access'
-    : 'Grant Speech Access';
+    ? t('enableSpeechAccess')
+    : t('grantSpeechAccess');
   const body = shouldOpenSettings
-    ? 'Speech Recognition is turned off for Voxa. Open Settings to enable it, then return to continue generating subtitles for this video.'
-    : 'Voxa needs Speech Recognition permission to generate subtitles directly on your device after you import a video.';
-  const primaryLabel = shouldOpenSettings ? 'Open Settings' : 'Grant Speech Access';
+    ? t('speechAccessSettingsBody')
+    : t('speechAccessGrantBody');
+  const primaryLabel = shouldOpenSettings ? t('openSettings') : t('grantSpeechAccess');
 
   return (
     <View pointerEvents="auto" style={styles.root}>
@@ -111,7 +113,7 @@ export function SpeechAccessSheet({
               pending ? styles.buttonDisabled : undefined,
             ]}>
             <Text style={styles.primaryButtonText}>
-              {pending ? 'Checking Access...' : primaryLabel}
+              {pending ? t('checkingAccess') : primaryLabel}
             </Text>
           </Pressable>
 
@@ -122,7 +124,7 @@ export function SpeechAccessSheet({
               styles.secondaryButton,
               pending ? styles.buttonDisabled : undefined,
             ]}>
-            <Text style={styles.secondaryButtonText}>Continue Manually</Text>
+            <Text style={styles.secondaryButtonText}>{t('continueManually')}</Text>
           </Pressable>
         </GlassPanel>
       </Animated.View>

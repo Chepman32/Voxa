@@ -16,6 +16,7 @@ import Animated, {
 import Feather from 'react-native-vector-icons/Feather';
 
 import { palette } from '../../theme/tokens';
+import { useTranslation } from '../../i18n/useTranslation';
 import type { ProcessingState } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { GlassPanel } from '../common/GlassPanel';
@@ -23,6 +24,7 @@ import { GlassPanel } from '../common/GlassPanel';
 const icons = ['video', 'mic', 'file-text'] as const;
 
 export function ProcessingOverlay({ processing }: { processing: ProcessingState }) {
+  const { t } = useTranslation();
   const [iconIndex, setIconIndex] = useState(0);
   const pulse = useSharedValue(0);
 
@@ -57,6 +59,19 @@ export function ProcessingOverlay({ processing }: { processing: ProcessingState 
     return null;
   }
 
+  const localizedLabel =
+    processing.label === 'Extracting audio...'
+      ? t('processingExtractingAudio')
+      : processing.label === 'Detecting spoken language...'
+      ? t('processingDetectingLanguage')
+      : processing.label === 'Transcribing with the selected language...'
+      ? t('processingSelectedLanguage')
+      : processing.label === 'Transcribing with the best on-device language...'
+      ? t('processingBestLanguage')
+      : processing.label === 'Generating timeline...'
+      ? t('processingGeneratingTimeline')
+      : processing.label;
+
   return (
     <View pointerEvents="auto" style={styles.root}>
       <AtmosphereCanvas intensity={1.24} />
@@ -70,11 +85,9 @@ export function ProcessingOverlay({ processing }: { processing: ProcessingState 
         </Animated.View>
 
         <View style={styles.copy}>
-          <Text style={styles.title}>Offline AI</Text>
-          <Text style={styles.label}>{processing.label}</Text>
-          <Text style={styles.body}>
-            Voxa is processing your video locally on-device.
-          </Text>
+          <Text style={styles.title}>{t('processingOfflineAi')}</Text>
+          <Text style={styles.label}>{localizedLabel}</Text>
+          <Text style={styles.body}>{t('processingBody')}</Text>
         </View>
 
         <ActivityIndicator color={palette.cyan} />

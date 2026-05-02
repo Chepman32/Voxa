@@ -6,6 +6,8 @@ export const supportedLocales: SupportedLocale[] = [
 ];
 
 export interface Translations {
+  [key: string]: string;
+
   welcomeEyebrow: string;
   welcomeTitle: string;
   welcomeDescription: string;
@@ -267,6 +269,138 @@ const en: Translations = {
   continue: 'Continue',
   skip: 'Skip',
   back: 'Back',
+
+  homeProjects: 'Projects',
+  homeCreateProjectLabel: 'Create project',
+  homeCreateProjectHint: 'Create a new project',
+  homeOpenSettingsLabel: 'Open settings',
+  homeOpenSettingsHint: 'Open app settings',
+  homeEmptyProjectTitle: 'Pull down to create',
+  homeEmptyProjectFileName: 'Empty',
+  homeEmptyTitle: 'Tap + to create.',
+  homeEmptyText:
+    'Import a local video and Voxa will build the subtitle timeline offline. You can still pull down for a quick create gesture.',
+  greetingMorning: 'Good Morning',
+  greetingAfternoon: 'Good Afternoon',
+  greetingEvening: 'Good Evening',
+  projectDelete: 'Delete',
+  projectSubtitleBlocks: 'subtitle blocks',
+  projectSubtitleBlock: 'subtitle block',
+
+  transcribingLanguageTitle: 'Transcribing Language',
+  transcribingLanguageBody:
+    'Choose the spoken language for this video before Voxa creates subtitles.',
+  appLanguageLabel: 'App language',
+  appLanguageFallback: 'app',
+  loadingOnDeviceLanguages: 'Loading on-device languages...',
+  onDeviceLanguagesAvailable: 'on-device languages available on this device.',
+  noOnDeviceLanguages: 'No on-device languages are currently available.',
+  loading: 'Loading...',
+  transcribeVideo: 'Transcribe Video',
+
+  settingsTitle: 'Settings',
+  settingsDefaultExport: 'Default Export',
+  settingsUseAppLanguage: 'Use app language',
+  settingsUseAppLanguageDescription:
+    'New videos use the same language as the app when that speech locale is available.',
+  settingsAskBeforeTranscription: 'Ask before each transcription',
+  settingsAskBeforeTranscriptionDescription:
+    'Show a language picker before each new transcription.',
+  settingsRememberLastLanguage: 'Remember last used language',
+  settingsLastUsed: 'Last used',
+  settingsRememberLastLanguageDescription:
+    'Preselect and reuse the last language you transcribed with.',
+  settingsSubtitleHighlighting: 'Subtitle Highlighting',
+  settingsHighlightEditedWords: 'Highlight edited words',
+  settingsHighlightEditedWordsDescription:
+    'Approximate word timing after manual subtitle edits.',
+  settingsPrivacy: 'Privacy',
+  settingsPrivacyBody:
+    'Voxa keeps extraction, speech recognition, subtitle editing, and export entirely on-device. Remote media is only used for visual placeholders.',
+  settingsReplayOnboarding: 'Replay onboarding',
+
+  speechAccessFailedTitle: 'Speech Access Failed',
+  speechAccessFailedBody: 'Unable to request Speech Recognition access right now.',
+  languageListFailedTitle: 'Language List Failed',
+  languageListFailedBody: 'Unable to load on-device transcription languages right now.',
+  selectedVideo: 'Selected video',
+  enableSpeechAccess: 'Enable Speech Access',
+  grantSpeechAccess: 'Grant Speech Access',
+  speechAccessSettingsBody:
+    'Speech Recognition is turned off for Voxa. Open Settings to enable it, then return to continue generating subtitles for this video.',
+  speechAccessGrantBody:
+    'Voxa needs Speech Recognition permission to generate subtitles directly on your device after you import a video.',
+  openSettings: 'Open Settings',
+  checkingAccess: 'Checking Access...',
+  continueManually: 'Continue Manually',
+
+  processingOfflineAi: 'Offline AI',
+  processingBody: 'Voxa is processing your video locally on-device.',
+  processingExtractingAudio: 'Extracting audio...',
+  processingDetectingLanguage: 'Detecting spoken language...',
+  processingSelectedLanguage: 'Transcribing with the selected language...',
+  processingBestLanguage: 'Transcribing with the best on-device language...',
+  processingGeneratingTimeline: 'Generating timeline...',
+
+  exportTitle: 'Export',
+  exportResolution: 'Resolution',
+  exportToPhotos: 'Export to Photos',
+  exportHold: 'Press and hold to export',
+  exportingToPhotos: 'Exporting to Photos...',
+  exportSaved: 'Saved to Photos',
+  exportFailed: 'Export failed. Please try again.',
+
+  retry: 'Retry',
+  retrySubtitles: 'Retry Subtitles',
+  retrying: 'Retrying...',
+  retrySubtitlesBody:
+    'Auto Detect picks the best on-device language. Choose a locale manually if detection missed the clip.',
+  autoDetect: 'Auto Detect',
+  subtitlesCreatedNeedsReview:
+    'Subtitles were created, but this project is still marked as requiring review.',
+  noSubtitlesGenerated:
+    'No subtitles were generated for this clip. Try Auto Detect or pick a language manually.',
+  manualEditingAvailable: 'Manual subtitle editing remains available.',
+  lastAttempt: 'Last attempt',
+  manual: 'manual',
+  auto: 'auto',
+  chooseLanguageToRetry: 'Choose Auto Detect or a specific on-device language to retry.',
+  subtitleRetryFailedTitle: 'Subtitle Retry Failed',
+  subtitleRetryFailedBody: 'Unable to regenerate subtitles right now.',
+  noSubtitlesCreatedTitle: 'No Subtitles Created',
+  noSubtitlesSelectedLanguage: 'No subtitles were generated with the selected language.',
+  regenerateSubtitles: 'Regenerate Subtitles',
+  regenerating: 'Regenerating...',
+
+  wordHighlight: 'Word Highlight',
+  wordHighlightAvailable: 'Accent the currently spoken word.',
+  wordTimingUnavailable: 'Word timing unavailable',
+  textEffects: 'Text Effects',
+  effectNone: 'None',
+  effectChrome: 'Chrome',
+  effectShadow: 'Shadow',
+  recognitionLanguage: 'Recognition Language',
+  current: 'Current',
+  onDeviceLanguagesAvailableShort: 'on-device languages available',
+  subtitleTab: 'Subtitle',
+  styleTab: 'Style',
+  languageTab: 'Language',
+  fxTab: 'FX',
+  done: 'Done',
+  activeSubtitle: 'Active Subtitle',
+  noSubtitleSelected: 'No subtitle selected',
+  rewriteSubtitleText: 'Rewrite subtitle text',
+  selectSubtitleToEdit: 'Select a subtitle block to edit.',
+  styleControls: 'Style Controls',
+  fonts: 'Fonts',
+  size: 'Size',
+  textColor: 'Text Color',
+  highlight: 'Highlight',
+  background: 'Background',
+  positions: 'Positions',
+  casing: 'Casing',
+  sentence: 'Sentence',
+  uppercase: 'Uppercase',
 };
 
 const es: Translations = {
@@ -1101,6 +1235,138 @@ const ru: Translations = {
   continue: 'Продолжить',
   skip: 'Пропустить',
   back: 'Назад',
+
+  homeProjects: 'Проекты',
+  homeCreateProjectLabel: 'Создать проект',
+  homeCreateProjectHint: 'Создать новый проект',
+  homeOpenSettingsLabel: 'Открыть настройки',
+  homeOpenSettingsHint: 'Открыть настройки приложения',
+  homeEmptyProjectTitle: 'Потяни вниз, чтобы создать',
+  homeEmptyProjectFileName: 'Пусто',
+  homeEmptyTitle: 'Нажми +, чтобы создать.',
+  homeEmptyText:
+    'Импортируй локальное видео, и Voxa соберёт таймлайн субтитров офлайн. Можно также потянуть вниз для быстрого создания.',
+  greetingMorning: 'Доброе утро',
+  greetingAfternoon: 'Добрый день',
+  greetingEvening: 'Добрый вечер',
+  projectDelete: 'Удалить',
+  projectSubtitleBlocks: 'блоков субтитров',
+  projectSubtitleBlock: 'блок субтитров',
+
+  transcribingLanguageTitle: 'Язык транскрибации',
+  transcribingLanguageBody:
+    'Выбери язык речи в этом видео, прежде чем Voxa создаст субтитры.',
+  appLanguageLabel: 'Язык приложения',
+  appLanguageFallback: 'приложение',
+  loadingOnDeviceLanguages: 'Загружаем языки на устройстве...',
+  onDeviceLanguagesAvailable: 'языков на устройстве доступно.',
+  noOnDeviceLanguages: 'Сейчас нет доступных языков на устройстве.',
+  loading: 'Загрузка...',
+  transcribeVideo: 'Транскрибировать видео',
+
+  settingsTitle: 'Настройки',
+  settingsDefaultExport: 'Экспорт по умолчанию',
+  settingsUseAppLanguage: 'Использовать язык приложения',
+  settingsUseAppLanguageDescription:
+    'Новые видео используют язык приложения, если такой язык речи доступен.',
+  settingsAskBeforeTranscription: 'Спрашивать перед каждой транскрибацией',
+  settingsAskBeforeTranscriptionDescription:
+    'Показывать выбор языка перед каждой новой транскрибацией.',
+  settingsRememberLastLanguage: 'Запоминать последний язык',
+  settingsLastUsed: 'Последний',
+  settingsRememberLastLanguageDescription:
+    'Предвыбирать и повторно использовать последний язык транскрибации.',
+  settingsSubtitleHighlighting: 'Подсветка субтитров',
+  settingsHighlightEditedWords: 'Подсвечивать изменённые слова',
+  settingsHighlightEditedWordsDescription:
+    'Приблизительный тайминг слов после ручной правки субтитров.',
+  settingsPrivacy: 'Приватность',
+  settingsPrivacyBody:
+    'Voxa выполняет извлечение, распознавание речи, редактирование субтитров и экспорт полностью на устройстве. Удалённые медиа используются только как визуальные заглушки.',
+  settingsReplayOnboarding: 'Повторить онбординг',
+
+  speechAccessFailedTitle: 'Ошибка доступа к речи',
+  speechAccessFailedBody: 'Сейчас не удалось запросить доступ к распознаванию речи.',
+  languageListFailedTitle: 'Ошибка списка языков',
+  languageListFailedBody: 'Сейчас не удалось загрузить языки транскрибации на устройстве.',
+  selectedVideo: 'Выбранное видео',
+  enableSpeechAccess: 'Включи доступ к речи',
+  grantSpeechAccess: 'Разреши доступ к речи',
+  speechAccessSettingsBody:
+    'Распознавание речи выключено для Voxa. Открой настройки, включи доступ и вернись, чтобы продолжить создание субтитров для этого видео.',
+  speechAccessGrantBody:
+    'Voxa нужен доступ к распознаванию речи, чтобы создавать субтитры прямо на устройстве после импорта видео.',
+  openSettings: 'Открыть настройки',
+  checkingAccess: 'Проверяем доступ...',
+  continueManually: 'Продолжить вручную',
+
+  processingOfflineAi: 'Офлайн AI',
+  processingBody: 'Voxa обрабатывает видео локально на устройстве.',
+  processingExtractingAudio: 'Извлекаем аудио...',
+  processingDetectingLanguage: 'Определяем язык речи...',
+  processingSelectedLanguage: 'Транскрибируем на выбранном языке...',
+  processingBestLanguage: 'Транскрибируем на лучшем языке устройства...',
+  processingGeneratingTimeline: 'Создаём таймлайн...',
+
+  exportTitle: 'Экспорт',
+  exportResolution: 'Разрешение',
+  exportToPhotos: 'Экспортировать в Фото',
+  exportHold: 'Нажми и удерживай для экспорта',
+  exportingToPhotos: 'Экспортируем в Фото...',
+  exportSaved: 'Сохранено в Фото',
+  exportFailed: 'Экспорт не удался. Попробуй ещё раз.',
+
+  retry: 'Повторить',
+  retrySubtitles: 'Повторить субтитры',
+  retrying: 'Повторяем...',
+  retrySubtitlesBody:
+    'Автоопределение выбирает лучший язык на устройстве. Выбери язык вручную, если определение ошиблось.',
+  autoDetect: 'Автоопределение',
+  subtitlesCreatedNeedsReview:
+    'Субтитры созданы, но проект всё ещё помечен как требующий проверки.',
+  noSubtitlesGenerated:
+    'Для этого клипа не удалось создать субтитры. Попробуй автоопределение или выбери язык вручную.',
+  manualEditingAvailable: 'Ручное редактирование субтитров всё ещё доступно.',
+  lastAttempt: 'Последняя попытка',
+  manual: 'вручную',
+  auto: 'авто',
+  chooseLanguageToRetry: 'Выбери автоопределение или конкретный язык на устройстве для повтора.',
+  subtitleRetryFailedTitle: 'Не удалось повторить субтитры',
+  subtitleRetryFailedBody: 'Сейчас не удалось заново создать субтитры.',
+  noSubtitlesCreatedTitle: 'Субтитры не созданы',
+  noSubtitlesSelectedLanguage: 'На выбранном языке субтитры не были созданы.',
+  regenerateSubtitles: 'Создать субтитры заново',
+  regenerating: 'Создаём заново...',
+
+  wordHighlight: 'Подсветка слов',
+  wordHighlightAvailable: 'Подсвечивать текущее произнесённое слово.',
+  wordTimingUnavailable: 'Тайминг слов недоступен',
+  textEffects: 'Текстовые эффекты',
+  effectNone: 'Нет',
+  effectChrome: 'Хром',
+  effectShadow: 'Тень',
+  recognitionLanguage: 'Язык распознавания',
+  current: 'Текущий',
+  onDeviceLanguagesAvailableShort: 'языков на устройстве доступно',
+  subtitleTab: 'Субтитры',
+  styleTab: 'Стиль',
+  languageTab: 'Язык',
+  fxTab: 'FX',
+  done: 'Готово',
+  activeSubtitle: 'Активный субтитр',
+  noSubtitleSelected: 'Субтитр не выбран',
+  rewriteSubtitleText: 'Перепиши текст субтитра',
+  selectSubtitleToEdit: 'Выбери блок субтитров для редактирования.',
+  styleControls: 'Настройки стиля',
+  fonts: 'Шрифты',
+  size: 'Размер',
+  textColor: 'Цвет текста',
+  highlight: 'Подсветка',
+  background: 'Фон',
+  positions: 'Позиции',
+  casing: 'Регистр',
+  sentence: 'Обычный',
+  uppercase: 'Верхний регистр',
 };
 
 const ja: Translations = {

@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { APP_LANGUAGE_LOCALE_VALUE } from '../../lib/speech-locale';
+import { useTranslation } from '../../i18n/useTranslation';
 import { palette } from '../../theme/tokens';
 import type { SpeechLocaleOption } from '../../types/models';
 import { GlassPanel } from '../common/GlassPanel';
@@ -41,6 +42,7 @@ export function TranscriptionLanguageSheet({
   onConfirm,
   onSelectLocale,
 }: TranscriptionLanguageSheetProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const progress = useSharedValue(0);
 
@@ -80,10 +82,8 @@ export function TranscriptionLanguageSheet({
         <GlassPanel style={styles.sheet}>
           <View style={styles.header}>
             <View style={styles.titleWrap}>
-              <Text style={styles.title}>Transcribing Language</Text>
-              <Text style={styles.body}>
-                Choose the spoken language for this video before Voxa creates subtitles.
-              </Text>
+              <Text style={styles.title}>{t('transcribingLanguageTitle')}</Text>
+              <Text style={styles.body}>{t('transcribingLanguageBody')}</Text>
             </View>
             <Pressable onPress={onClose} style={styles.closeButton}>
               <Feather color={palette.textSecondary} name="x" size={18} />
@@ -112,10 +112,10 @@ export function TranscriptionLanguageSheet({
 
           <Text style={styles.footnote}>
             {loading
-              ? 'Loading on-device languages...'
+              ? t('loadingOnDeviceLanguages')
               : localeOptions.length > 0
-              ? `${localeOptions.length} on-device languages available on this device.`
-              : 'No on-device languages are currently available.'}
+              ? `${localeOptions.length} ${t('onDeviceLanguagesAvailable')}`
+              : t('noOnDeviceLanguages')}
           </Text>
 
           <Pressable
@@ -123,7 +123,7 @@ export function TranscriptionLanguageSheet({
             onPress={onConfirm}
             style={[styles.confirmButton, loading && styles.buttonDisabled]}>
             <Text style={styles.confirmButtonText}>
-              {loading ? 'Loading...' : 'Transcribe Video'}
+              {loading ? t('loading') : t('transcribeVideo')}
             </Text>
           </Pressable>
         </GlassPanel>
