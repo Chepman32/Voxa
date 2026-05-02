@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { palette, springConfig } from '../../theme/tokens';
 import { GlassPanel } from '../common/GlassPanel';
@@ -20,6 +21,7 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ onNext, onSkip, progress }: WelcomeScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const titleY = useSharedValue(40);
   const titleOpacity = useSharedValue(0);
@@ -84,16 +86,15 @@ export function WelcomeScreen({ onNext, onSkip, progress }: WelcomeScreenProps) 
         </Animated.View>
 
         <Animated.View style={[styles.textWrap, titleStyle]}>
-          <Text style={styles.eyebrow}>Offline. Private. Instant.</Text>
+          <Text style={styles.eyebrow}>{t('welcomeEyebrow')}</Text>
           <Text style={styles.title}>
-            Subtitles that make your clips impossible to scroll past
+            {t('welcomeTitle')}
           </Text>
         </Animated.View>
 
         <Animated.View style={[styles.textWrap, descStyle]}>
           <Text style={styles.description}>
-            Import any video. Get perfectly timed, cinematic captions in under a
-            minute. No uploads. No subscriptions. Just your phone.
+            {t('welcomeDescription')}
           </Text>
         </Animated.View>
       </View>
@@ -110,7 +111,7 @@ export function WelcomeScreen({ onNext, onSkip, progress }: WelcomeScreenProps) 
             onNext();
           }}
           style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Get Started</Text>
+          <Text style={styles.primaryButtonText}>{t('welcomeCta')}</Text>
         </Pressable>
       </Animated.View>
     </View>

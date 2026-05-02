@@ -7,6 +7,7 @@ import type {
   OnboardingAnswers,
   ProcessingState,
   Project,
+  SupportedLocale,
   UserSettings,
 } from '../types/models';
 import { ensureSubtitles, normalizeSubtitleStyle } from '../lib/project';
@@ -20,6 +21,7 @@ interface AppState {
   hasCompletedOnboarding: boolean;
   onboardingStep: number;
   onboardingAnswers: OnboardingAnswers;
+  uiLocale: SupportedLocale | null;
   processing: ProcessingState;
   settings: UserSettings;
   projects: Project[];
@@ -28,6 +30,7 @@ interface AppState {
   resetOnboarding: () => void;
   setOnboardingStep: (step: number) => void;
   setOnboardingAnswers: (answers: Partial<OnboardingAnswers>) => void;
+  setUiLocale: (locale: SupportedLocale) => void;
   openSettings: () => void;
   closeSettings: () => void;
   openProject: (projectId: string) => void;
@@ -44,7 +47,7 @@ interface AppState {
 }
 
 type PersistedAppState = Partial<
-  Pick<AppState, 'hasCompletedOnboarding' | 'onboardingStep' | 'onboardingAnswers' | 'projects' | 'settings'>
+  Pick<AppState, 'hasCompletedOnboarding' | 'onboardingStep' | 'onboardingAnswers' | 'uiLocale' | 'projects' | 'settings'>
 >;
 
 const defaultSettings: UserSettings = {
@@ -137,6 +140,7 @@ export const useAppStore = create<AppState>()(
       hasCompletedOnboarding: false,
       onboardingStep: 0,
       onboardingAnswers: defaultOnboardingAnswers,
+      uiLocale: null,
       processing: defaultProcessing,
       settings: defaultSettings,
       projects: [],
@@ -153,6 +157,7 @@ export const useAppStore = create<AppState>()(
         set(state => ({
           onboardingAnswers: { ...state.onboardingAnswers, ...answers },
         })),
+      setUiLocale: locale => set({ uiLocale: locale }),
       openSettings: () => set({ settingsOpen: true }),
       closeSettings: () => set({ settingsOpen: false }),
       openProject: projectId => set({ activeProjectId: projectId, route: 'editor' }),
@@ -231,6 +236,7 @@ export const useAppStore = create<AppState>()(
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         onboardingStep: state.onboardingStep,
         onboardingAnswers: state.onboardingAnswers,
+        uiLocale: state.uiLocale,
         settings: state.settings,
         projects: state.projects,
       }),

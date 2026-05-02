@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import {
   palette,
@@ -43,12 +44,14 @@ const COLORS = subtitleHighlightColorOptions.map(c => ({
   color: c.accentColor,
 }));
 
-const EFFECTS: Array<{ id: SubtitleEffect; label: string }> = [
-  { id: 'none', label: 'Clean' },
-  { id: 'neon', label: 'Neon' },
-  { id: 'glow', label: 'Glow' },
-  { id: 'shadow', label: 'Cinema' },
-];
+function useEffects(t: (key: string) => string): Array<{ id: SubtitleEffect; label: string }> {
+  return [
+    { id: 'none', label: t('effectClean') },
+    { id: 'neon', label: t('effectNeon') },
+    { id: 'glow', label: t('effectGlow') },
+    { id: 'shadow', label: t('effectCinema') },
+  ];
+}
 
 export function PreferenceConfigScreen({
   onNext,
@@ -57,13 +60,15 @@ export function PreferenceConfigScreen({
   progress,
   onSelectPreferences,
 }: PreferenceConfigScreenProps) {
+  const { t } = useTranslation();
+  const EFFECTS = useEffects(t);
   const insets = useSafeAreaInsets();
   const [selectedFont, setSelectedFont] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedEffect, setSelectedEffect] = useState<string | null>(null);
   const buttonScale = useSharedValue(1);
 
-  const previewText = "Your captions will look like this";
+  const previewText = t('demoPreviewText');
 
   const handleNext = () => {
     haptics.medium();
@@ -117,9 +122,9 @@ export function PreferenceConfigScreen({
       <OnboardingHeader progress={progress} onBack={onBack} onSkip={onSkip} />
 
       <View style={styles.content}>
-        <Text style={styles.headline}>Pick your signature look</Text>
+        <Text style={styles.headline}>{t('prefHeadline')}</Text>
         <Text style={styles.subheadline}>
-          These are the defaults we will use for your first project. You can change them anytime.
+          {t('prefSubheadline')}
         </Text>
 
         <GlassPanel style={styles.previewCard} blurAmount={20}>
@@ -137,7 +142,7 @@ export function PreferenceConfigScreen({
           </Text>
         </GlassPanel>
 
-        <Text style={styles.sectionLabel}>Font</Text>
+        <Text style={styles.sectionLabel}>{t('prefSectionFont')}</Text>
         <View style={styles.grid}>
           {FONTS.map(font => {
             const isSelected = selectedFont === font.id;
@@ -165,7 +170,7 @@ export function PreferenceConfigScreen({
           })}
         </View>
 
-        <Text style={styles.sectionLabel}>Accent Color</Text>
+        <Text style={styles.sectionLabel}>{t('prefSectionColor')}</Text>
         <View style={styles.colorRow}>
           {COLORS.map(color => {
             const isSelected = selectedColor === color.id;
@@ -189,7 +194,7 @@ export function PreferenceConfigScreen({
           })}
         </View>
 
-        <Text style={styles.sectionLabel}>Effect</Text>
+        <Text style={styles.sectionLabel}>{t('prefSectionEffect')}</Text>
         <View style={styles.grid}>
           {EFFECTS.map(effect => {
             const isSelected = selectedEffect === effect.id;
@@ -222,7 +227,7 @@ export function PreferenceConfigScreen({
           <Pressable
             onPress={handleNext}
             style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Continue</Text>
+            <Text style={styles.primaryButtonText}>{t('prefCta')}</Text>
           </Pressable>
         </Animated.View>
       </View>

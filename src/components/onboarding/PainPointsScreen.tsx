@@ -8,6 +8,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { palette, springConfig } from '../../theme/tokens';
 import { OnboardingHeader } from './OnboardingHeader';
@@ -20,15 +21,17 @@ interface PainPointsScreenProps {
   onSelectPainPoints: (painPoints: string[]) => void;
 }
 
-const PAIN_POINTS = [
-  { id: 'typing', label: 'Typing captions takes forever' },
-  { id: 'tools', label: 'Online tools feel sketchy or slow' },
-  { id: 'cost', label: 'Subscription fees add up fast' },
-  { id: 'timing', label: 'Timing never lines up perfectly' },
-  { id: 'style', label: 'Captions look boring and generic' },
-  { id: 'offline', label: 'I need to work without internet' },
-  { id: 'privacy', label: 'I do not want my footage in the cloud' },
-];
+function usePainPoints(t: (key: string) => string) {
+  return [
+    { id: 'typing', label: t('painTyping') },
+    { id: 'tools', label: t('painTools') },
+    { id: 'cost', label: t('painCost') },
+    { id: 'timing', label: t('painTiming') },
+    { id: 'style', label: t('painStyle') },
+    { id: 'offline', label: t('painOffline') },
+    { id: 'privacy', label: t('painPrivacy') },
+  ];
+}
 
 export function PainPointsScreen({
   onNext,
@@ -37,6 +40,8 @@ export function PainPointsScreen({
   progress,
   onSelectPainPoints,
 }: PainPointsScreenProps) {
+  const { t } = useTranslation();
+  const PAIN_POINTS = usePainPoints(t);
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const buttonScale = useSharedValue(1);
@@ -65,9 +70,9 @@ export function PainPointsScreen({
       <OnboardingHeader progress={progress} onBack={onBack} onSkip={onSkip} />
 
       <View style={styles.content}>
-        <Text style={styles.headline}>What slows you down most?</Text>
+        <Text style={styles.headline}>{t('painHeadline')}</Text>
         <Text style={styles.subheadline}>
-          Select everything that frustrates you. We have been there too.
+          {t('painSubheadline')}
         </Text>
 
         <View style={styles.options}>
@@ -117,8 +122,8 @@ export function PainPointsScreen({
             ]}>
             <Text style={styles.primaryButtonText}>
               {selected.size === 0
-                ? 'Select at least one'
-                : `Continue (${selected.size} selected)`}
+                ? t('painCtaNone')
+                : `${t('continue')} (${selected.size})`}
             </Text>
           </Pressable>
         </Animated.View>

@@ -9,6 +9,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { palette, springConfig } from '../../theme/tokens';
 import { GlassPanel } from '../common/GlassPanel';
@@ -51,6 +52,7 @@ export function SocialProofScreen({
   onSkip,
   progress,
 }: SocialProofScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const card1Y = useSharedValue(30);
   const card1Opacity = useSharedValue(0);
@@ -88,9 +90,9 @@ export function SocialProofScreen({
       <OnboardingHeader progress={progress} onBack={onBack} onSkip={onSkip} />
 
       <View style={styles.content}>
-        <Text style={styles.headline}>Creators like you are already saving hours</Text>
+        <Text style={styles.headline}>{t('socialHeadline')}</Text>
         <Text style={styles.subheadline}>
-          Join thousands who ditched manual captioning for good.
+          {t('socialSubheadline')}
         </Text>
 
         <View style={styles.cards}>
@@ -132,7 +134,7 @@ export function SocialProofScreen({
             onNext();
           }}
           style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Continue</Text>
+          <Text style={styles.primaryButtonText}>{t('socialCta')}</Text>
         </Pressable>
       </View>
     </View>

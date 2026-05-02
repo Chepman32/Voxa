@@ -10,6 +10,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { palette } from '../../theme/tokens';
 import { OnboardingHeader } from './OnboardingHeader';
 
@@ -18,16 +19,20 @@ interface ProcessingMomentScreenProps {
   progress: number;
 }
 
-const PHASES = [
-  { label: 'Analyzing your preferences...', icon: 'sliders' as const },
-  { label: 'Preparing your workspace...', icon: 'layout' as const },
-  { label: 'Almost there...', icon: 'check-circle' as const },
-];
+function usePhases(t: (key: string) => string) {
+  return [
+    { label: t('procPhase1'), icon: 'sliders' as const },
+    { label: t('procPhase2'), icon: 'layout' as const },
+    { label: t('procPhase3'), icon: 'check-circle' as const },
+  ];
+}
 
 export function ProcessingMomentScreen({
   onComplete,
   progress,
 }: ProcessingMomentScreenProps) {
+  const { t } = useTranslation();
+  const PHASES = usePhases(t);
   const insets = useSafeAreaInsets();
   const rotation = useSharedValue(0);
   const pulse = useSharedValue(1);
@@ -84,7 +89,7 @@ export function ProcessingMomentScreen({
           </View>
         </View>
 
-        <Text style={styles.title}>Setting things up</Text>
+        <Text style={styles.title}>{t('procTitle')}</Text>
         <Text style={styles.subtitle}>
           {PHASES[0].label}
         </Text>

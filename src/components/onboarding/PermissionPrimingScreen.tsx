@@ -8,6 +8,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import {
   getSpeechAuthorizationStatus,
@@ -30,6 +31,7 @@ export function PermissionPrimingScreen({
   onSkip,
   progress,
 }: PermissionPrimingScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [requesting, setRequesting] = useState(false);
   const [photoStatus, setPhotoStatus] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export function PermissionPrimingScreen({
         haptics.light();
       }
     } catch (error) {
-      Alert.alert('Permission Error', 'Unable to request permissions. Please check Settings.');
+      Alert.alert(t('permHeadline'), t('permSubheadline'));
     } finally {
       setRequesting(false);
     }
@@ -73,9 +75,9 @@ export function PermissionPrimingScreen({
       <OnboardingHeader progress={progress} onBack={onBack} onSkip={onSkip} />
 
       <View style={styles.content}>
-        <Text style={styles.headline}>One last thing before we begin</Text>
+        <Text style={styles.headline}>{t('permHeadline')}</Text>
         <Text style={styles.subheadline}>
-          Voxa needs two permissions to work its magic. Everything stays offline.
+          {t('permSubheadline')}
         </Text>
 
         <View style={styles.cards}>
@@ -85,9 +87,9 @@ export function PermissionPrimingScreen({
                 <Feather color={palette.cyan} name="image" size={20} />
               </View>
               <View style={styles.cardMeta}>
-                <Text style={styles.cardTitle}>Photo Library</Text>
+                <Text style={styles.cardTitle}>{t('permPhotoTitle')}</Text>
                 <Text style={styles.cardBody}>
-                  To import your videos and save finished clips back to your camera roll.
+                  {t('permPhotoBody')}
                 </Text>
               </View>
             </View>
@@ -103,7 +105,7 @@ export function PermissionPrimingScreen({
                     styles.statusText,
                     photoStatus === 'authorized' && styles.statusTextGranted,
                   ]}>
-                  {photoStatus === 'authorized' ? 'Granted' : photoStatus}
+                  {photoStatus === 'authorized' ? t('permGranted') : photoStatus}
                 </Text>
               </View>
             )}
@@ -115,9 +117,9 @@ export function PermissionPrimingScreen({
                 <Feather color={palette.violet} name="mic" size={20} />
               </View>
               <View style={styles.cardMeta}>
-                <Text style={styles.cardTitle}>Speech Recognition</Text>
+                <Text style={styles.cardTitle}>{t('permSpeechTitle')}</Text>
                 <Text style={styles.cardBody}>
-                  To transcribe audio into subtitles directly on your device. No cloud involved.
+                  {t('permSpeechBody')}
                 </Text>
               </View>
             </View>
@@ -133,7 +135,7 @@ export function PermissionPrimingScreen({
                     styles.statusText,
                     speechStatus === 'authorized' && styles.statusTextGranted,
                   ]}>
-                  {speechStatus === 'authorized' ? 'Granted' : speechStatus}
+                  {speechStatus === 'authorized' ? t('permGranted') : speechStatus}
                 </Text>
               </View>
             )}
@@ -152,17 +154,17 @@ export function PermissionPrimingScreen({
             ]}>
             <Text style={styles.primaryButtonText}>
               {allGranted
-                ? 'All set'
+                ? t('permAllSet')
                 : requesting
-                ? 'Requesting...'
-                : 'Enable Access'}
+                ? t('permRequesting')
+                : t('permEnable')}
             </Text>
           </Pressable>
         </Animated.View>
 
         {!allGranted && (
           <Pressable onPress={handleNotNow} style={styles.ghostButton}>
-            <Text style={styles.ghostButtonText}>Not now</Text>
+            <Text style={styles.ghostButtonText}>{t('permNotNow')}</Text>
           </Pressable>
         )}
       </View>

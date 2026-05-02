@@ -9,6 +9,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { useAppStore } from '../../store/app-store';
 import { palette, springConfig } from '../../theme/tokens';
@@ -58,17 +59,19 @@ export function ValueDeliveryScreen({
     transform: [{ translateY: ctaY.value }],
   }));
 
+  const { t } = useTranslation();
+
   const goalLabels: Record<string, string> = {
-    viral: 'Go viral with better retention',
-    accessible: 'Make content accessible',
-    brand: 'Build a consistent brand look',
-    fast: 'Post faster without outsourcing',
-    multilingual: 'Reach non-English audiences',
-    professional: 'Look more professional',
+    viral: t('goalViral'),
+    accessible: t('goalAccessible'),
+    brand: t('goalBrand'),
+    fast: t('goalFast'),
+    multilingual: t('goalMultilingual'),
+    professional: t('goalProfessional'),
   };
 
   const goal = onboardingAnswers.goal;
-  const goalLabel = goal ? goalLabels[goal] ?? 'Create amazing subtitles' : 'Create amazing subtitles';
+  const goalLabel = goal ? goalLabels[goal] ?? t('valueGoalFallback') : t('valueGoalFallback');
 
   return (
     <View style={styles.root}>
@@ -91,15 +94,15 @@ export function ValueDeliveryScreen({
         </Animated.View>
 
         <Animated.View style={[styles.itemsWrap, itemsStyle]}>
-          <Text style={styles.itemsTitle}>What is ready for you:</Text>
+          <Text style={styles.itemsTitle}>{t('valueItemsTitle')}</Text>
 
           <View style={styles.item}>
             <View style={styles.itemIcon}>
               <Feather color={palette.cyan} name="zap" size={16} />
             </View>
             <View>
-              <Text style={styles.itemLabel}>One-tap subtitle generation</Text>
-              <Text style={styles.itemDesc}>Import a video and get captions in seconds</Text>
+              <Text style={styles.itemLabel}>{t('valueItem1Label')}</Text>
+              <Text style={styles.itemDesc}>{t('valueItem1Desc')}</Text>
             </View>
           </View>
 
@@ -108,8 +111,8 @@ export function ValueDeliveryScreen({
               <Feather color={palette.cyan} name="sliders" size={16} />
             </View>
             <View>
-              <Text style={styles.itemLabel}>Your signature style saved</Text>
-              <Text style={styles.itemDesc}>Default font, color, and effect pre-selected</Text>
+              <Text style={styles.itemLabel}>{t('valueItem2Label')}</Text>
+              <Text style={styles.itemDesc}>{t('valueItem2Desc')}</Text>
             </View>
           </View>
 
@@ -118,8 +121,8 @@ export function ValueDeliveryScreen({
               <Feather color={palette.cyan} name="shield" size={16} />
             </View>
             <View>
-              <Text style={styles.itemLabel}>Private by default</Text>
-              <Text style={styles.itemDesc}>Everything processed on your device</Text>
+              <Text style={styles.itemLabel}>{t('valueItem3Label')}</Text>
+              <Text style={styles.itemDesc}>{t('valueItem3Desc')}</Text>
             </View>
           </View>
         </Animated.View>
@@ -137,7 +140,7 @@ export function ValueDeliveryScreen({
             onComplete();
           }}
           style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Start Creating</Text>
+          <Text style={styles.primaryButtonText}>{t('valueCta')}</Text>
         </Pressable>
       </Animated.View>
     </View>

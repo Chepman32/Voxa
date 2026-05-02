@@ -21,12 +21,14 @@ import {
   repairProjectMedia,
 } from './services/project-processor';
 import {
+  getDeviceLocale,
   getSpeechAuthorizationStatus,
   requestAuthorizations,
   requestSpeechAuthorization,
 } from './services/native-voxa';
 import { pickVideoAsset } from './services/media-picker';
 import { haptics } from './services/haptics';
+import { resolveLocale } from './i18n/translations';
 import { useAppStore } from './store/app-store';
 import { SpeechAccessSheet } from './components/permissions/SpeechAccessSheet';
 import { emptyStateImage, onboardingCards, palette } from './theme/tokens';
@@ -47,6 +49,8 @@ export function AppRoot() {
   const activeProjectId = useAppStore(state => state.activeProjectId);
   const settingsOpen = useAppStore(state => state.settingsOpen);
   const hasCompletedOnboarding = useAppStore(state => state.hasCompletedOnboarding);
+  const uiLocale = useAppStore(state => state.uiLocale);
+  const setUiLocale = useAppStore(state => state.setUiLocale);
 
   const completeOnboarding = useAppStore(state => state.completeOnboarding);
   const resetOnboarding = useAppStore(state => state.resetOnboarding);
@@ -65,6 +69,21 @@ export function AppRoot() {
   const replaceProject = useAppStore(state => state.replaceProject);
 
   const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    if (uiLocale !== null) {
+      return;
+    }
+
+    getDeviceLocale()
+      .then(raw => {
+        const resolved = resolveLocale(raw);
+        setUiLocale(resolved);
+      })
+      .catch(() => {
+        setUiLocale('en');
+      });
+  }, [uiLocale, setUiLocale]);
   const repairedProjectIdsRef = useRef(new Set<string>());
   const [permissionSummary, setPermissionSummary] =
     useState<PermissionSummary | null>(null);

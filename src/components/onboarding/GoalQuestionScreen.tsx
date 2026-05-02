@@ -13,6 +13,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { palette, springConfig } from '../../theme/tokens';
 import { GlassPanel } from '../common/GlassPanel';
@@ -26,14 +27,16 @@ interface GoalQuestionScreenProps {
   onSelectGoal: (goal: string) => void;
 }
 
-const GOALS = [
-  { id: 'viral', label: 'Go viral with better retention', icon: 'trending-up' },
-  { id: 'accessible', label: 'Make content accessible', icon: 'users' },
-  { id: 'brand', label: 'Build a consistent brand look', icon: 'aperture' },
-  { id: 'fast', label: 'Post faster without outsourcing', icon: 'zap' },
-  { id: 'multilingual', label: 'Reach non-English audiences', icon: 'globe' },
-  { id: 'professional', label: 'Look more professional', icon: 'award' },
-];
+function useGoals(t: (key: string) => string) {
+  return [
+    { id: 'viral', label: t('goalViral'), icon: 'trending-up' },
+    { id: 'accessible', label: t('goalAccessible'), icon: 'users' },
+    { id: 'brand', label: t('goalBrand'), icon: 'aperture' },
+    { id: 'fast', label: t('goalFast'), icon: 'zap' },
+    { id: 'multilingual', label: t('goalMultilingual'), icon: 'globe' },
+    { id: 'professional', label: t('goalProfessional'), icon: 'award' },
+  ];
+}
 
 export function GoalQuestionScreen({
   onNext,
@@ -42,6 +45,8 @@ export function GoalQuestionScreen({
   progress,
   onSelectGoal,
 }: GoalQuestionScreenProps) {
+  const { t } = useTranslation();
+  const GOALS = useGoals(t);
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<string | null>(null);
   const buttonScale = useSharedValue(1);
@@ -62,9 +67,9 @@ export function GoalQuestionScreen({
       <OnboardingHeader progress={progress} onBack={onBack} onSkip={onSkip} />
 
       <View style={styles.content}>
-        <Text style={styles.headline}>What are you trying to achieve?</Text>
+        <Text style={styles.headline}>{t('goalHeadline')}</Text>
         <Text style={styles.subheadline}>
-          Pick the one that matters most right now. We will tailor your experience around it.
+          {t('goalSubheadline')}
         </Text>
 
         <View style={styles.options}>
@@ -115,7 +120,7 @@ export function GoalQuestionScreen({
               styles.primaryButton,
               !selected && styles.primaryButtonDisabled,
             ]}>
-            <Text style={styles.primaryButtonText}>Continue</Text>
+            <Text style={styles.primaryButtonText}>{t('goalCta')}</Text>
           </Pressable>
         </Animated.View>
       </View>

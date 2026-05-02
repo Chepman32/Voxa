@@ -96,6 +96,9 @@ export interface OnboardingPreferences {
   effect: string | null;
 }
 
+export type SupportedLocale =
+  | 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'ru' | 'ja' | 'ko' | 'zh' | 'ar';
+
 export interface OnboardingAnswers {
   goal: string | null;
   painPoints: string[];

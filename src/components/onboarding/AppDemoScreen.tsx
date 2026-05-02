@@ -18,6 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { useAppStore } from '../../store/app-store';
 import {
@@ -37,16 +38,17 @@ interface AppDemoScreenProps {
   progress: number;
 }
 
-const SAMPLE_TEXT = "This is how your captions will look";
-
 const FONTS = subtitleFontOptions.slice(0, 4);
 const COLORS = subtitleHighlightColorOptions;
-const EFFECTS: Array<{ id: SubtitleEffect; label: string }> = [
-  { id: 'none', label: 'Clean' },
-  { id: 'neon', label: 'Neon' },
-  { id: 'glow', label: 'Glow' },
-  { id: 'shadow', label: 'Cinema' },
-];
+
+function useEffects(t: (key: string) => string): Array<{ id: SubtitleEffect; label: string }> {
+  return [
+    { id: 'none', label: t('effectClean') },
+    { id: 'neon', label: t('effectNeon') },
+    { id: 'glow', label: t('effectGlow') },
+    { id: 'shadow', label: t('effectCinema') },
+  ];
+}
 
 function getEffectStyle(effect: SubtitleEffect | undefined, accentColor: string): any {
   switch (effect) {
@@ -85,6 +87,9 @@ export function AppDemoScreen({
   onSkip,
   progress,
 }: AppDemoScreenProps) {
+  const { t } = useTranslation();
+  const SAMPLE_TEXT = t('demoPreviewText');
+  const EFFECTS = useEffects(t);
   const insets = useSafeAreaInsets();
   const onboardingAnswers = useAppStore(state => state.onboardingAnswers);
 
@@ -145,9 +150,9 @@ export function AppDemoScreen({
       <OnboardingHeader progress={progress} onBack={onBack} onSkip={onSkip} />
 
       <View style={styles.content}>
-        <Text style={styles.headline}>Try it now</Text>
+        <Text style={styles.headline}>{t('demoHeadline')}</Text>
         <Text style={styles.subheadline}>
-          Pick a font, color, and effect. See your style come alive in real time.
+          {t('demoSubheadline')}
         </Text>
 
         <Animated.View style={[styles.previewWrap, previewStyle]}>
@@ -181,7 +186,7 @@ export function AppDemoScreen({
         </Animated.View>
 
         <View style={styles.controls}>
-          <Text style={styles.sectionLabel}>Font</Text>
+          <Text style={styles.sectionLabel}>{t('demoSectionFont')}</Text>
           <View style={styles.fontRow}>
             {FONTS.map(f => {
               const isSelected = selectedFont === f.id;
@@ -206,7 +211,7 @@ export function AppDemoScreen({
             })}
           </View>
 
-          <Text style={styles.sectionLabel}>Accent</Text>
+          <Text style={styles.sectionLabel}>{t('demoSectionAccent')}</Text>
           <View style={styles.colorRow}>
             {COLORS.map(c => {
               const isSelected = selectedColor === c.id;
@@ -227,7 +232,7 @@ export function AppDemoScreen({
             })}
           </View>
 
-          <Text style={styles.sectionLabel}>Effect</Text>
+          <Text style={styles.sectionLabel}>{t('demoSectionEffect')}</Text>
           <View style={styles.effectRow}>
             {EFFECTS.map(e => {
               const isSelected = selectedEffect === e.id;
@@ -260,7 +265,7 @@ export function AppDemoScreen({
             onNext();
           }}
           style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>I love this look</Text>
+          <Text style={styles.primaryButtonText}>{t('demoCta')}</Text>
         </Pressable>
       </View>
     </View>
