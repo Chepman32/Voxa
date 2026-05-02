@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
@@ -22,6 +23,7 @@ import type {
   TranscriptionLanguageMode,
 } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
+import { useIosScreenTransition } from '../common/useIosScreenTransition';
 
 interface SettingsScreenProps {
   preferredExportResolution: ExportResolution;
@@ -56,15 +58,18 @@ export function SettingsScreen({
 }: SettingsScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { closeWithTransition, screenTransitionStyle } =
+    useIosScreenTransition(onClose);
 
   return (
-    <View style={styles.root}>
+    <Animated.View
+      style={[styles.root, styles.screenTransitionShadow, screenTransitionStyle]}>
       <AtmosphereCanvas intensity={1.04} />
 
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Pressable
           accessibilityLabel={t('back')}
-          onPress={onClose}
+          onPress={() => closeWithTransition()}
           style={styles.backButton}>
           <Feather color={palette.textPrimary} name="chevron-left" size={20} />
         </Pressable>
@@ -191,12 +196,14 @@ export function SettingsScreen({
           <Text style={styles.bodyText}>{t('settingsPrivacyBody')}</Text>
         </View>
 
-        <Pressable onPress={onResetOnboarding} style={styles.resetRow}>
+        <Pressable
+          onPress={() => closeWithTransition(onResetOnboarding)}
+          style={styles.resetRow}>
           <Feather color={palette.cyan} name="refresh-ccw" size={16} />
           <Text style={styles.resetText}>{t('settingsReplayOnboarding')}</Text>
         </Pressable>
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -233,8 +240,16 @@ function SettingsOption({
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: palette.canvas,
+    zIndex: 4,
+  },
+  screenTransitionShadow: {
+    elevation: 18,
+    shadowColor: palette.black,
+    shadowOffset: { width: -8, height: 0 },
+    shadowOpacity: 0.34,
+    shadowRadius: 22,
   },
   header: {
     paddingHorizontal: 18,

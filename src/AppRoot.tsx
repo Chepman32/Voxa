@@ -431,49 +431,55 @@ export function AppRoot() {
     <View style={styles.root}>
       {!hasCompletedOnboarding ? (
         <OnboardingFlow />
-      ) : route === 'editor' && activeProject ? (
-        <EditorScreen
-          onClose={() => {}}
-          project={activeProject}
-        />
-      ) : route === 'settings' ? (
-        <SettingsScreen
-          onClose={closeSettings}
-          onHighlightEditedWordsChange={setHighlightEditedWords}
-          onRememberLastTranscriptionLanguageChange={
-            setRememberLastTranscriptionLanguage
-          }
-          onResetOnboarding={() => {
-            closeSettings();
-            resetOnboarding();
-          }}
-          onResolutionChange={setPreferredExportResolution}
-          onTranscriptionLanguageModeChange={setTranscriptionLanguageMode}
-          onUiLocaleChange={setUiLocale}
-          highlightEditedWords={settings.highlightEditedWords}
-          lastTranscriptionLanguageLabel={lastTranscriptionLanguageLabel}
-          preferredExportResolution={settings.preferredExportResolution}
-          rememberLastTranscriptionLanguage={
-            settings.rememberLastTranscriptionLanguage
-          }
-          transcriptionLanguageMode={settings.transcriptionLanguageMode}
-          uiLocale={uiLocale}
-        />
       ) : (
-        <HomeScreen
-          onCreateProject={() => {
-            handleCreateProject().catch(showSpeechAccessError);
-          }}
-          onDeleteProject={deleteProject}
-          onOpenProject={projectId => {
-            startTransition(() => {
-              openProject(projectId);
-            });
-          }}
-          onOpenSettings={openSettings}
-          processingVisible={processing.visible}
-          projects={projects}
-        />
+        <>
+          <HomeScreen
+            onCreateProject={() => {
+              handleCreateProject().catch(showSpeechAccessError);
+            }}
+            onDeleteProject={deleteProject}
+            onOpenProject={projectId => {
+              startTransition(() => {
+                openProject(projectId);
+              });
+            }}
+            onOpenSettings={openSettings}
+            processingVisible={processing.visible}
+            projects={projects}
+          />
+
+          {route === 'editor' && activeProject ? (
+            <EditorScreen
+              onClose={() => {}}
+              project={activeProject}
+            />
+          ) : null}
+
+          {route === 'settings' ? (
+            <SettingsScreen
+              onClose={closeSettings}
+              onHighlightEditedWordsChange={setHighlightEditedWords}
+              onRememberLastTranscriptionLanguageChange={
+                setRememberLastTranscriptionLanguage
+              }
+              onResetOnboarding={() => {
+                closeSettings();
+                resetOnboarding();
+              }}
+              onResolutionChange={setPreferredExportResolution}
+              onTranscriptionLanguageModeChange={setTranscriptionLanguageMode}
+              onUiLocaleChange={setUiLocale}
+              highlightEditedWords={settings.highlightEditedWords}
+              lastTranscriptionLanguageLabel={lastTranscriptionLanguageLabel}
+              preferredExportResolution={settings.preferredExportResolution}
+              rememberLastTranscriptionLanguage={
+                settings.rememberLastTranscriptionLanguage
+              }
+              transcriptionLanguageMode={settings.transcriptionLanguageMode}
+              uiLocale={uiLocale}
+            />
+          ) : null}
+        </>
       )}
 
       <TranscriptionLanguageSheet

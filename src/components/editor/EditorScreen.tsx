@@ -98,6 +98,7 @@ import type {
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { GlassPanel } from '../common/GlassPanel';
 import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
+import { useIosScreenTransition } from '../common/useIosScreenTransition';
 import { ExportSheet } from './ExportSheet';
 import { calculateEditorVerticalLayout } from './layout';
 import {
@@ -219,7 +220,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [stylePresetValue, setStylePreset] = useAtom(globalStyleAtom);
   const [timelineZoom, setTimelineZoom] = useAtom(timelineZoomAtom);
   const [isTextEditing, setIsTextEditing] = useAtom(isTextEditingAtom);
-  const [isStylePanelOpen, setIsStylePanelOpen] = useAtom(isStylePanelOpenAtom);
+  const [, setIsStylePanelOpen] = useAtom(isStylePanelOpenAtom);
   const [isExportSheetOpen, setIsExportSheetOpen] = useAtom(isExportSheetOpenAtom);
   const activeSubtitle = useAtomValue(activeSubtitleAtom);
   const selectedSubtitle = useAtomValue(selectedSubtitleAtom);
@@ -304,6 +305,12 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const setLastTranscriptionLocale = useAppStore(
     state => state.setLastTranscriptionLocale,
   );
+  const finishEditorClose = useCallback(() => {
+    closeProject();
+    onClose();
+  }, [closeProject, onClose]);
+  const { closeWithTransition, screenTransitionStyle } =
+    useIosScreenTransition(finishEditorClose);
 
   const persistProject = useEffectEvent((nextProject: Project | null) => {
     if (!nextProject) {
@@ -727,11 +734,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     seekTo(playbackPosition + deltaMs);
   };
 
-  const closeEditor = () => {
+  const closeEditor = useCallback(() => {
     setIsPlaying(false);
-    closeProject();
-    onClose();
-  };
+    closeWithTransition();
+  }, [closeWithTransition, setIsPlaying]);
 
   const openExportSheet = () => {
     setIsExportSheetOpen(true);
@@ -942,17 +948,18 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
   return (
     <Animated.View
-      entering={FadeIn.springify().damping(18)}
-      exiting={FadeOut.duration(180)}
-      style={styles.root}>
+      style={[styles.root, styles.screenTransitionShadow, screenTransitionStyle]}>
       <AtmosphereCanvas intensity={1.1} />
       <Animated.View
         pointerEvents={isKeyboardEditing ? 'none' : 'auto'}
         style={[styles.topBarShell, topBarAnimatedStyle]}
         testID={EDITOR_TOP_BAR_ID}>
         <View style={styles.topBar}>
-          <Pressable onPress={closeEditor} style={styles.topBarButton}>
-            <Feather color={palette.textPrimary} name="chevron-down" size={18} />
+          <Pressable
+            accessibilityLabel={t('back')}
+            onPress={closeEditor}
+            style={styles.topBarButton}>
+            <Feather color={palette.textPrimary} name="chevron-left" size={20} />
           </Pressable>
           <View style={styles.topBarMeta}>
             <Text style={styles.topBarSubtitle}>
@@ -1195,7 +1202,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 availableLocales={availableSpeechLocales}
                 currentLocale={project.recognitionLocale}
                 loading={loadingSpeechLocales}
-                retrying={retryingSubtitles}
                 selectedLocale={selectedRetryLocale}
                 onSelectLocale={locale => {
                   setSelectedRetryLocale(locale);
@@ -1478,14 +1484,12 @@ function LanguagePanel({
   availableLocales,
   currentLocale,
   loading,
-  retrying,
   selectedLocale,
   onSelectLocale,
 }: {
   availableLocales: SpeechLocaleOption[];
   currentLocale?: string;
   loading: boolean;
-  retrying: boolean;
   selectedLocale: string;
   onSelectLocale: (locale: string) => void;
 }) {
@@ -2124,8 +2128,16 @@ function StyleRow({
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: palette.canvas,
+    zIndex: 4,
+  },
+  screenTransitionShadow: {
+    elevation: 18,
+    shadowColor: palette.black,
+    shadowOffset: { width: -8, height: 0 },
+    shadowOpacity: 0.34,
+    shadowRadius: 22,
   },
   topBarShell: {
     overflow: 'hidden',
