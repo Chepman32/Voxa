@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,7 +10,6 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import {
   palette,
-  springConfig,
   subtitleFontOptions,
   subtitleHighlightColorOptions,
 } from '../../theme/tokens';
@@ -158,6 +156,9 @@ export function PreferenceConfigScreen({
                   isSelected && styles.gridItemSelected,
                 ]}>
                 <Text
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                  numberOfLines={1}
                   style={[
                     styles.gridItemText,
                     { fontFamily: font.fontFamily, fontWeight: font.fontWeight as any },
@@ -210,6 +211,9 @@ export function PreferenceConfigScreen({
                   isSelected && styles.gridItemSelected,
                 ]}>
                 <Text
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                  numberOfLines={1}
                   style={[
                     styles.gridItemText,
                     isSelected && styles.gridItemTextSelected,
@@ -279,14 +283,14 @@ const styles = StyleSheet.create({
   },
   grid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
   },
   gridItem: {
     flex: 1,
-    minWidth: '30%',
-    paddingVertical: 14,
+    minHeight: 64,
+    paddingHorizontal: 6,
+    paddingVertical: 12,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -302,6 +306,7 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
   },
   gridItemTextSelected: {
     color: palette.cyan,

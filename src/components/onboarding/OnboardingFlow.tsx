@@ -15,10 +15,9 @@ import { SocialProofScreen } from './SocialProofScreen';
 import { PreferenceConfigScreen } from './PreferenceConfigScreen';
 import { PermissionPrimingScreen } from './PermissionPrimingScreen';
 import { ProcessingMomentScreen } from './ProcessingMomentScreen';
-import { AppDemoScreen } from './AppDemoScreen';
 import { ValueDeliveryScreen } from './ValueDeliveryScreen';
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 8;
 
 export function OnboardingFlow() {
   const step = useAppStore(state => state.onboardingStep);
@@ -118,15 +117,6 @@ export function OnboardingFlow() {
           />
         );
       case 7:
-        return (
-          <AppDemoScreen
-            onNext={goNext}
-            onBack={goBack}
-            onSkip={skipToEnd}
-            progress={8 / TOTAL_STEPS}
-          />
-        );
-      case 8:
         return (
           <ValueDeliveryScreen
             onComplete={completeOnboarding}
