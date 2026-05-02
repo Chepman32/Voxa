@@ -40,6 +40,7 @@ export function ProjectCard({
   const { t } = useTranslation();
   const translateX = useSharedValue(0);
   const subtitleCount = countRenderableSubtitles(project.subtitles);
+  const displayTitle = project.title === 'Untitled Cut' ? t('untitledCut') : project.title;
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-12, 12])
@@ -108,7 +109,7 @@ export function ProjectCard({
 
             <View style={styles.meta}>
               <Text numberOfLines={2} style={styles.title}>
-                {project.title}
+                {displayTitle}
               </Text>
               <Text style={styles.subtitleMeta}>
                 {subtitleCount} {subtitleCount === 1 ? t('projectSubtitleBlock') : t('projectSubtitleBlocks')}

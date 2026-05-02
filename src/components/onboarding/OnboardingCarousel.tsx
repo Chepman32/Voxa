@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { haptics } from '../../services/haptics';
+import { useTranslation } from '../../i18n/useTranslation';
 import { onboardingCards, palette, springConfig } from '../../theme/tokens';
 import type { PermissionSummary } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
@@ -40,6 +41,7 @@ export function OnboardingCarousel({
   onGrantAccess,
   onSkip,
 }: OnboardingCarouselProps) {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -124,19 +126,19 @@ export function OnboardingCarousel({
                       <View style={styles.permissionLoading}>
                         <ActivityIndicator color={palette.cyan} />
                         <Text style={styles.permissionBody}>
-                          Requesting iOS permissions...
+                          {t('carouselRequestingPermissions')}
                         </Text>
                       </View>
                     ) : (
                       <Text style={styles.permissionBody}>
-                        Pull this card upward to request Photos and Speech permissions.
+                        {t('carouselPermissionPull')}
                       </Text>
                     )}
 
                     {permissionSummary ? (
                       <View style={styles.permissionSummary}>
-                        <PermissionRow label="Library" value={permissionSummary.photoLibrary} />
-                        <PermissionRow label="Speech" value={permissionSummary.speech} />
+                        <PermissionRow label={t('carouselLibrary')} value={permissionSummary.photoLibrary} />
+                        <PermissionRow label={t('carouselSpeech')} value={permissionSummary.speech} />
                       </View>
                     ) : null}
                   </Animated.View>
@@ -147,7 +149,7 @@ export function OnboardingCarousel({
                   style={styles.primaryButton}
                   testID="onboarding-get-started-button">
                   <Text style={styles.primaryButtonText}>
-                    {item.ctaLabel ?? 'Get Started'}
+                    {item.ctaLabel ?? t('welcomeCta')}
                   </Text>
                 </Pressable>
               ) : (

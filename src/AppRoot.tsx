@@ -120,10 +120,13 @@ export function AppRoot() {
   );
 
   const showSpeechAccessError = useCallback((error: unknown) => {
+    const rawMessage = error instanceof Error && error.message ? error.message : null;
     const message =
-      error instanceof Error && error.message
-        ? error.message
-        : t('speechAccessFailedBody');
+      rawMessage === 'Unable to open the photo library.'
+        ? t('photoLibraryOpenFailed')
+        : rawMessage === 'The selected video could not be read.'
+        ? t('selectedVideoUnreadable')
+        : rawMessage ?? t('speechAccessFailedBody');
 
     Alert.alert(t('speechAccessFailedTitle'), message);
   }, [t]);
