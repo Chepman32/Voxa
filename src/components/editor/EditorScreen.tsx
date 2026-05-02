@@ -295,7 +295,13 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const upsertProject = useAppStore(state => state.upsertProject);
   const resolution = useAppStore(state => state.settings.preferredExportResolution);
   const highlightEditedWords = useAppStore(state => state.settings.highlightEditedWords);
+  const rememberLastTranscriptionLanguage = useAppStore(
+    state => state.settings.rememberLastTranscriptionLanguage,
+  );
   const setResolution = useAppStore(state => state.setPreferredExportResolution);
+  const setLastTranscriptionLocale = useAppStore(
+    state => state.setLastTranscriptionLocale,
+  );
 
   const persistProject = useEffectEvent((nextProject: Project | null) => {
     if (!nextProject) {
@@ -462,6 +468,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     beginProcessing(project.videoLocalURI);
 
     try {
+      if (localeOverride && rememberLastTranscriptionLanguage) {
+        setLastTranscriptionLocale(localeOverride);
+      }
+
       const updatedProject = await retryProjectSubtitles(
         project,
         localeOverride,
@@ -492,7 +502,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     beginProcessing,
     finishProcessing,
     project,
+    rememberLastTranscriptionLanguage,
     selectedRetryLocale,
+    setLastTranscriptionLocale,
     setProcessingPhase,
     setProject,
     showRetryError,

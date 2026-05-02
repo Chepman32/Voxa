@@ -21,6 +21,7 @@ import {
   repairProjectMedia,
 } from './services/project-processor';
 import {
+  getAvailableSpeechLocales,
   getDeviceLocale,
   getSpeechAuthorizationStatus,
   requestSpeechAuthorization,
@@ -28,16 +29,23 @@ import {
 import { pickVideoAsset } from './services/media-picker';
 import { haptics } from './services/haptics';
 import { resolveLocale } from './i18n/translations';
+import {
+  APP_LANGUAGE_LOCALE_VALUE,
+  findSpeechLocaleOption,
+  resolveAppSpeechLocale,
+  resolveRememberedSpeechLocale,
+} from './lib/speech-locale';
 import { useAppStore } from './store/app-store';
 import { SpeechAccessSheet } from './components/permissions/SpeechAccessSheet';
 import { emptyStateImage, onboardingCards, palette } from './theme/tokens';
 import { EditorScreen } from './components/editor/EditorScreen';
 import { HomeScreen } from './components/home/HomeScreen';
 import { SettingsSheet } from './components/home/SettingsSheet';
+import { TranscriptionLanguageSheet } from './components/home/TranscriptionLanguageSheet';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
 import { ProcessingOverlay } from './components/processing/ProcessingOverlay';
 import { SplashSequence } from './components/splash/SplashSequence';
-import type { PermissionSummary } from './types/models';
+import type { PermissionSummary, SpeechLocaleOption } from './types/models';
 
 export function AppRoot() {
   const hydrated = useAppStore(state => state.hydrated);
@@ -64,6 +72,15 @@ export function AppRoot() {
     state => state.setPreferredExportResolution,
   );
   const setHighlightEditedWords = useAppStore(state => state.setHighlightEditedWords);
+  const setTranscriptionLanguageMode = useAppStore(
+    state => state.setTranscriptionLanguageMode,
+  );
+  const setRememberLastTranscriptionLanguage = useAppStore(
+    state => state.setRememberLastTranscriptionLanguage,
+  );
+  const setLastTranscriptionLocale = useAppStore(
+    state => state.setLastTranscriptionLocale,
+  );
   const replaceProject = useAppStore(state => state.replaceProject);
 
   const [showSplash, setShowSplash] = useState(true);
@@ -91,6 +108,15 @@ export function AppRoot() {
   const [speechAccessStatus, setSpeechAccessStatus] =
     useState<PermissionSummary['speech'] | null>(null);
   const [speechAccessPending, setSpeechAccessPending] = useState(false);
+  const [pendingTranscriptionAsset, setPendingTranscriptionAsset] =
+    useState<Asset | null>(null);
+  const [availableSpeechLocales, setAvailableSpeechLocales] = useState<
+    SpeechLocaleOption[]
+  >([]);
+  const [speechLocalesLoading, setSpeechLocalesLoading] = useState(false);
+  const [selectedTranscriptionLocale, setSelectedTranscriptionLocale] = useState(
+    APP_LANGUAGE_LOCALE_VALUE,
+  );
 
   const showSpeechAccessError = useCallback((error: unknown) => {
     const message =
@@ -100,6 +126,33 @@ export function AppRoot() {
 
     Alert.alert('Speech Access Failed', message);
   }, []);
+
+  const showLanguageListError = useCallback((error: unknown) => {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : 'Unable to load on-device transcription languages right now.';
+
+    Alert.alert('Language List Failed', message);
+  }, []);
+
+  const loadSpeechLocales = useCallback(async () => {
+    if (availableSpeechLocales.length > 0) {
+      return availableSpeechLocales;
+    }
+
+    setSpeechLocalesLoading(true);
+    try {
+      const locales = await getAvailableSpeechLocales();
+      setAvailableSpeechLocales(locales);
+      return locales;
+    } catch (error) {
+      showLanguageListError(error);
+      return [];
+    } finally {
+      setSpeechLocalesLoading(false);
+    }
+  }, [availableSpeechLocales, showLanguageListError]);
 
   useEffect(() => {
     const remoteImages = [
@@ -135,17 +188,65 @@ export function AppRoot() {
   const activeProject =
     projects.find(project => project.id === activeProjectId) ?? null;
 
+  const appSpeechLocale = uiLocale
+    ? resolveAppSpeechLocale(uiLocale, availableSpeechLocales)
+    : null;
+  const appSpeechLocaleLabel = appSpeechLocale
+    ? findSpeechLocaleOption(appSpeechLocale, availableSpeechLocales)?.label
+    : null;
+  const lastTranscriptionLanguageLabel =
+    findSpeechLocaleOption(
+      settings.lastTranscriptionLocale,
+      availableSpeechLocales,
+    )?.label ??
+    settings.lastTranscriptionLocale ??
+    undefined;
+  const transcriptionAppLanguageLabel = appSpeechLocaleLabel
+    ? `App language (${appSpeechLocaleLabel})`
+    : `App language (${uiLocale ? uiLocale.toUpperCase() : 'app'})`;
+
   const closeSpeechAccessSheet = useCallback(() => {
     setPendingSpeechAsset(null);
     setSpeechAccessStatus(null);
     setSpeechAccessPending(false);
   }, []);
 
-  const processAsset = useCallback(async (asset: Asset) => {
+  const resolveDefaultTranscriptionLocale = useCallback((
+    locales: SpeechLocaleOption[],
+  ) => {
+    if (settings.rememberLastTranscriptionLanguage) {
+      const rememberedLocale = resolveRememberedSpeechLocale(
+        settings.lastTranscriptionLocale,
+        locales,
+      );
+      if (rememberedLocale) {
+        return rememberedLocale;
+      }
+    }
+
+    return uiLocale ? resolveAppSpeechLocale(uiLocale, locales) : null;
+  }, [
+    settings.lastTranscriptionLocale,
+    settings.rememberLastTranscriptionLanguage,
+    uiLocale,
+  ]);
+
+  const processAsset = useCallback(async (
+    asset: Asset,
+    localeOverride: string | null = null,
+  ) => {
     beginProcessing(asset.uri);
 
     try {
-      const project = await buildProjectFromAsset(asset, null, setProcessingPhase);
+      if (localeOverride && settings.rememberLastTranscriptionLanguage) {
+        setLastTranscriptionLocale(localeOverride);
+      }
+
+      const project = await buildProjectFromAsset(
+        asset,
+        localeOverride,
+        setProcessingPhase,
+      );
       addProject(project);
       haptics.success();
       startTransition(() => {
@@ -165,7 +266,73 @@ export function AppRoot() {
     beginProcessing,
     finishProcessing,
     openProject,
+    setLastTranscriptionLocale,
     setProcessingPhase,
+    settings.rememberLastTranscriptionLanguage,
+  ]);
+
+  const openTranscriptionLanguageSheet = useCallback(async (asset: Asset) => {
+    const locales = await loadSpeechLocales();
+    const rememberedLocale = settings.rememberLastTranscriptionLanguage
+      ? resolveRememberedSpeechLocale(settings.lastTranscriptionLocale, locales)
+      : null;
+
+    setSelectedTranscriptionLocale(
+      rememberedLocale ?? APP_LANGUAGE_LOCALE_VALUE,
+    );
+    setPendingTranscriptionAsset(asset);
+  }, [
+    loadSpeechLocales,
+    settings.lastTranscriptionLocale,
+    settings.rememberLastTranscriptionLanguage,
+  ]);
+
+  const prepareProjectImport = useCallback(async (asset: Asset) => {
+    if (settings.transcriptionLanguageMode === 'ask') {
+      await openTranscriptionLanguageSheet(asset);
+      return;
+    }
+
+    const locales = await loadSpeechLocales();
+    const localeOverride = resolveDefaultTranscriptionLocale(locales);
+    await processAsset(asset, localeOverride);
+  }, [
+    loadSpeechLocales,
+    openTranscriptionLanguageSheet,
+    processAsset,
+    resolveDefaultTranscriptionLocale,
+    settings.transcriptionLanguageMode,
+  ]);
+
+  const closeTranscriptionLanguageSheet = useCallback(() => {
+    setPendingTranscriptionAsset(null);
+  }, []);
+
+  const confirmTranscriptionLanguage = useCallback(async () => {
+    if (!pendingTranscriptionAsset) {
+      return;
+    }
+
+    const asset = pendingTranscriptionAsset;
+    const locales = availableSpeechLocales.length > 0
+      ? availableSpeechLocales
+      : await loadSpeechLocales();
+    const localeOverride =
+      selectedTranscriptionLocale === APP_LANGUAGE_LOCALE_VALUE
+        ? uiLocale
+          ? resolveAppSpeechLocale(uiLocale, locales)
+          : null
+        : selectedTranscriptionLocale;
+
+    setPendingTranscriptionAsset(null);
+    await processAsset(asset, localeOverride);
+  }, [
+    availableSpeechLocales,
+    loadSpeechLocales,
+    pendingTranscriptionAsset,
+    processAsset,
+    selectedTranscriptionLocale,
+    uiLocale,
   ]);
 
   const continueWithManualSubtitles = useCallback(async () => {
@@ -207,8 +374,8 @@ export function AppRoot() {
 
     const asset = pendingSpeechAsset;
     closeSpeechAccessSheet();
-    await processAsset(asset);
-  }, [closeSpeechAccessSheet, pendingSpeechAsset, processAsset]);
+    await prepareProjectImport(asset);
+  }, [closeSpeechAccessSheet, pendingSpeechAsset, prepareProjectImport]);
 
   useEffect(() => {
     if (!pendingSpeechAsset) {
@@ -241,7 +408,7 @@ export function AppRoot() {
       return;
     }
 
-    await processAsset(asset);
+    await prepareProjectImport(asset);
   };
 
   const handleGrantSpeechAccess = useCallback(async () => {
@@ -260,11 +427,11 @@ export function AppRoot() {
 
       const asset = pendingSpeechAsset;
       closeSpeechAccessSheet();
-      await processAsset(asset);
+      await prepareProjectImport(asset);
     } finally {
       setSpeechAccessPending(false);
     }
-  }, [closeSpeechAccessSheet, pendingSpeechAsset, processAsset]);
+  }, [closeSpeechAccessSheet, pendingSpeechAsset, prepareProjectImport]);
 
   const handleOpenSpeechSettings = useCallback(async () => {
     await Linking.openSettings();
@@ -303,14 +470,36 @@ export function AppRoot() {
       <SettingsSheet
         onClose={closeSettings}
         onHighlightEditedWordsChange={setHighlightEditedWords}
+        onRememberLastTranscriptionLanguageChange={
+          setRememberLastTranscriptionLanguage
+        }
         onResetOnboarding={() => {
           closeSettings();
           resetOnboarding();
         }}
         onResolutionChange={setPreferredExportResolution}
+        onTranscriptionLanguageModeChange={setTranscriptionLanguageMode}
         highlightEditedWords={settings.highlightEditedWords}
+        lastTranscriptionLanguageLabel={lastTranscriptionLanguageLabel}
         preferredExportResolution={settings.preferredExportResolution}
+        rememberLastTranscriptionLanguage={
+          settings.rememberLastTranscriptionLanguage
+        }
+        transcriptionLanguageMode={settings.transcriptionLanguageMode}
         visible={settingsOpen}
+      />
+
+      <TranscriptionLanguageSheet
+        appLanguageLabel={transcriptionAppLanguageLabel}
+        loading={speechLocalesLoading}
+        localeOptions={availableSpeechLocales}
+        onClose={closeTranscriptionLanguageSheet}
+        onConfirm={() => {
+          confirmTranscriptionLanguage().catch(showSpeechAccessError);
+        }}
+        onSelectLocale={setSelectedTranscriptionLocale}
+        selectedLocale={selectedTranscriptionLocale}
+        visible={pendingTranscriptionAsset !== null}
       />
 
       <SpeechAccessSheet

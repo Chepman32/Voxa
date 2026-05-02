@@ -4,6 +4,7 @@ export type SubtitleEffect = 'none' | 'neon' | 'chrome' | 'glow' | 'shadow';
 export type RecognitionStatus = 'ready' | 'manual' | 'failed';
 export type RecognitionMode = 'auto' | 'manual';
 export type ExportResolution = '720p' | '1080p' | '4k';
+export type TranscriptionLanguageMode = 'app' | 'ask';
 export type AppRoute = 'home' | 'editor';
 
 export interface SpeechLocaleOption {
@@ -82,6 +83,9 @@ export interface ProcessingState {
 export interface UserSettings {
   preferredExportResolution: ExportResolution;
   highlightEditedWords: boolean;
+  transcriptionLanguageMode: TranscriptionLanguageMode;
+  rememberLastTranscriptionLanguage: boolean;
+  lastTranscriptionLocale: string | null;
 }
 
 export interface PermissionSummary {

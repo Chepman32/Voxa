@@ -40,6 +40,9 @@ interface AppState {
   finishProcessing: () => void;
   setPreferredExportResolution: (resolution: UserSettings['preferredExportResolution']) => void;
   setHighlightEditedWords: (value: boolean) => void;
+  setTranscriptionLanguageMode: (mode: UserSettings['transcriptionLanguageMode']) => void;
+  setRememberLastTranscriptionLanguage: (value: boolean) => void;
+  setLastTranscriptionLocale: (locale: string | null) => void;
   addProject: (project: Project) => void;
   upsertProject: (project: Project) => void;
   replaceProject: (project: Project) => void;
@@ -53,6 +56,9 @@ type PersistedAppState = Partial<
 const defaultSettings: UserSettings = {
   preferredExportResolution: '1080p',
   highlightEditedWords: true,
+  transcriptionLanguageMode: 'app',
+  rememberLastTranscriptionLanguage: false,
+  lastTranscriptionLocale: null,
 };
 
 const defaultProcessing: ProcessingState = {
@@ -125,6 +131,14 @@ export function migratePersistedAppState(persistedState?: PersistedAppState | nu
         defaultSettings.preferredExportResolution,
       highlightEditedWords:
         state.settings?.highlightEditedWords ?? defaultSettings.highlightEditedWords,
+      transcriptionLanguageMode:
+        state.settings?.transcriptionLanguageMode ??
+        defaultSettings.transcriptionLanguageMode,
+      rememberLastTranscriptionLanguage:
+        state.settings?.rememberLastTranscriptionLanguage ??
+        defaultSettings.rememberLastTranscriptionLanguage,
+      lastTranscriptionLocale:
+        state.settings?.lastTranscriptionLocale ?? state.settings?.speechLocale ?? null,
     },
     projects: (state.projects ?? []).map(normalizeStoredProject),
   };
@@ -189,6 +203,18 @@ export const useAppStore = create<AppState>()(
         set(state => ({
           settings: { ...state.settings, highlightEditedWords },
         })),
+      setTranscriptionLanguageMode: transcriptionLanguageMode =>
+        set(state => ({
+          settings: { ...state.settings, transcriptionLanguageMode },
+        })),
+      setRememberLastTranscriptionLanguage: rememberLastTranscriptionLanguage =>
+        set(state => ({
+          settings: { ...state.settings, rememberLastTranscriptionLanguage },
+        })),
+      setLastTranscriptionLocale: lastTranscriptionLocale =>
+        set(state => ({
+          settings: { ...state.settings, lastTranscriptionLocale },
+        })),
       addProject: project =>
         set(state => ({
           projects: [normalizeStoredProject(project), ...state.projects],
@@ -244,7 +270,7 @@ export const useAppStore = create<AppState>()(
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 7,
+      version: 8,
     },
   ),
 );

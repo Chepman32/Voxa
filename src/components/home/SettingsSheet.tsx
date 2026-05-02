@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -24,15 +25,21 @@ import {
   springConfig,
 } from '../../theme/tokens';
 import type { ExportResolution } from '../../types/models';
+import type { TranscriptionLanguageMode } from '../../types/models';
 import { GlassPanel } from '../common/GlassPanel';
 
 interface SettingsSheetProps {
   visible: boolean;
   preferredExportResolution: ExportResolution;
   highlightEditedWords: boolean;
+  transcriptionLanguageMode: TranscriptionLanguageMode;
+  rememberLastTranscriptionLanguage: boolean;
+  lastTranscriptionLanguageLabel?: string;
   onClose: () => void;
   onResolutionChange: (resolution: ExportResolution) => void;
   onHighlightEditedWordsChange: (value: boolean) => void;
+  onTranscriptionLanguageModeChange: (mode: TranscriptionLanguageMode) => void;
+  onRememberLastTranscriptionLanguageChange: (value: boolean) => void;
   onResetOnboarding: () => void;
 }
 
@@ -40,9 +47,14 @@ export function SettingsSheet({
   visible,
   preferredExportResolution,
   highlightEditedWords,
+  transcriptionLanguageMode,
+  rememberLastTranscriptionLanguage,
+  lastTranscriptionLanguageLabel,
   onClose,
   onResolutionChange,
   onHighlightEditedWordsChange,
+  onTranscriptionLanguageModeChange,
+  onRememberLastTranscriptionLanguageChange,
   onResetOnboarding,
 }: SettingsSheetProps) {
   const insets = useSafeAreaInsets();
@@ -108,72 +120,150 @@ export function SettingsSheet({
                 <Feather color={palette.textSecondary} name="x" size={18} />
               </Pressable>
             </View>
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Default Export</Text>
-              <View style={styles.pillRow}>
-                {exportResolutions.map(option => (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => onResolutionChange(option.value)}
-                    style={[
-                      styles.pill,
-                      preferredExportResolution === option.value
-                        ? styles.pillActive
-                        : undefined,
-                    ]}>
-                    <Text
+
+            <ScrollView
+              bounces={false}
+              contentContainerStyle={styles.sheetContent}
+              showsVerticalScrollIndicator={false}>
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Default Export</Text>
+                <View style={styles.pillRow}>
+                  {exportResolutions.map(option => (
+                    <Pressable
+                      key={option.value}
+                      onPress={() => onResolutionChange(option.value)}
                       style={[
-                        styles.pillText,
+                        styles.pill,
                         preferredExportResolution === option.value
-                          ? styles.pillTextActive
+                          ? styles.pillActive
                           : undefined,
                       ]}>
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Subtitle Highlighting</Text>
-              <View style={styles.toggleCard}>
-                <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleLabel}>Highlight edited words</Text>
-                  <Text style={styles.toggleHint}>
-                    Approximate word timing after manual subtitle edits.
-                  </Text>
+                      <Text
+                        style={[
+                          styles.pillText,
+                          preferredExportResolution === option.value
+                            ? styles.pillTextActive
+                            : undefined,
+                        ]}>
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
-                <Switch
-                  ios_backgroundColor="rgba(255, 255, 255, 0.12)"
-                  onValueChange={onHighlightEditedWordsChange}
-                  thumbColor={palette.textPrimary}
-                  trackColor={{
-                    false: 'rgba(255, 255, 255, 0.16)',
-                    true: 'rgba(0, 240, 255, 0.42)',
-                  }}
-                  value={highlightEditedWords}
-                />
               </View>
-            </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Privacy</Text>
-              <Text style={styles.bodyText}>
-                Voxa keeps extraction, speech recognition, subtitle editing, and
-                export entirely on-device. Remote media is only used for visual
-                placeholders.
-              </Text>
-            </View>
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Transcribing Language</Text>
+                <View style={styles.optionStack}>
+                  <SettingsOption
+                    active={transcriptionLanguageMode === 'app'}
+                    description="New videos use the same language as the app when that speech locale is available."
+                    icon="smartphone"
+                    onPress={() => onTranscriptionLanguageModeChange('app')}
+                    title="Use app language"
+                  />
+                  <SettingsOption
+                    active={transcriptionLanguageMode === 'ask'}
+                    description="Show a language picker before each new transcription."
+                    icon="message-square"
+                    onPress={() => onTranscriptionLanguageModeChange('ask')}
+                    title="Ask before each transcription"
+                  />
+                </View>
 
-            <Pressable onPress={onResetOnboarding} style={styles.resetRow}>
-              <Feather color={palette.cyan} name="refresh-ccw" size={16} />
-              <Text style={styles.resetText}>Replay onboarding</Text>
-            </Pressable>
+                <View style={styles.toggleCard}>
+                  <View style={styles.toggleCopy}>
+                    <Text style={styles.toggleLabel}>Remember last used language</Text>
+                    <Text style={styles.toggleHint}>
+                      {lastTranscriptionLanguageLabel
+                        ? `Last used: ${lastTranscriptionLanguageLabel}.`
+                        : 'Preselect and reuse the last language you transcribed with.'}
+                    </Text>
+                  </View>
+                  <Switch
+                    ios_backgroundColor="rgba(255, 255, 255, 0.12)"
+                    onValueChange={onRememberLastTranscriptionLanguageChange}
+                    thumbColor={palette.textPrimary}
+                    trackColor={{
+                      false: 'rgba(255, 255, 255, 0.16)',
+                      true: 'rgba(0, 240, 255, 0.42)',
+                    }}
+                    value={rememberLastTranscriptionLanguage}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Subtitle Highlighting</Text>
+                <View style={styles.toggleCard}>
+                  <View style={styles.toggleCopy}>
+                    <Text style={styles.toggleLabel}>Highlight edited words</Text>
+                    <Text style={styles.toggleHint}>
+                      Approximate word timing after manual subtitle edits.
+                    </Text>
+                  </View>
+                  <Switch
+                    ios_backgroundColor="rgba(255, 255, 255, 0.12)"
+                    onValueChange={onHighlightEditedWordsChange}
+                    thumbColor={palette.textPrimary}
+                    trackColor={{
+                      false: 'rgba(255, 255, 255, 0.16)',
+                      true: 'rgba(0, 240, 255, 0.42)',
+                    }}
+                    value={highlightEditedWords}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Privacy</Text>
+                <Text style={styles.bodyText}>
+                  Voxa keeps extraction, speech recognition, subtitle editing, and
+                  export entirely on-device. Remote media is only used for visual
+                  placeholders.
+                </Text>
+              </View>
+
+              <Pressable onPress={onResetOnboarding} style={styles.resetRow}>
+                <Feather color={palette.cyan} name="refresh-ccw" size={16} />
+                <Text style={styles.resetText}>Replay onboarding</Text>
+              </Pressable>
+            </ScrollView>
           </GlassPanel>
         </Animated.View>
       </GestureDetector>
     </View>
+  );
+}
+
+function SettingsOption({
+  active,
+  description,
+  icon,
+  onPress,
+  title,
+}: {
+  active: boolean;
+  description: string;
+  icon: string;
+  onPress: () => void;
+  title: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.optionCard, active ? styles.optionCardActive : undefined]}>
+      <View style={styles.optionIcon}>
+        <Feather color={active ? palette.cyan : palette.textSecondary} name={icon} size={16} />
+      </View>
+      <View style={styles.optionCopy}>
+        <Text style={[styles.optionTitle, active ? styles.optionTitleActive : undefined]}>
+          {title}
+        </Text>
+        <Text style={styles.optionDescription}>{description}</Text>
+      </View>
+      {active ? <Feather color={palette.cyan} name="check" size={16} /> : null}
+    </Pressable>
   );
 }
 
@@ -196,6 +286,11 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 22,
     gap: 22,
+    maxHeight: 720,
+  },
+  sheetContent: {
+    gap: 22,
+    paddingBottom: 2,
   },
   handle: {
     alignSelf: 'center',
@@ -254,6 +349,49 @@ const styles = StyleSheet.create({
   },
   pillTextActive: {
     color: palette.textPrimary,
+  },
+  optionStack: {
+    gap: 10,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  optionCardActive: {
+    borderColor: 'rgba(0, 240, 255, 0.34)',
+    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+  },
+  optionIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  optionCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  optionTitle: {
+    color: palette.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  optionTitleActive: {
+    color: palette.cyan,
+  },
+  optionDescription: {
+    color: palette.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
   },
   bodyText: {
     color: palette.textSecondary,
