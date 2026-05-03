@@ -7,9 +7,11 @@ import type {
   OnboardingAnswers,
   ProcessingState,
   Project,
+  ProjectFolder,
   SupportedLocale,
   UserSettings,
 } from '../types/models';
+import { createId } from '../lib/id';
 import { ensureSubtitles, normalizeSubtitleStyle } from '../lib/project';
 import { zustandStorage } from './storage';
 
@@ -24,6 +26,7 @@ interface AppState {
   processing: ProcessingState;
   settings: UserSettings;
   projects: Project[];
+  folders: ProjectFolder[];
   setHydrated: (value: boolean) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
@@ -37,25 +40,47 @@ interface AppState {
   beginProcessing: (assetUri?: string) => void;
   setProcessingPhase: (phase: ProcessingState['phase'], label: string) => void;
   finishProcessing: () => void;
-  setPreferredExportResolution: (resolution: UserSettings['preferredExportResolution']) => void;
+  setPreferredExportResolution: (
+    resolution: UserSettings['preferredExportResolution'],
+  ) => void;
   setHighlightEditedWords: (value: boolean) => void;
-  setTranscriptionLanguageMode: (mode: UserSettings['transcriptionLanguageMode']) => void;
+  setTranscriptionLanguageMode: (
+    mode: UserSettings['transcriptionLanguageMode'],
+  ) => void;
   setRememberLastTranscriptionLanguage: (value: boolean) => void;
   setLastTranscriptionLocale: (locale: string | null) => void;
   addProject: (project: Project) => void;
   upsertProject: (project: Project) => void;
   replaceProject: (project: Project) => void;
+  renameProject: (projectId: string, title: string) => void;
+  duplicateProject: (projectId: string) => void;
+  moveProjectToFolder: (projectId: string, folderId: string) => void;
+  moveProjectToTrash: (projectId: string) => void;
+  recoverProject: (projectId: string) => void;
   deleteProject: (projectId: string) => void;
+  createFolder: (title: string) => string;
+  renameFolder: (folderId: string, title: string) => void;
+  removeFolder: (folderId: string) => void;
+  emptyTrash: () => void;
 }
 
 type PersistedAppState = Partial<
-  Pick<AppState, 'hasCompletedOnboarding' | 'onboardingStep' | 'onboardingAnswers' | 'uiLocale' | 'projects' | 'settings'>
+  Pick<
+    AppState,
+    | 'hasCompletedOnboarding'
+    | 'onboardingStep'
+    | 'onboardingAnswers'
+    | 'uiLocale'
+    | 'projects'
+    | 'folders'
+    | 'settings'
+  >
 >;
 
 const defaultSettings: UserSettings = {
   preferredExportResolution: '1080p',
   highlightEditedWords: true,
-  transcriptionLanguageMode: 'auto',
+  transcriptionLanguageMode: 'ask',
   rememberLastTranscriptionLanguage: false,
   lastTranscriptionLocale: null,
 };
@@ -82,7 +107,10 @@ function isTemporaryFileUri(uri?: string) {
   }
 
   const normalizedUri = uri.toLowerCase();
-  return normalizedUri.includes('/tmp/') || normalizedUri.includes('/temporaryitems/');
+  return (
+    normalizedUri.includes('/tmp/') ||
+    normalizedUri.includes('/temporaryitems/')
+  );
 }
 
 function getFileNameFromUri(uri?: string) {
@@ -96,16 +124,42 @@ function getFileNameFromUri(uri?: string) {
   return fileName || undefined;
 }
 
+function normalizeFolderTitle(title: string) {
+  const trimmedTitle = title.trim();
+  return trimmedTitle.length > 0 ? trimmedTitle : 'Untitled Folder';
+}
+
+function normalizeStoredFolder(folder: ProjectFolder): ProjectFolder {
+  const now = Date.now();
+
+  return {
+    ...folder,
+    title: normalizeFolderTitle(folder.title ?? ''),
+    createdAt: typeof folder.createdAt === 'number' ? folder.createdAt : now,
+    updatedAt: typeof folder.updatedAt === 'number' ? folder.updatedAt : now,
+  };
+}
+
 function normalizeStoredProject(project: Project): Project {
-  const subtitles = ensureSubtitles(project.subtitles ?? [], project.duration ?? 0);
+  const subtitles = ensureSubtitles(
+    project.subtitles ?? [],
+    project.duration ?? 0,
+  );
   const hasSelectedSubtitle = subtitles.some(
     subtitle => subtitle.id === project.lastEditedSubtitleId,
   );
 
   return {
     ...project,
-    globalStyle: normalizeSubtitleStyle(project.globalStyle ?? defaultSubtitleStyle),
-    videoFileName: project.videoFileName ?? getFileNameFromUri(project.videoLocalURI),
+    folderId:
+      typeof project.folderId === 'string' ? project.folderId : undefined,
+    deletedAt:
+      typeof project.deletedAt === 'number' ? project.deletedAt : undefined,
+    globalStyle: normalizeSubtitleStyle(
+      project.globalStyle ?? defaultSubtitleStyle,
+    ),
+    videoFileName:
+      project.videoFileName ?? getFileNameFromUri(project.videoLocalURI),
     thumbnailUri: isTemporaryFileUri(project.thumbnailUri)
       ? undefined
       : project.thumbnailUri,
@@ -113,20 +167,58 @@ function normalizeStoredProject(project: Project): Project {
       project.thumbnailFileName ?? getFileNameFromUri(project.thumbnailUri),
     subtitles,
     recognitionMode: project.recognitionMode ?? 'auto',
-    lastEditedSubtitleId: hasSelectedSubtitle ? project.lastEditedSubtitleId : undefined,
+    lastEditedSubtitleId: hasSelectedSubtitle
+      ? project.lastEditedSubtitleId
+      : undefined,
   };
+}
+
+function copyProjectForDuplicate(project: Project): Project {
+  const now = Date.now();
+
+  return normalizeStoredProject({
+    ...project,
+    id: createId('project'),
+    title: `${project.title} Copy`,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: undefined,
+    subtitles: project.subtitles.map(subtitle => ({
+      ...subtitle,
+      words: subtitle.words?.map(word => ({ ...word })),
+    })),
+    globalStyle: { ...project.globalStyle },
+    waveform: [...project.waveform],
+    metrics: { ...project.metrics },
+  });
 }
 
 function normalizeTranscriptionLanguageMode(
-  mode?: string,
+  _mode?: string,
 ): UserSettings['transcriptionLanguageMode'] {
-  return mode === 'ask' ? 'ask' : defaultSettings.transcriptionLanguageMode;
+  return defaultSettings.transcriptionLanguageMode;
 }
 
-export function migratePersistedAppState(persistedState?: PersistedAppState | null) {
+export function migratePersistedAppState(
+  persistedState?: PersistedAppState | null,
+) {
   const state = (persistedState ?? {}) as PersistedAppState & {
     settings?: Partial<UserSettings> & { speechLocale?: string };
   };
+  const folders = (state.folders ?? []).map(normalizeStoredFolder);
+  const folderIds = new Set(folders.map(folder => folder.id));
+  const projects = (state.projects ?? [])
+    .map(normalizeStoredProject)
+    .map(project => {
+      if (!project.folderId || folderIds.has(project.folderId)) {
+        return project;
+      }
+
+      return {
+        ...project,
+        folderId: undefined,
+      };
+    });
 
   return {
     ...state,
@@ -135,16 +227,21 @@ export function migratePersistedAppState(persistedState?: PersistedAppState | nu
         state.settings?.preferredExportResolution ??
         defaultSettings.preferredExportResolution,
       highlightEditedWords:
-        state.settings?.highlightEditedWords ?? defaultSettings.highlightEditedWords,
-      transcriptionLanguageMode:
-        normalizeTranscriptionLanguageMode(state.settings?.transcriptionLanguageMode),
+        state.settings?.highlightEditedWords ??
+        defaultSettings.highlightEditedWords,
+      transcriptionLanguageMode: normalizeTranscriptionLanguageMode(
+        state.settings?.transcriptionLanguageMode,
+      ),
       rememberLastTranscriptionLanguage:
         state.settings?.rememberLastTranscriptionLanguage ??
         defaultSettings.rememberLastTranscriptionLanguage,
       lastTranscriptionLocale:
-        state.settings?.lastTranscriptionLocale ?? state.settings?.speechLocale ?? null,
+        state.settings?.lastTranscriptionLocale ??
+        state.settings?.speechLocale ??
+        null,
     },
-    projects: (state.projects ?? []).map(normalizeStoredProject),
+    folders,
+    projects,
   };
 }
 
@@ -161,8 +258,10 @@ export const useAppStore = create<AppState>()(
       processing: defaultProcessing,
       settings: defaultSettings,
       projects: [],
+      folders: [],
       setHydrated: value => set({ hydrated: value }),
-      completeOnboarding: () => set({ hasCompletedOnboarding: true, onboardingStep: 0 }),
+      completeOnboarding: () =>
+        set({ hasCompletedOnboarding: true, onboardingStep: 0 }),
       resetOnboarding: () =>
         set({
           hasCompletedOnboarding: false,
@@ -177,7 +276,8 @@ export const useAppStore = create<AppState>()(
       setUiLocale: locale => set({ uiLocale: locale }),
       openSettings: () => set({ route: 'settings' }),
       closeSettings: () => set({ route: 'home' }),
-      openProject: projectId => set({ activeProjectId: projectId, route: 'editor' }),
+      openProject: projectId =>
+        set({ activeProjectId: projectId, route: 'editor' }),
       closeProject: () => set({ activeProjectId: null, route: 'home' }),
       beginProcessing: assetUri =>
         set({
@@ -220,7 +320,13 @@ export const useAppStore = create<AppState>()(
         })),
       addProject: project =>
         set(state => ({
-          projects: [normalizeStoredProject(project), ...state.projects],
+          projects: [
+            normalizeStoredProject({
+              ...project,
+              deletedAt: undefined,
+            }),
+            ...state.projects,
+          ],
         })),
       upsertProject: project =>
         set(state => {
@@ -228,7 +334,9 @@ export const useAppStore = create<AppState>()(
             ...normalizeStoredProject(project),
             updatedAt: Date.now(),
           };
-          const existingIndex = state.projects.findIndex(item => item.id === project.id);
+          const existingIndex = state.projects.findIndex(
+            item => item.id === project.id,
+          );
           if (existingIndex === -1) {
             return { projects: [nextProject, ...state.projects] };
           }
@@ -238,15 +346,88 @@ export const useAppStore = create<AppState>()(
         }),
       replaceProject: project =>
         set(state => {
-          const existingIndex = state.projects.findIndex(item => item.id === project.id);
+          const existingIndex = state.projects.findIndex(
+            item => item.id === project.id,
+          );
           if (existingIndex === -1) {
-            return { projects: [normalizeStoredProject(project), ...state.projects] };
+            return {
+              projects: [normalizeStoredProject(project), ...state.projects],
+            };
           }
 
           const nextProjects = [...state.projects];
           nextProjects[existingIndex] = normalizeStoredProject(project);
           return { projects: nextProjects };
         }),
+      renameProject: (projectId, title) =>
+        set(state => {
+          const nextTitle = title.trim();
+          if (nextTitle.length === 0) {
+            return {};
+          }
+
+          return {
+            projects: state.projects.map(project =>
+              project.id === projectId
+                ? { ...project, title: nextTitle, updatedAt: Date.now() }
+                : project,
+            ),
+          };
+        }),
+      duplicateProject: projectId =>
+        set(state => {
+          const project = state.projects.find(item => item.id === projectId);
+          if (!project || project.deletedAt) {
+            return {};
+          }
+
+          return {
+            projects: [copyProjectForDuplicate(project), ...state.projects],
+          };
+        }),
+      moveProjectToFolder: (projectId, folderId) =>
+        set(state => {
+          const folderExists = state.folders.some(
+            folder => folder.id === folderId,
+          );
+          if (!folderExists) {
+            return {};
+          }
+
+          return {
+            projects: state.projects.map(project =>
+              project.id === projectId && !project.deletedAt
+                ? { ...project, folderId, updatedAt: Date.now() }
+                : project,
+            ),
+          };
+        }),
+      moveProjectToTrash: projectId =>
+        set(state => ({
+          activeProjectId:
+            state.activeProjectId === projectId ? null : state.activeProjectId,
+          route:
+            state.activeProjectId === projectId && state.route === 'editor'
+              ? 'home'
+              : state.route,
+          projects: state.projects.map(project =>
+            project.id === projectId
+              ? {
+                  ...project,
+                  deletedAt: project.deletedAt ?? Date.now(),
+                  updatedAt: Date.now(),
+                }
+              : project,
+          ),
+        })),
+      recoverProject: projectId =>
+        set(state => ({
+          projects: state.projects.map(project =>
+            project.id === projectId
+              ? { ...project, deletedAt: undefined, updatedAt: Date.now() }
+              : project,
+          ),
+        })),
       deleteProject: projectId =>
         set(state => ({
           activeProjectId:
@@ -256,6 +437,49 @@ export const useAppStore = create<AppState>()(
               ? 'home'
               : state.route,
           projects: state.projects.filter(project => project.id !== projectId),
+        })),
+      createFolder: title => {
+        const now = Date.now();
+        const folder: ProjectFolder = {
+          id: createId('folder'),
+          title: normalizeFolderTitle(title),
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        set(state => ({
+          folders: [folder, ...state.folders],
+        }));
+
+        return folder.id;
+      },
+      renameFolder: (folderId, title) =>
+        set(state => {
+          const nextTitle = title.trim();
+          if (nextTitle.length === 0) {
+            return {};
+          }
+
+          return {
+            folders: state.folders.map(folder =>
+              folder.id === folderId
+                ? { ...folder, title: nextTitle, updatedAt: Date.now() }
+                : folder,
+            ),
+          };
+        }),
+      removeFolder: folderId =>
+        set(state => ({
+          folders: state.folders.filter(folder => folder.id !== folderId),
+          projects: state.projects.map(project =>
+            project.folderId === folderId
+              ? { ...project, folderId: undefined, updatedAt: Date.now() }
+              : project,
+          ),
+        })),
+      emptyTrash: () =>
+        set(state => ({
+          projects: state.projects.filter(project => !project.deletedAt),
         })),
     }),
     {
@@ -268,17 +492,21 @@ export const useAppStore = create<AppState>()(
         uiLocale: state.uiLocale,
         settings: state.settings,
         projects: state.projects,
+        folders: state.folders,
       }),
-      migrate: persistedState => migratePersistedAppState(persistedState as PersistedAppState),
+      migrate: persistedState =>
+        migratePersistedAppState(persistedState as PersistedAppState),
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 8,
+      version: 10,
     },
   ),
 );
 
 export function getActiveProject() {
   const state = useAppStore.getState();
-  return state.projects.find(project => project.id === state.activeProjectId) ?? null;
+  return (
+    state.projects.find(project => project.id === state.activeProjectId) ?? null
+  );
 }

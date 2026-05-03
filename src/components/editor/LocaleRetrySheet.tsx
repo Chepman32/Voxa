@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -15,7 +9,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { AUTO_DETECT_LOCALE_VALUE } from '../../lib/speech-locale';
 import { palette } from '../../theme/tokens';
 import type { SpeechLocaleOption } from '../../types/models';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -24,7 +17,6 @@ import { GlassPanel } from '../common/GlassPanel';
 export const LOCALE_RETRY_SHEET_ID = 'locale-retry-sheet';
 export const LOCALE_RETRY_BUTTON_ID = 'locale-retry-button';
 export const LOCALE_RETRY_OPTION_TEST_ID_PREFIX = 'locale-retry-option';
-export { AUTO_DETECT_LOCALE_VALUE };
 
 interface LocaleRetrySheetProps {
   visible: boolean;
@@ -72,8 +64,18 @@ export function LocaleRetrySheet({
     return null;
   }
 
+  const canRetry =
+    !loading &&
+    !retrying &&
+    localeOptions.length > 0 &&
+    selectedLocale.length > 0;
+
   return (
-    <View pointerEvents="auto" style={styles.root} testID={LOCALE_RETRY_SHEET_ID}>
+    <View
+      pointerEvents="auto"
+      style={styles.root}
+      testID={LOCALE_RETRY_SHEET_ID}
+    >
       <Animated.View style={[styles.backdrop, backdropStyle]}>
         <Pressable onPress={onClose} style={StyleSheet.absoluteFill} />
       </Animated.View>
@@ -83,7 +85,8 @@ export function LocaleRetrySheet({
           styles.sheetWrap,
           { paddingBottom: Math.max(insets.bottom, 12) },
           sheetStyle,
-        ]}>
+        ]}
+      >
         <GlassPanel style={styles.sheet}>
           <View style={styles.header}>
             <View style={styles.titleWrap}>
@@ -99,14 +102,8 @@ export function LocaleRetrySheet({
           <ScrollView
             bounces={false}
             contentContainerStyle={styles.localeList}
-            showsVerticalScrollIndicator={false}>
-            <LocaleOptionRow
-              active={selectedLocale === AUTO_DETECT_LOCALE_VALUE}
-              label={t('autoDetect')}
-              onPress={() => onSelectLocale(AUTO_DETECT_LOCALE_VALUE)}
-              testID={`${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-${AUTO_DETECT_LOCALE_VALUE}`}
-            />
-
+            showsVerticalScrollIndicator={false}
+          >
             {localeOptions.map(option => (
               <LocaleOptionRow
                 key={option.value}
@@ -127,13 +124,11 @@ export function LocaleRetrySheet({
           </Text>
 
           <Pressable
-            disabled={loading || retrying || localeOptions.length === 0}
+            disabled={!canRetry}
             onPress={onRetry}
-            style={[
-              styles.retryButton,
-              (loading || retrying || localeOptions.length === 0) && styles.buttonDisabled,
-            ]}
-            testID={LOCALE_RETRY_BUTTON_ID}>
+            style={[styles.retryButton, !canRetry && styles.buttonDisabled]}
+            testID={LOCALE_RETRY_BUTTON_ID}
+          >
             <Text style={styles.retryButtonText}>
               {retrying ? t('retrying') : t('retrySubtitles')}
             </Text>
@@ -159,8 +154,14 @@ function LocaleOptionRow({
     <Pressable
       onPress={onPress}
       style={[styles.localeRow, active ? styles.localeRowActive : undefined]}
-      testID={testID}>
-      <Text style={[styles.localeLabel, active ? styles.localeLabelActive : undefined]}>
+      testID={testID}
+    >
+      <Text
+        style={[
+          styles.localeLabel,
+          active ? styles.localeLabelActive : undefined,
+        ]}
+      >
         {label}
       </Text>
       {active ? <Feather color={palette.cyan} name="check" size={16} /> : null}

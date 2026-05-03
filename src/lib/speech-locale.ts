@@ -1,7 +1,5 @@
 import type { SpeechLocaleOption } from '../types/models';
 
-export const AUTO_DETECT_LOCALE_VALUE = '__auto_detect__';
-
 export function findSpeechLocaleOption(
   locale: string | null | undefined,
   options: SpeechLocaleOption[],
@@ -10,7 +8,9 @@ export function findSpeechLocaleOption(
     return undefined;
   }
 
-  return options.find(option => option.value.toLowerCase() === locale.toLowerCase());
+  return options.find(
+    option => option.value.toLowerCase() === locale.toLowerCase(),
+  );
 }
 
 export function resolveRememberedSpeechLocale(

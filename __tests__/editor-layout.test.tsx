@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  Keyboard,
-  StyleSheet,
-} from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
 jest.mock('../src/components/common/AtmosphereCanvas', () => ({
@@ -70,7 +67,9 @@ jest.mock('react-native-gesture-handler', () => {
   };
 
   return {
-    GestureDetector: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    GestureDetector: ({ children }: { children?: React.ReactNode }) => (
+      <>{children}</>
+    ),
     Gesture: {
       Pan: createGesture,
       Pinch: createGesture,
@@ -103,7 +102,11 @@ jest.mock('react-native-reanimated', () => {
         exiting?: unknown;
       },
       ref: React.Ref<any>,
-    ) => <View ref={ref} {...props}>{children}</View>,
+    ) => (
+      <View ref={ref} {...props}>
+        {children}
+      </View>
+    ),
   );
 
   return {
@@ -240,28 +243,31 @@ mockRetryProjectSubtitles.mockResolvedValue({
 describe('editor layout budgeting', () => {
   const screenHeights = [812, 844, 932];
 
-  it.each(screenHeights)('fits the closed editor layout on a %ipx screen', screenHeight => {
-    const layout = calculateEditorVerticalLayout({
-      screenHeight,
-      topInset: 44,
-      bottomInset: 34,
-      bannerHeight: 0,
-    });
-    const usedHeight =
-      layout.videoHeight +
-      layout.timelineHeight +
-      layout.bottomEditorTabsHeight +
-      layout.textHeight +
-      layout.stackGap * 2;
+  it.each(screenHeights)(
+    'fits the closed editor layout on a %ipx screen',
+    screenHeight => {
+      const layout = calculateEditorVerticalLayout({
+        screenHeight,
+        topInset: 44,
+        bottomInset: 34,
+        bannerHeight: 0,
+      });
+      const usedHeight =
+        layout.videoHeight +
+        layout.timelineHeight +
+        layout.bottomEditorTabsHeight +
+        layout.textHeight +
+        layout.stackGap * 2;
 
-    expect(layout.textHeight).toBeGreaterThanOrEqual(180);
-    expect(layout.videoHeight).toBeGreaterThanOrEqual(240);
-    expect(layout.videoHeight).toBeLessThanOrEqual(340);
-    expect(layout.timelineControlsHeight).toBe(128);
-    expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(56);
-    expect(layout.timelineTrackHeight).toBeLessThanOrEqual(72);
-    expect(usedHeight).toBeLessThanOrEqual(layout.contentHeight);
-  });
+      expect(layout.textHeight).toBeGreaterThanOrEqual(180);
+      expect(layout.videoHeight).toBeGreaterThanOrEqual(240);
+      expect(layout.videoHeight).toBeLessThanOrEqual(340);
+      expect(layout.timelineControlsHeight).toBe(128);
+      expect(layout.timelineTrackHeight).toBeGreaterThanOrEqual(56);
+      expect(layout.timelineTrackHeight).toBeLessThanOrEqual(72);
+      expect(usedHeight).toBeLessThanOrEqual(layout.contentHeight);
+    },
+  );
 
   it.each(screenHeights)(
     'keeps the active subtitle panel visible on a %ipx screen with an import banner',
@@ -287,34 +293,39 @@ describe('editor layout budgeting', () => {
     },
   );
 
-  it.each(screenHeights)('expands the text editor when the timeline is collapsed on a %ipx screen', screenHeight => {
-    const expandedLayout = calculateEditorVerticalLayout({
-      screenHeight,
-      topInset: 44,
-      bottomInset: 34,
-      bannerHeight: 0,
-      timelineCollapsed: false,
-    });
-    const collapsedLayout = calculateEditorVerticalLayout({
-      screenHeight,
-      topInset: 44,
-      bottomInset: 34,
-      bannerHeight: 0,
-      timelineCollapsed: true,
-    });
-    const usedHeight =
-      collapsedLayout.videoHeight +
-      collapsedLayout.timelineHeight +
-      collapsedLayout.bottomEditorTabsHeight +
-      collapsedLayout.textHeight +
-      collapsedLayout.stackGap * 2;
+  it.each(screenHeights)(
+    'expands the text editor when the timeline is collapsed on a %ipx screen',
+    screenHeight => {
+      const expandedLayout = calculateEditorVerticalLayout({
+        screenHeight,
+        topInset: 44,
+        bottomInset: 34,
+        bannerHeight: 0,
+        timelineCollapsed: false,
+      });
+      const collapsedLayout = calculateEditorVerticalLayout({
+        screenHeight,
+        topInset: 44,
+        bottomInset: 34,
+        bannerHeight: 0,
+        timelineCollapsed: true,
+      });
+      const usedHeight =
+        collapsedLayout.videoHeight +
+        collapsedLayout.timelineHeight +
+        collapsedLayout.bottomEditorTabsHeight +
+        collapsedLayout.textHeight +
+        collapsedLayout.stackGap * 2;
 
-    expect(collapsedLayout.timelineTrackHeight).toBe(0);
-    expect(collapsedLayout.timelineControlsHeight).toBe(0);
-    expect(collapsedLayout.timelineHeight).toBe(0);
-    expect(collapsedLayout.textHeight).toBeGreaterThan(expandedLayout.textHeight);
-    expect(usedHeight).toBeLessThanOrEqual(collapsedLayout.contentHeight);
-  });
+      expect(collapsedLayout.timelineTrackHeight).toBe(0);
+      expect(collapsedLayout.timelineControlsHeight).toBe(0);
+      expect(collapsedLayout.timelineHeight).toBe(0);
+      expect(collapsedLayout.textHeight).toBeGreaterThan(
+        expandedLayout.textHeight,
+      );
+      expect(usedHeight).toBeLessThanOrEqual(collapsedLayout.contentHeight);
+    },
+  );
 });
 
 describe('EditorScreen drag helpers', () => {
@@ -434,7 +445,8 @@ describe('EditorScreen', () => {
       },
     ],
     recognitionStatus: 'failed',
-    importError: 'No supported on-device speech locale could transcribe this video.',
+    importError:
+      'No supported on-device speech locale could transcribe this video.',
   };
 
   afterEach(() => {
@@ -472,8 +484,12 @@ describe('EditorScreen', () => {
       );
     });
 
-    expect(renderer!.root.findByProps({ children: 'Active Subtitle' })).toBeTruthy();
-    expect(renderer!.root.findAllByProps({ children: 'Export' })).toHaveLength(0);
+    expect(
+      renderer!.root.findByProps({ children: 'Active Subtitle' }),
+    ).toBeTruthy();
+    expect(renderer!.root.findAllByProps({ children: 'Export' })).toHaveLength(
+      0,
+    );
     expect(
       renderer!.root.findAllByProps({
         children: 'Swipe left or right to move between blocks.',
@@ -485,7 +501,9 @@ describe('EditorScreen', () => {
       }),
     ).toHaveLength(0);
 
-    const section = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_SECTION_ID });
+    const section = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_SECTION_ID,
+    });
     const style = StyleSheet.flatten(section.props.style);
 
     expect(style.height).toBeCloseTo(expectedLayout.textHeight, 5);
@@ -503,17 +521,23 @@ describe('EditorScreen', () => {
       string,
       Array<(event?: { endCoordinates?: { height?: number } }) => void>
     > = {};
-    const dismissKeyboard = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => undefined);
-    jest.spyOn(Keyboard, 'addListener').mockImplementation((eventName, listener) => {
-      keyboardListeners[eventName] ??= [];
-      keyboardListeners[eventName].push(
-        listener as (event?: { endCoordinates?: { height?: number } }) => void,
-      );
+    const dismissKeyboard = jest
+      .spyOn(Keyboard, 'dismiss')
+      .mockImplementation(() => undefined);
+    jest
+      .spyOn(Keyboard, 'addListener')
+      .mockImplementation((eventName, listener) => {
+        keyboardListeners[eventName] ??= [];
+        keyboardListeners[eventName].push(
+          listener as (event?: {
+            endCoordinates?: { height?: number };
+          }) => void,
+        );
 
-      return {
-        remove: jest.fn(),
-      } as any;
-    });
+        return {
+          remove: jest.fn(),
+        } as any;
+      });
 
     const expandedLayout = calculateEditorVerticalLayout({
       screenHeight: 844,
@@ -539,7 +563,9 @@ describe('EditorScreen', () => {
       );
     });
 
-    let timelineSection = renderer!.root.findByProps({ testID: TIMELINE_SECTION_ID });
+    let timelineSection = renderer!.root.findByProps({
+      testID: TIMELINE_SECTION_ID,
+    });
     let timelineStyle = StyleSheet.flatten(timelineSection.props.style);
     let activeSubtitleSection = renderer!.root.findByProps({
       testID: ACTIVE_SUBTITLE_SECTION_ID,
@@ -547,8 +573,12 @@ describe('EditorScreen', () => {
     let textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
     let topBar = renderer!.root.findByProps({ testID: EDITOR_TOP_BAR_ID });
     let topBarStyle = StyleSheet.flatten(topBar.props.style);
-    let bottomEditorShell = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_SHELL_ID });
-    let bottomEditorShellStyle = StyleSheet.flatten(bottomEditorShell.props.style);
+    let bottomEditorShell = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_SHELL_ID,
+    });
+    let bottomEditorShellStyle = StyleSheet.flatten(
+      bottomEditorShell.props.style,
+    );
     let dismissButtons = renderer!.root.findAll(
       node =>
         node.props.testID === KEYBOARD_DISMISS_BUTTON_ID &&
@@ -556,16 +586,25 @@ describe('EditorScreen', () => {
     );
 
     expect(timelineSection.props.pointerEvents).toBe('auto');
-    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineTrackHeight, 5);
+    expect(timelineStyle.height).toBeCloseTo(
+      expandedLayout.timelineTrackHeight,
+      5,
+    );
     expect(textStyle.height).toBeCloseTo(expandedLayout.textHeight, 5);
     expect(topBar.props.pointerEvents).toBe('auto');
     expect(topBarStyle.height).toBe(34);
-    expect(bottomEditorShellStyle.height).toBeGreaterThan(expandedLayout.textHeight);
+    expect(bottomEditorShellStyle.height).toBeGreaterThan(
+      expandedLayout.textHeight,
+    );
     expect(dismissButtons).toHaveLength(0);
-    expect(renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PAGER_ID })).toBeTruthy();
+    expect(
+      renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PAGER_ID }),
+    ).toBeTruthy();
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
     await ReactTestRenderer.act(() => {
@@ -578,7 +617,9 @@ describe('EditorScreen', () => {
       });
     });
 
-    timelineSection = renderer!.root.findByProps({ testID: TIMELINE_SECTION_ID });
+    timelineSection = renderer!.root.findByProps({
+      testID: TIMELINE_SECTION_ID,
+    });
     timelineStyle = StyleSheet.flatten(timelineSection.props.style);
     activeSubtitleSection = renderer!.root.findByProps({
       testID: ACTIVE_SUBTITLE_SECTION_ID,
@@ -586,7 +627,9 @@ describe('EditorScreen', () => {
     textStyle = StyleSheet.flatten(activeSubtitleSection.props.style);
     topBar = renderer!.root.findByProps({ testID: EDITOR_TOP_BAR_ID });
     topBarStyle = StyleSheet.flatten(topBar.props.style);
-    bottomEditorShell = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_SHELL_ID });
+    bottomEditorShell = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_SHELL_ID,
+    });
     bottomEditorShellStyle = StyleSheet.flatten(bottomEditorShell.props.style);
     dismissButtons = renderer!.root.findAll(
       node =>
@@ -611,7 +654,9 @@ describe('EditorScreen', () => {
     expect(dismissKeyboard).toHaveBeenCalledTimes(1);
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
     expect(dismissKeyboard).toHaveBeenCalledTimes(2);
@@ -622,7 +667,9 @@ describe('EditorScreen', () => {
       });
     });
 
-    timelineSection = renderer!.root.findByProps({ testID: TIMELINE_SECTION_ID });
+    timelineSection = renderer!.root.findByProps({
+      testID: TIMELINE_SECTION_ID,
+    });
     timelineStyle = StyleSheet.flatten(timelineSection.props.style);
     activeSubtitleSection = renderer!.root.findByProps({
       testID: ACTIVE_SUBTITLE_SECTION_ID,
@@ -637,7 +684,10 @@ describe('EditorScreen', () => {
     );
 
     expect(timelineSection.props.pointerEvents).toBe('auto');
-    expect(timelineStyle.height).toBeCloseTo(expandedLayout.timelineTrackHeight, 5);
+    expect(timelineStyle.height).toBeCloseTo(
+      expandedLayout.timelineTrackHeight,
+      5,
+    );
     expect(timelineStyle.opacity).toBe(1);
     expect(topBar.props.pointerEvents).toBe('auto');
     expect(topBarStyle.height).toBe(34);
@@ -662,9 +712,15 @@ describe('EditorScreen', () => {
       );
     });
 
-    let subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
-    let styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
-    const pager = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PAGER_ID });
+    let subtitleTab = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_PRIMARY_TAB_ID,
+    });
+    let styleTab = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_STYLE_TAB_ID,
+    });
+    const pager = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_PAGER_ID,
+    });
 
     expect(subtitleTab.props.accessibilityState.selected).toBe(true);
     expect(styleTab.props.accessibilityState.selected).toBe(false);
@@ -680,8 +736,12 @@ describe('EditorScreen', () => {
       });
     });
 
-    subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
-    styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
+    subtitleTab = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_PRIMARY_TAB_ID,
+    });
+    styleTab = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_STYLE_TAB_ID,
+    });
     expect(subtitleTab.props.accessibilityState.selected).toBe(false);
     expect(styleTab.props.accessibilityState.selected).toBe(true);
 
@@ -696,8 +756,12 @@ describe('EditorScreen', () => {
       });
     });
 
-    subtitleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_PRIMARY_TAB_ID });
-    styleTab = renderer!.root.findByProps({ testID: BOTTOM_EDITOR_STYLE_TAB_ID });
+    subtitleTab = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_PRIMARY_TAB_ID,
+    });
+    styleTab = renderer!.root.findByProps({
+      testID: BOTTOM_EDITOR_STYLE_TAB_ID,
+    });
     expect(subtitleTab.props.accessibilityState.selected).toBe(true);
     expect(styleTab.props.accessibilityState.selected).toBe(false);
   });
@@ -718,33 +782,47 @@ describe('EditorScreen', () => {
       );
     });
 
-    let prevButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_PREV_BUTTON_ID });
-    let nextButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_NEXT_BUTTON_ID });
+    let prevButton = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_PREV_BUTTON_ID,
+    });
+    let nextButton = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_NEXT_BUTTON_ID,
+    });
     const activeSubtitleInput = () =>
       renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
 
     expect(prevButton.props.disabled).toBe(true);
     expect(nextButton.props.disabled).toBe(false);
-    expect(renderer!.root.findByProps({ children: '0:00 - 0:03' })).toBeTruthy();
+    expect(
+      renderer!.root.findByProps({ children: '0:00 - 0:03' }),
+    ).toBeTruthy();
     expect(activeSubtitleInput().props.value).toBe('first bright line');
 
     await ReactTestRenderer.act(() => {
       nextButton.props.onPress();
     });
 
-    prevButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_PREV_BUTTON_ID });
-    nextButton = renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_NEXT_BUTTON_ID });
+    prevButton = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_PREV_BUTTON_ID,
+    });
+    nextButton = renderer!.root.findByProps({
+      testID: ACTIVE_SUBTITLE_NEXT_BUTTON_ID,
+    });
 
     expect(prevButton.props.disabled).toBe(false);
     expect(nextButton.props.disabled).toBe(true);
-    expect(renderer!.root.findByProps({ children: '0:03 - 0:05' })).toBeTruthy();
+    expect(
+      renderer!.root.findByProps({ children: '0:03 - 0:05' }),
+    ).toBeTruthy();
     expect(activeSubtitleInput().props.value).toBe('second bright line');
 
     await ReactTestRenderer.act(() => {
       prevButton.props.onPress();
     });
 
-    expect(renderer!.root.findByProps({ children: '0:00 - 0:03' })).toBeTruthy();
+    expect(
+      renderer!.root.findByProps({ children: '0:00 - 0:03' }),
+    ).toBeTruthy();
     expect(activeSubtitleInput().props.value).toBe('first bright line');
   });
 
@@ -779,7 +857,9 @@ describe('EditorScreen', () => {
       testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-0`,
     });
 
-    expect(activeWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
+    expect(activeWord.props.style).toEqual({
+      color: defaultSubtitleStyle.accentColor,
+    });
     expect(inactiveWord.props.style).toBeUndefined();
   });
 
@@ -808,10 +888,14 @@ describe('EditorScreen', () => {
     });
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
-    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const textInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
 
     await ReactTestRenderer.act(() => {
       textInput.props.onBlur();
@@ -821,7 +905,9 @@ describe('EditorScreen', () => {
       testID: `${OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX}-1`,
     });
 
-    expect(activeWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
+    expect(activeWord.props.style).toEqual({
+      color: defaultSubtitleStyle.accentColor,
+    });
   });
 
   it('highlights the current word inside the active subtitle input after entering edit mode', async () => {
@@ -849,10 +935,14 @@ describe('EditorScreen', () => {
     });
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
-    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const textInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
 
     await ReactTestRenderer.act(() => {
       textInput.props.onFocus();
@@ -867,7 +957,10 @@ describe('EditorScreen', () => {
         : node.props.children;
       const style = StyleSheet.flatten(node.props.style);
 
-      return content === 'bright' && style?.color === defaultSubtitleStyle.accentColor;
+      return (
+        content === 'bright' &&
+        style?.color === defaultSubtitleStyle.accentColor
+      );
     });
 
     expect(highlightedWords.length).toBeGreaterThan(0);
@@ -890,10 +983,14 @@ describe('EditorScreen', () => {
     });
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
-    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const textInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
     const inputStyle = StyleSheet.flatten(textInput.props.style);
 
     expect(inputStyle.fontSize).toBe(28);
@@ -919,10 +1016,14 @@ describe('EditorScreen', () => {
     });
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
-    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const textInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
 
     await ReactTestRenderer.act(() => {
       textInput.props.onChangeText('instant preview text');
@@ -960,16 +1061,22 @@ describe('EditorScreen', () => {
     });
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
-    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const textInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
 
     await ReactTestRenderer.act(() => {
       textInput.props.onChangeText('rewritten text');
     });
 
-    const updatedTextInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const updatedTextInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
 
     await ReactTestRenderer.act(() => {
       updatedTextInput.props.onBlur();
@@ -983,7 +1090,9 @@ describe('EditorScreen', () => {
     });
 
     expect(firstWord.props.children.join('')).toBe('rewritten');
-    expect(firstWord.props.style).toEqual({ color: defaultSubtitleStyle.accentColor });
+    expect(firstWord.props.style).toEqual({
+      color: defaultSubtitleStyle.accentColor,
+    });
     expect(secondWord.props.children.join('')).toBe(' text');
   });
 
@@ -1006,16 +1115,22 @@ describe('EditorScreen', () => {
     });
 
     await ReactTestRenderer.act(() => {
-      renderer!.root.findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: ACTIVE_SUBTITLE_HEADER_ID })
+        .props.onPress();
     });
 
-    const textInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const textInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
 
     await ReactTestRenderer.act(() => {
       textInput.props.onChangeText('rewritten text');
     });
 
-    const updatedTextInput = renderer!.root.findByProps({ placeholder: 'Rewrite subtitle text' });
+    const updatedTextInput = renderer!.root.findByProps({
+      placeholder: 'Rewrite subtitle text',
+    });
 
     await ReactTestRenderer.act(() => {
       updatedTextInput.props.onBlur();
@@ -1050,7 +1165,7 @@ describe('EditorScreen', () => {
     expect(renderer!.root.findByProps({ children: 'Retry' })).toBeTruthy();
   });
 
-  it('opens the locale retry sheet with auto detect and device locales', async () => {
+  it('opens the locale retry sheet with device locales only', async () => {
     jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
       width: 390,
       height: 844,
@@ -1074,11 +1189,11 @@ describe('EditorScreen', () => {
     });
 
     expect(mockGetAvailableSpeechLocales).toHaveBeenCalledTimes(1);
-    expect(
+    expect(() =>
       renderer!.root.findByProps({
         testID: `${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-__auto_detect__`,
       }),
-    ).toBeTruthy();
+    ).toThrow();
     expect(
       renderer!.root.findByProps({
         testID: `${LOCALE_RETRY_OPTION_TEST_ID_PREFIX}-en-US`,
@@ -1121,7 +1236,9 @@ describe('EditorScreen', () => {
     });
 
     await ReactTestRenderer.act(async () => {
-      renderer!.root.findByProps({ testID: LOCALE_RETRY_BUTTON_ID }).props.onPress();
+      renderer!.root
+        .findByProps({ testID: LOCALE_RETRY_BUTTON_ID })
+        .props.onPress();
       await Promise.resolve();
     });
 
@@ -1130,7 +1247,9 @@ describe('EditorScreen', () => {
       'ru-RU',
       mockAppStoreState.setProcessingPhase,
     );
-    expect(mockAppStoreState.beginProcessing).toHaveBeenCalledWith(failedProject.videoLocalURI);
+    expect(mockAppStoreState.beginProcessing).toHaveBeenCalledWith(
+      failedProject.videoLocalURI,
+    );
     expect(mockAppStoreState.finishProcessing).toHaveBeenCalledTimes(1);
     expect(mockAppStoreState.upsertProject).toHaveBeenCalled();
   });

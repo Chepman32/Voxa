@@ -4,7 +4,7 @@ export type SubtitleEffect = 'none' | 'neon' | 'chrome' | 'glow' | 'shadow';
 export type RecognitionStatus = 'ready' | 'manual' | 'failed';
 export type RecognitionMode = 'auto' | 'manual';
 export type ExportResolution = '720p' | '1080p' | '4k';
-export type TranscriptionLanguageMode = 'auto' | 'ask';
+export type TranscriptionLanguageMode = 'ask';
 export type AppRoute = 'home' | 'editor' | 'settings';
 
 export interface SpeechLocaleOption {
@@ -51,9 +51,18 @@ export interface ProjectMetrics {
   height: number;
 }
 
+export interface ProjectFolder {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Project {
   id: string;
   title: string;
+  folderId?: string;
+  deletedAt?: number;
   sourceFileName: string;
   videoLocalURI: string;
   videoFileName?: string;
@@ -101,7 +110,17 @@ export interface OnboardingPreferences {
 }
 
 export type SupportedLocale =
-  | 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'ru' | 'ja' | 'ko' | 'zh' | 'ar';
+  | 'en'
+  | 'es'
+  | 'pt'
+  | 'fr'
+  | 'de'
+  | 'it'
+  | 'ru'
+  | 'ja'
+  | 'ko'
+  | 'zh'
+  | 'ar';
 
 export interface OnboardingAnswers {
   goal: string | null;

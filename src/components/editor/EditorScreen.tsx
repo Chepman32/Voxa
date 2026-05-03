@@ -20,11 +20,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import {
-  useAtom,
-  useAtomValue,
-  useSetAtom,
-} from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn,
@@ -101,10 +97,7 @@ import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
 import { useIosScreenTransition } from '../common/useIosScreenTransition';
 import { ExportSheet } from './ExportSheet';
 import { calculateEditorVerticalLayout } from './layout';
-import {
-  AUTO_DETECT_LOCALE_VALUE,
-  LocaleRetrySheet,
-} from './LocaleRetrySheet';
+import { LocaleRetrySheet } from './LocaleRetrySheet';
 
 const MAX_TIMELINE_SURFACE_WIDTH = 8192;
 const TIMELINE_COLLAPSE_DURATION_MS = 220;
@@ -193,7 +186,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const lastSeekMs = useRef(0);
   const isScrubbing = useRef(false);
   const navigationPinnedSubtitleExpiresAtRef = useRef(0);
-  const pendingSeekSyncRef = useRef<{ expiresAt: number; targetMs: number } | null>(null);
+  const pendingSeekSyncRef = useRef<{
+    expiresAt: number;
+    targetMs: number;
+  } | null>(null);
   const [skipFlash, setSkipFlash] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [subtitleBubbleHeight, setSubtitleBubbleHeight] = useState(0);
@@ -201,11 +197,17 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [localeRetrySheetVisible, setLocaleRetrySheetVisible] = useState(false);
-  const [availableSpeechLocales, setAvailableSpeechLocales] = useState<SpeechLocaleOption[]>([]);
+  const [availableSpeechLocales, setAvailableSpeechLocales] = useState<
+    SpeechLocaleOption[]
+  >([]);
   const [loadingSpeechLocales, setLoadingSpeechLocales] = useState(false);
   const [retryingSubtitles, setRetryingSubtitles] = useState(false);
-  const [draggedSubtitleSnapshot, setDraggedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
-  const [navigationPinnedSubtitleSnapshot, setNavigationPinnedSubtitleSnapshot] = useState<SubtitleBlock | null>(null);
+  const [draggedSubtitleSnapshot, setDraggedSubtitleSnapshot] =
+    useState<SubtitleBlock | null>(null);
+  const [
+    navigationPinnedSubtitleSnapshot,
+    setNavigationPinnedSubtitleSnapshot,
+  ] = useState<SubtitleBlock | null>(null);
   const isSubtitleDraggingRef = useRef(false);
   const subtitleCanvasPreviewTopY = useSharedValue(0);
   const isSubtitleDragging = useSharedValue(false);
@@ -215,13 +217,17 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [editorProject, setProject] = useAtom(editorProjectAtom);
   const [playbackPosition, setPlaybackPosition] = useAtom(playbackPositionAtom);
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
-  const [selectedSubtitleId, setSelectedSubtitleId] = useAtom(selectedSubtitleIdAtom);
+  const [selectedSubtitleId, setSelectedSubtitleId] = useAtom(
+    selectedSubtitleIdAtom,
+  );
   const [subtitles, setSubtitles] = useAtom(subtitlesAtom);
   const [stylePresetValue, setStylePreset] = useAtom(globalStyleAtom);
   const [timelineZoom, setTimelineZoom] = useAtom(timelineZoomAtom);
   const [isTextEditing, setIsTextEditing] = useAtom(isTextEditingAtom);
   const [, setIsStylePanelOpen] = useAtom(isStylePanelOpenAtom);
-  const [isExportSheetOpen, setIsExportSheetOpen] = useAtom(isExportSheetOpenAtom);
+  const [isExportSheetOpen, setIsExportSheetOpen] = useAtom(
+    isExportSheetOpenAtom,
+  );
   const activeSubtitle = useAtomValue(activeSubtitleAtom);
   const selectedSubtitle = useAtomValue(selectedSubtitleAtom);
   const setPlayback = useSetAtom(playbackPositionAtom);
@@ -230,9 +236,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const [draftTextPreview, setDraftTextPreview] = useState<string | null>(null);
 
   const [selectedRetryLocale, setSelectedRetryLocale] = useState(
-    project.recognitionLocale || AUTO_DETECT_LOCALE_VALUE
+    project.recognitionLocale ?? '',
   );
-  const [activeTab, setActiveTab] = useState<'subtitle' | 'style' | 'language' | 'fx'>('subtitle');
+  const [activeTab, setActiveTab] = useState<
+    'subtitle' | 'style' | 'language' | 'fx'
+  >('subtitle');
   const [showRegenerateButton, setShowRegenerateButton] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -260,7 +268,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }, [isPlaying, scheduleHideControls, clearHideTimer]);
 
   useEffect(() => {
-    const handleKeyboardShow = (event?: { endCoordinates?: { height?: number } }) => {
+    const handleKeyboardShow = (event?: {
+      endCoordinates?: { height?: number };
+    }) => {
       setKeyboardVisible(true);
       setKeyboardHeight(event?.endCoordinates?.height ?? 0);
     };
@@ -284,7 +294,14 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => {
-    const pageIndex = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : activeTab === 'language' ? 2 : 3;
+    const pageIndex =
+      activeTab === 'subtitle'
+        ? 0
+        : activeTab === 'style'
+        ? 1
+        : activeTab === 'language'
+        ? 2
+        : 3;
     bottomEditorPagerRef.current?.scrollTo?.({
       x: pageIndex * width,
       animated: true,
@@ -296,12 +313,18 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const finishProcessing = useAppStore(state => state.finishProcessing);
   const setProcessingPhase = useAppStore(state => state.setProcessingPhase);
   const upsertProject = useAppStore(state => state.upsertProject);
-  const resolution = useAppStore(state => state.settings.preferredExportResolution);
-  const highlightEditedWords = useAppStore(state => state.settings.highlightEditedWords);
+  const resolution = useAppStore(
+    state => state.settings.preferredExportResolution,
+  );
+  const highlightEditedWords = useAppStore(
+    state => state.settings.highlightEditedWords,
+  );
   const rememberLastTranscriptionLanguage = useAppStore(
     state => state.settings.rememberLastTranscriptionLanguage,
   );
-  const setResolution = useAppStore(state => state.setPreferredExportResolution);
+  const setResolution = useAppStore(
+    state => state.setPreferredExportResolution,
+  );
   const setLastTranscriptionLocale = useAppStore(
     state => state.setLastTranscriptionLocale,
   );
@@ -351,7 +374,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   });
   const isTimelineCollapsed = keyboardVisible;
   const showKeyboardDismissButton = keyboardVisible && isTextEditing;
-  const targetTimelineHeight = isTimelineCollapsed ? 0 : editorLayout.timelineTrackHeight;
+  const targetTimelineHeight = isTimelineCollapsed
+    ? 0
+    : editorLayout.timelineTrackHeight;
   const targetTextZoneHeight = isTimelineCollapsed
     ? collapsedEditorLayout.textHeight
     : editorLayout.textHeight;
@@ -374,8 +399,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const pixelsPerMs = basePixelsPerMs * timelineScale;
   const contentWidth = Math.max(width, durationMs * pixelsPerMs);
 
-  const activeDisplaySubtitle =
-    isTextEditing ? selectedSubtitle ?? activeSubtitle : activeSubtitle;
+  const activeDisplaySubtitle = isTextEditing
+    ? selectedSubtitle ?? activeSubtitle
+    : activeSubtitle;
   const liveDisplaySubtitle = isPlaceholderSubtitle(activeDisplaySubtitle)
     ? null
     : activeDisplaySubtitle;
@@ -412,17 +438,24 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     ? t('subtitlesCreatedNeedsReview')
     : t('noSubtitlesGenerated');
   const recognitionBannerDetail = project.recognitionLocale
-    ? `${t('lastAttempt')}: ${project.recognitionLocale}${project.recognitionMode === 'manual' ? ` (${t('manual')})` : ` (${t('auto')})`}.`
+    ? `${t('lastAttempt')}: ${project.recognitionLocale}${
+        project.recognitionMode === 'manual'
+          ? ` (${t('manual')})`
+          : ` (${t('auto')})`
+      }.`
     : t('chooseLanguageToRetry');
 
-  const showRetryError = useCallback((error: unknown) => {
-    const message =
-      error instanceof Error && error.message
-        ? error.message
-        : t('subtitleRetryFailedBody');
+  const showRetryError = useCallback(
+    (error: unknown) => {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : t('subtitleRetryFailedBody');
 
-    Alert.alert(t('subtitleRetryFailedTitle'), message);
-  }, [t]);
+      Alert.alert(t('subtitleRetryFailedTitle'), message);
+    },
+    [t],
+  );
 
   const loadSpeechLocales = useCallback(async () => {
     setLoadingSpeechLocales(true);
@@ -438,25 +471,31 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
   }, [showRetryError]);
 
+  const resolveInitialRetryLocale = useCallback(
+    (locales: SpeechLocaleOption[]) => {
+      if (
+        project.recognitionLocale &&
+        locales.some(locale => locale.value === project.recognitionLocale)
+      ) {
+        return project.recognitionLocale;
+      }
+
+      return locales[0]?.value ?? '';
+    },
+    [project.recognitionLocale],
+  );
+
   const openLocaleRetrySheet = useCallback(async () => {
-    const initialLocale =
-      project.recognitionMode === 'manual' && project.recognitionLocale
-        ? project.recognitionLocale
-        : AUTO_DETECT_LOCALE_VALUE;
-    setSelectedRetryLocale(initialLocale);
     setLocaleRetrySheetVisible(true);
 
     if (availableSpeechLocales.length > 0) {
+      setSelectedRetryLocale(resolveInitialRetryLocale(availableSpeechLocales));
       return;
     }
 
-    await loadSpeechLocales();
-  }, [
-    availableSpeechLocales.length,
-    loadSpeechLocales,
-    project.recognitionLocale,
-    project.recognitionMode,
-  ]);
+    const locales = await loadSpeechLocales();
+    setSelectedRetryLocale(resolveInitialRetryLocale(locales));
+  }, [availableSpeechLocales, loadSpeechLocales, resolveInitialRetryLocale]);
 
   const closeLocaleRetrySheet = useCallback(() => {
     if (retryingSubtitles) {
@@ -470,8 +509,11 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   }, [loadSpeechLocales]);
 
   const handleRetrySubtitleGeneration = useCallback(async () => {
-    const localeOverride =
-      selectedRetryLocale === AUTO_DETECT_LOCALE_VALUE ? null : selectedRetryLocale;
+    if (!selectedRetryLocale) {
+      return;
+    }
+
+    const localeOverride = selectedRetryLocale;
 
     setRetryingSubtitles(true);
     beginProcessing(project.videoLocalURI);
@@ -498,8 +540,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
       Alert.alert(
         t('noSubtitlesCreatedTitle'),
-        updatedProject.importError ??
-          t('noSubtitlesSelectedLanguage'),
+        updatedProject.importError ?? t('noSubtitlesSelectedLanguage'),
       );
     } catch (error) {
       showRetryError(error);
@@ -552,7 +593,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     });
   };
 
-  const applyPositionPreset = (position: Project['globalStyle']['position']) => {
+  const applyPositionPreset = (
+    position: Project['globalStyle']['position'],
+  ) => {
     if (!stylePreset) {
       return;
     }
@@ -577,7 +620,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     );
   };
 
-  const updateProjectSubtitles = (updater: (current: SubtitleBlock[]) => SubtitleBlock[]) => {
+  const updateProjectSubtitles = (
+    updater: (current: SubtitleBlock[]) => SubtitleBlock[],
+  ) => {
     setSubtitles(current => updater(current));
   };
 
@@ -605,26 +650,38 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     );
   };
 
-  const beginSubtitleDragSession = useCallback((subtitle: SubtitleBlock | null) => {
-    isSubtitleDraggingRef.current = true;
-    setDraggedSubtitleSnapshot(subtitle);
-  }, []);
+  const beginSubtitleDragSession = useCallback(
+    (subtitle: SubtitleBlock | null) => {
+      isSubtitleDraggingRef.current = true;
+      setDraggedSubtitleSnapshot(subtitle);
+    },
+    [],
+  );
 
   const finishSubtitleDragSession = useCallback(() => {
     isSubtitleDraggingRef.current = false;
     setDraggedSubtitleSnapshot(null);
   }, []);
 
-  const beginSubtitleNavigationTransition = useCallback((subtitle: SubtitleBlock | null) => {
-    navigationPinnedSubtitleExpiresAtRef.current = Date.now() + SUBTITLE_NAVIGATION_SETTLE_MS;
-    setNavigationPinnedSubtitleSnapshot(subtitle);
-  }, []);
+  const beginSubtitleNavigationTransition = useCallback(
+    (subtitle: SubtitleBlock | null) => {
+      navigationPinnedSubtitleExpiresAtRef.current =
+        Date.now() + SUBTITLE_NAVIGATION_SETTLE_MS;
+      setNavigationPinnedSubtitleSnapshot(subtitle);
+    },
+    [],
+  );
 
-  const navigateAdjacentSubtitle = (direction: -1 | 1, keepEditing: boolean) => {
+  const navigateAdjacentSubtitle = (
+    direction: -1 | 1,
+    keepEditing: boolean,
+  ) => {
     if (!selectedSubtitle) {
       return;
     }
-    const currentIndex = subtitles.findIndex(item => item.id === selectedSubtitle.id);
+    const currentIndex = subtitles.findIndex(
+      item => item.id === selectedSubtitle.id,
+    );
     if (currentIndex === -1) {
       return;
     }
@@ -636,7 +693,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     updateSelectedSubtitleSelection(nextSubtitle.id, keepEditing);
   };
 
-  const updateSelectedSubtitleSelection = (subtitleId: string, keepEditing: boolean) => {
+  const updateSelectedSubtitleSelection = (
+    subtitleId: string,
+    keepEditing: boolean,
+  ) => {
     setSelectedSubtitleId(subtitleId);
     setIsTextEditing(keepEditing);
     const subtitle = subtitles.find(item => item.id === subtitleId);
@@ -676,7 +736,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
     const pendingSeekSync = pendingSeekSyncRef.current;
     if (pendingSeekSync) {
-      const seekSettled = Math.abs(currentTimeMs - pendingSeekSync.targetMs) <= 140;
+      const seekSettled =
+        Math.abs(currentTimeMs - pendingSeekSync.targetMs) <= 140;
       const seekExpired = Date.now() >= pendingSeekSync.expiresAt;
 
       if (!seekSettled && !seekExpired) {
@@ -785,19 +846,21 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     }
   });
 
-  const effectiveSubtitleBubbleHeight =
-    stylePreset ? Math.max(subtitleBubbleHeight, stylePreset.fontSize + 24) : subtitleBubbleHeight;
+  const effectiveSubtitleBubbleHeight = stylePreset
+    ? Math.max(subtitleBubbleHeight, stylePreset.fontSize + 24)
+    : subtitleBubbleHeight;
   const videoSubtitleBounds = getSubtitleVerticalBounds(
     editorLayout.videoHeight,
     effectiveSubtitleBubbleHeight,
   );
-  const videoSubtitleTop = stylePreset && displaySubtitle
-    ? getSubtitleVerticalOrigin(
-        stylePreset,
-        editorLayout.videoHeight,
-        effectiveSubtitleBubbleHeight,
-      )
-    : 0;
+  const videoSubtitleTop =
+    stylePreset && displaySubtitle
+      ? getSubtitleVerticalOrigin(
+          stylePreset,
+          editorLayout.videoHeight,
+          effectiveSubtitleBubbleHeight,
+        )
+      : 0;
   const overlayStylePreset =
     displaySubtitle &&
     hasRenderableSubtitleWords(displaySubtitle, {
@@ -822,7 +885,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     ],
   }));
   const timelineSectionAnimatedStyle = useAnimatedStyle(() => ({
-    height: withTiming(targetTimelineHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
+    height: withTiming(targetTimelineHeight, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
     opacity: withTiming(isTimelineCollapsed ? 0 : 1, {
       duration: TIMELINE_COLLAPSE_DURATION_MS,
     }),
@@ -846,10 +911,14 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     ],
   }));
   const textZoneAnimatedStyle = useAnimatedStyle(() => ({
-    height: withTiming(targetTextZoneHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
+    height: withTiming(targetTextZoneHeight, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
   }));
   const bottomEditorAnimatedStyle = useAnimatedStyle(() => ({
-    height: withTiming(targetBottomEditorHeight, { duration: TIMELINE_COLLAPSE_DURATION_MS }),
+    height: withTiming(targetBottomEditorHeight, {
+      duration: TIMELINE_COLLAPSE_DURATION_MS,
+    }),
   }));
   const keyboardDismissAnimatedStyle = useAnimatedStyle(() => ({
     bottom: withTiming(showKeyboardDismissButton ? keyboardHeight + 10 : 0, {
@@ -948,22 +1017,34 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
   return (
     <Animated.View
-      style={[styles.root, styles.screenTransitionShadow, screenTransitionStyle]}>
+      style={[
+        styles.root,
+        styles.screenTransitionShadow,
+        screenTransitionStyle,
+      ]}
+    >
       <AtmosphereCanvas intensity={1.1} />
       <Animated.View
         pointerEvents={isKeyboardEditing ? 'none' : 'auto'}
         style={[styles.topBarShell, topBarAnimatedStyle]}
-        testID={EDITOR_TOP_BAR_ID}>
+        testID={EDITOR_TOP_BAR_ID}
+      >
         <View style={styles.topBar}>
           <Pressable
             accessibilityLabel={t('back')}
             onPress={closeEditor}
-            style={styles.topBarButton}>
-            <Feather color={palette.textPrimary} name="chevron-left" size={20} />
+            style={styles.topBarButton}
+          >
+            <Feather
+              color={palette.textPrimary}
+              name="chevron-left"
+              size={20}
+            />
           </Pressable>
           <View style={styles.topBarMeta}>
             <Text style={styles.topBarSubtitle}>
-              {formatDuration(playbackPosition)} / {formatDuration(project.duration)}
+              {formatDuration(playbackPosition)} /{' '}
+              {formatDuration(project.duration)}
             </Text>
           </View>
           <Pressable onPress={openExportSheet} style={styles.topBarButton}>
@@ -980,7 +1061,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
               setBannerHeight(nextHeight);
             }
           }}
-          style={styles.banner}>
+          style={styles.banner}
+        >
           <Feather color={palette.amber} name="alert-triangle" size={16} />
           <View style={styles.bannerCopy}>
             <Text style={styles.bannerText}>{recognitionBannerText}</Text>
@@ -995,7 +1077,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
               styles.bannerAction,
               retryingSubtitles ? styles.bannerActionDisabled : undefined,
             ]}
-            testID={RETRY_SUBTITLE_BANNER_BUTTON_ID}>
+            testID={RETRY_SUBTITLE_BANNER_BUTTON_ID}
+          >
             <Text style={styles.bannerActionLabel}>{t('retry')}</Text>
           </Pressable>
         </GlassPanel>
@@ -1008,13 +1091,18 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             gap: editorLayout.stackGap,
             paddingBottom: editorLayout.contentPaddingBottom,
           },
-        ]}>
+        ]}
+      >
         <GestureDetector gesture={videoDismissGesture}>
-          <View style={[styles.videoZone, { height: editorLayout.videoHeight }]}>
+          <View
+            style={[styles.videoZone, { height: editorLayout.videoHeight }]}
+          >
             <Video
               onEnd={handleVideoEnd}
               onLoad={handleVideoLoad}
-              onProgress={event => handleVideoProgress(event.currentTime * 1000)}
+              onProgress={event =>
+                handleVideoProgress(event.currentTime * 1000)
+              }
               paused={!isPlaying}
               ref={videoRef}
               repeat={false}
@@ -1026,24 +1114,37 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
             <View style={styles.doubleTapRow}>
               <GestureDetector
-                gesture={Gesture.Tap().numberOfTaps(2).onEnd(() => runOnJS(seekBy)(-5000))}>
+                gesture={Gesture.Tap()
+                  .numberOfTaps(2)
+                  .onEnd(() => runOnJS(seekBy)(-5000))}
+              >
                 <View style={styles.videoHalf} />
               </GestureDetector>
               <GestureDetector
-                gesture={Gesture.Tap().numberOfTaps(2).onEnd(() => runOnJS(seekBy)(5000))}>
+                gesture={Gesture.Tap()
+                  .numberOfTaps(2)
+                  .onEnd(() => runOnJS(seekBy)(5000))}
+              >
                 <View style={styles.videoHalf} />
               </GestureDetector>
             </View>
 
-            <Pressable onPress={handleVideoTap} style={StyleSheet.absoluteFill} />
+            <Pressable
+              onPress={handleVideoTap}
+              style={StyleSheet.absoluteFill}
+            />
 
             {showControls ? (
               <Animated.View
                 entering={FadeIn.duration(150)}
                 exiting={FadeOut.duration(150)}
                 pointerEvents="box-none"
-                style={styles.playPauseWrap}>
-                <Pressable onPress={togglePlayback} style={styles.playPauseButton}>
+                style={styles.playPauseWrap}
+              >
+                <Pressable
+                  onPress={togglePlayback}
+                  style={styles.playPauseButton}
+                >
                   <Feather
                     color={palette.textPrimary}
                     name={isPlaying ? 'pause' : 'play'}
@@ -1057,19 +1158,26 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
               <Animated.View
                 entering={FadeIn.duration(120)}
                 exiting={FadeOut.duration(220)}
-                style={styles.skipFlash}>
+                style={styles.skipFlash}
+              >
                 <Text style={styles.skipFlashText}>{skipFlash}</Text>
               </Animated.View>
             ) : null}
 
             {displaySubtitle ? (
               <View pointerEvents="box-none" style={styles.overlaySubtitleWrap}>
-                <GestureDetector gesture={Gesture.Race(subtitleDragGesture, subtitleTapGesture)}>
+                <GestureDetector
+                  gesture={Gesture.Race(
+                    subtitleDragGesture,
+                    subtitleTapGesture,
+                  )}
+                >
                   <Animated.View
                     style={[
                       styles.overlaySubtitleBubble,
                       subtitleBubbleAnimatedStyle,
-                    ]}>
+                    ]}
+                  >
                     <HighlightedSubtitleText
                       allowSyntheticWords={highlightEditedWords}
                       onLayout={event => {
@@ -1104,7 +1212,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         <Animated.View
           pointerEvents={isTimelineCollapsed ? 'none' : 'auto'}
           style={[styles.timelineSectionShell, timelineSectionAnimatedStyle]}
-          testID={TIMELINE_SECTION_ID}>
+          testID={TIMELINE_SECTION_ID}
+        >
           <TimelineTrackSection
             contentWidth={contentWidth}
             onScroll={handleTimelineScroll}
@@ -1128,7 +1237,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
         <Animated.View
           style={[styles.bottomEditorShell, bottomEditorAnimatedStyle]}
-          testID={BOTTOM_EDITOR_SHELL_ID}>
+          testID={BOTTOM_EDITOR_SHELL_ID}
+        >
           <BottomEditorTabs
             activeTab={activeTab}
             onSelectTab={tab => {
@@ -1143,8 +1253,17 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             directionalLockEnabled
             decelerationRate="fast"
             onMomentumScrollEnd={event => {
-              const pageIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-              const newTab = pageIndex === 0 ? 'subtitle' : pageIndex === 1 ? 'style' : pageIndex === 2 ? 'language' : 'fx';
+              const pageIndex = Math.round(
+                event.nativeEvent.contentOffset.x / width,
+              );
+              const newTab =
+                pageIndex === 0
+                  ? 'subtitle'
+                  : pageIndex === 1
+                  ? 'style'
+                  : pageIndex === 2
+                  ? 'language'
+                  : 'fx';
               setActiveTab(newTab);
               setIsStylePanelOpen(newTab === 'style');
             }}
@@ -1153,7 +1272,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
             scrollEnabled={!isTextEditing}
             showsHorizontalScrollIndicator={false}
             style={styles.bottomEditorPager}
-            testID={BOTTOM_EDITOR_PAGER_ID}>
+            testID={BOTTOM_EDITOR_PAGER_ID}
+          >
             <View style={[styles.bottomEditorPage, { width }]}>
               {isTimelineCollapsed ? null : (
                 <TimelineControlsPanel
@@ -1170,7 +1290,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 isEditing={isTextEditing}
                 keyboardVisible={keyboardVisible}
                 onNavigate={navigateAdjacentSubtitle}
-                onDraftChange={text => { setDraftTextPreview(text); }}
+                onDraftChange={text => {
+                  setDraftTextPreview(text);
+                }}
                 onSelectText={() => {
                   setIsStylePanelOpen(false);
                   setIsTextEditing(true);
@@ -1179,7 +1301,9 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                   }
                 }}
                 onSetEditing={value => {
-                  if (!value) { setDraftTextPreview(null); }
+                  if (!value) {
+                    setDraftTextPreview(null);
+                  }
                   setIsTextEditing(value);
                 }}
                 onUpdateText={updateSelectedSubtitleText}
@@ -1205,7 +1329,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 selectedLocale={selectedRetryLocale}
                 onSelectLocale={locale => {
                   setSelectedRetryLocale(locale);
-                  const hasChanged = locale !== (project.recognitionLocale || AUTO_DETECT_LOCALE_VALUE);
+                  const hasChanged =
+                    locale !== (project.recognitionLocale ?? '');
                   setShowRegenerateButton(hasChanged);
                 }}
               />
@@ -1233,17 +1358,29 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(150)}
-          style={[styles.floatingRegenerateButton, { bottom: bottomInset + 24, right: 16 }]}>
+          style={[
+            styles.floatingRegenerateButton,
+            { bottom: bottomInset + 24, right: 16 },
+          ]}
+        >
           <Pressable
-            disabled={retryingSubtitles || availableSpeechLocales.length === 0}
+            disabled={
+              retryingSubtitles ||
+              availableSpeechLocales.length === 0 ||
+              selectedRetryLocale.length === 0
+            }
             onPress={() => {
               setShowRegenerateButton(false);
               handleRetrySubtitleGeneration().catch(showRetryError);
             }}
             style={[
               styles.regenerateButton,
-              (retryingSubtitles || availableSpeechLocales.length === 0) && styles.regenerateButtonDisabled,
-            ]}>
+              (retryingSubtitles ||
+                availableSpeechLocales.length === 0 ||
+                selectedRetryLocale.length === 0) &&
+                styles.regenerateButtonDisabled,
+            ]}
+          >
             <Text style={styles.regenerateButtonText}>
               {retryingSubtitles ? t('regenerating') : t('regenerateSubtitles')}
             </Text>
@@ -1252,12 +1389,19 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       )}
 
       {showKeyboardDismissButton ? (
-        <Animated.View style={[styles.keyboardDismissWrap, keyboardDismissAnimatedStyle]}>
+        <Animated.View
+          style={[styles.keyboardDismissWrap, keyboardDismissAnimatedStyle]}
+        >
           <Pressable
             onPress={() => Keyboard.dismiss()}
             style={styles.keyboardDismissButton}
-            testID={KEYBOARD_DISMISS_BUTTON_ID}>
-            <Feather color={palette.textPrimary} name="chevron-down" size={16} />
+            testID={KEYBOARD_DISMISS_BUTTON_ID}
+          >
+            <Feather
+              color={palette.textPrimary}
+              name="chevron-down"
+              size={16}
+            />
             <Text style={styles.keyboardDismissLabel}>{t('done')}</Text>
           </Pressable>
         </Animated.View>
@@ -1324,7 +1468,9 @@ function TimelineTrackSection({
       pinchStartZoom.current = timelineZoom;
     })
     .onUpdate(event => {
-      runOnJS(setTimelineZoom)(clamp(pinchStartZoom.current * event.scale, 0.75, 2.4));
+      runOnJS(setTimelineZoom)(
+        clamp(pinchStartZoom.current * event.scale, 0.75, 2.4),
+      );
     });
 
   return (
@@ -1344,11 +1490,15 @@ function TimelineTrackSection({
               onScrollEndDrag={onScrubEnd}
               ref={timelineRef}
               scrollEventThrottle={16}
-              showsHorizontalScrollIndicator={false}>
-              <View style={{ width: contentWidth, height: timelineTrackHeight }}>
+              showsHorizontalScrollIndicator={false}
+            >
+              <View
+                style={{ width: contentWidth, height: timelineTrackHeight }}
+              >
                 <View pointerEvents="none" style={styles.waveformLayer}>
                   {waveform.map((value, index) => {
-                    const barWidth = contentWidth / Math.max(1, waveform.length);
+                    const barWidth =
+                      contentWidth / Math.max(1, waveform.length);
                     const minAmplitude = timelineTrackHeight * 0.52;
                     const maxAmplitude = timelineTrackHeight * 0.92;
                     const amplitude = clamp(
@@ -1359,7 +1509,7 @@ function TimelineTrackSection({
                     const x = index * barWidth;
                     const y = (timelineTrackHeight - amplitude) / 2;
                     const barColor =
-                      Math.abs((x / pixelsPerMs) - playhead) < 1300
+                      Math.abs(x / pixelsPerMs - playhead) < 1300
                         ? 'rgba(0, 240, 255, 0.5)'
                         : 'rgba(255, 255, 255, 0.16)';
 
@@ -1408,7 +1558,9 @@ function TimelineControlsPanel({
       <View style={styles.timelineControlDock}>
         <View style={styles.timelineControlRow}>
           <View style={styles.timelineControlCopy}>
-            <Text style={styles.timelineControlLabel}>{t('wordHighlight')}</Text>
+            <Text style={styles.timelineControlLabel}>
+              {t('wordHighlight')}
+            </Text>
             <Text style={styles.timelineControlHint}>
               {wordHighlightAvailable
                 ? t('wordHighlightAvailable')
@@ -1421,7 +1573,9 @@ function TimelineControlsPanel({
             onValueChange={onToggleWordHighlight}
             testID={WORD_HIGHLIGHT_SWITCH_ID}
             thumbColor={
-              wordHighlightAvailable ? palette.textPrimary : 'rgba(255, 255, 255, 0.32)'
+              wordHighlightAvailable
+                ? palette.textPrimary
+                : 'rgba(255, 255, 255, 0.32)'
             }
             trackColor={{
               false: 'rgba(255, 255, 255, 0.16)',
@@ -1462,12 +1616,14 @@ function FXPanel({
             style={[
               styles.fxOption,
               currentEffect === effect.value && styles.fxOptionActive,
-            ]}>
+            ]}
+          >
             <Text
               style={[
                 styles.fxOptionLabel,
                 currentEffect === effect.value && styles.fxOptionLabelActive,
-              ]}>
+              ]}
+            >
               {effect.label}
             </Text>
             {currentEffect === effect.value && (
@@ -1498,35 +1654,23 @@ function LanguagePanel({
     <ScrollView
       bounces={false}
       contentContainerStyle={styles.languagePanel}
-      showsVerticalScrollIndicator={false}>
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.languagePanelHeader}>
-        <Text style={styles.languagePanelTitle}>{t('recognitionLanguage')}</Text>
+        <Text style={styles.languagePanelTitle}>
+          {t('recognitionLanguage')}
+        </Text>
         <Text style={styles.languagePanelHint}>
           {currentLocale
-            ? `${t('current')}: ${availableLocales.find(l => l.value === currentLocale)?.label || currentLocale}`
+            ? `${t('current')}: ${
+                availableLocales.find(l => l.value === currentLocale)?.label ||
+                currentLocale
+              }`
             : t('chooseLanguageToRetry')}
         </Text>
       </View>
 
       <View style={styles.localeOptions}>
-        <Pressable
-          onPress={() => onSelectLocale(AUTO_DETECT_LOCALE_VALUE)}
-          style={[
-            styles.localeOption,
-            selectedLocale === AUTO_DETECT_LOCALE_VALUE && styles.localeOptionActive,
-          ]}>
-          <Text
-            style={[
-              styles.localeOptionLabel,
-              selectedLocale === AUTO_DETECT_LOCALE_VALUE && styles.localeOptionLabelActive,
-            ]}>
-            {t('autoDetect')}
-          </Text>
-          {selectedLocale === AUTO_DETECT_LOCALE_VALUE && (
-            <Feather color={palette.cyan} name="check" size={16} />
-          )}
-        </Pressable>
-
         {availableLocales.map(option => (
           <Pressable
             key={option.value}
@@ -1534,12 +1678,15 @@ function LanguagePanel({
             style={[
               styles.localeOption,
               selectedLocale === option.value && styles.localeOptionActive,
-            ]}>
+            ]}
+          >
             <Text
               style={[
                 styles.localeOptionLabel,
-                selectedLocale === option.value && styles.localeOptionLabelActive,
-              ]}>
+                selectedLocale === option.value &&
+                  styles.localeOptionLabelActive,
+              ]}
+            >
               {option.label}
             </Text>
             {selectedLocale === option.value && (
@@ -1552,7 +1699,9 @@ function LanguagePanel({
       <Text style={styles.languagePanelFootnote}>
         {loading
           ? t('loadingOnDeviceLanguages')
-          : `${availableLocales.length} ${t('onDeviceLanguagesAvailableShort')}`}
+          : `${availableLocales.length} ${t(
+              'onDeviceLanguagesAvailableShort',
+            )}`}
       </Text>
     </ScrollView>
   );
@@ -1568,11 +1717,24 @@ function BottomEditorTabs({
   const { t } = useTranslation();
   const [tabTrackWidth, setTabTrackWidth] = useState(0);
   const activeTabProgress = useSharedValue(
-    activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : activeTab === 'language' ? 2 : 3
+    activeTab === 'subtitle'
+      ? 0
+      : activeTab === 'style'
+      ? 1
+      : activeTab === 'language'
+      ? 2
+      : 3,
   );
 
   useEffect(() => {
-    const nextProgress = activeTab === 'subtitle' ? 0 : activeTab === 'style' ? 1 : activeTab === 'language' ? 2 : 3;
+    const nextProgress =
+      activeTab === 'subtitle'
+        ? 0
+        : activeTab === 'style'
+        ? 1
+        : activeTab === 'language'
+        ? 2
+        : 3;
     const direction = nextProgress - activeTabProgress.value;
 
     activeTabProgress.value = withSpring(nextProgress, {
@@ -1586,7 +1748,9 @@ function BottomEditorTabs({
   const tabIndicatorWidth = tabTrackWidth > 12 ? (tabTrackWidth - 12) / 4 : 0;
   const tabIndicatorTravel = tabIndicatorWidth + 4;
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
-    const bounceDistance = Math.abs(activeTabProgress.value - Math.round(activeTabProgress.value));
+    const bounceDistance = Math.abs(
+      activeTabProgress.value - Math.round(activeTabProgress.value),
+    );
     const scale = 1 + bounceDistance * 0.04;
 
     return {
@@ -1671,7 +1835,8 @@ function BottomEditorTabs({
           setTabTrackWidth(nextWidth);
         }
       }}
-      style={styles.bottomEditorTabs}>
+      style={styles.bottomEditorTabs}
+    >
       <Animated.View
         pointerEvents="none"
         style={[styles.bottomEditorTabIndicator, indicatorAnimatedStyle]}
@@ -1681,13 +1846,15 @@ function BottomEditorTabs({
         accessibilityState={{ selected: activeTab === 'subtitle' }}
         onPress={() => onSelectTab('subtitle')}
         style={styles.bottomEditorTab}
-        testID={BOTTOM_EDITOR_PRIMARY_TAB_ID}>
+        testID={BOTTOM_EDITOR_PRIMARY_TAB_ID}
+      >
         <Animated.View style={subtitleLabelAnimatedStyle}>
           <Text
             style={[
               styles.bottomEditorTabLabel,
               activeTab === 'subtitle' && styles.bottomEditorTabLabelActive,
-            ]}>
+            ]}
+          >
             {t('subtitleTab')}
           </Text>
         </Animated.View>
@@ -1697,13 +1864,15 @@ function BottomEditorTabs({
         accessibilityState={{ selected: activeTab === 'style' }}
         onPress={() => onSelectTab('style')}
         style={styles.bottomEditorTab}
-        testID={BOTTOM_EDITOR_STYLE_TAB_ID}>
+        testID={BOTTOM_EDITOR_STYLE_TAB_ID}
+      >
         <Animated.View style={styleLabelAnimatedStyle}>
           <Text
             style={[
               styles.bottomEditorTabLabel,
               activeTab === 'style' && styles.bottomEditorTabLabelActive,
-            ]}>
+            ]}
+          >
             {t('styleTab')}
           </Text>
         </Animated.View>
@@ -1713,13 +1882,15 @@ function BottomEditorTabs({
         accessibilityState={{ selected: activeTab === 'language' }}
         onPress={() => onSelectTab('language')}
         style={styles.bottomEditorTab}
-        testID={BOTTOM_EDITOR_LANGUAGE_TAB_ID}>
+        testID={BOTTOM_EDITOR_LANGUAGE_TAB_ID}
+      >
         <Animated.View style={languageLabelAnimatedStyle}>
           <Text
             style={[
               styles.bottomEditorTabLabel,
               activeTab === 'language' && styles.bottomEditorTabLabelActive,
-            ]}>
+            ]}
+          >
             {t('languageTab')}
           </Text>
         </Animated.View>
@@ -1729,13 +1900,15 @@ function BottomEditorTabs({
         accessibilityState={{ selected: activeTab === 'fx' }}
         onPress={() => onSelectTab('fx')}
         style={styles.bottomEditorTab}
-        testID={BOTTOM_EDITOR_FX_TAB_ID}>
+        testID={BOTTOM_EDITOR_FX_TAB_ID}
+      >
         <Animated.View style={fxLabelAnimatedStyle}>
           <Text
             style={[
               styles.bottomEditorTabLabel,
               activeTab === 'fx' && styles.bottomEditorTabLabelActive,
-            ]}>
+            ]}
+          >
             {t('fxTab')}
           </Text>
         </Animated.View>
@@ -1798,11 +1971,17 @@ function TextEditorSection({
       return;
     }
 
-    const currentIndex = findActiveSubtitleWordIndex(selectedSubtitle, playbackPosition);
+    const currentIndex = findActiveSubtitleWordIndex(
+      selectedSubtitle,
+      playbackPosition,
+    );
     setActiveEditWordIndex(
       currentIndex > -1
         ? currentIndex
-        : findActiveSubtitleWordIndex(selectedSubtitle, selectedSubtitle.startTime),
+        : findActiveSubtitleWordIndex(
+            selectedSubtitle,
+            selectedSubtitle.startTime,
+          ),
     );
   }, [playbackPosition, selectedSubtitle]);
 
@@ -1826,21 +2005,22 @@ function TextEditorSection({
   return (
     <Animated.View
       testID={ACTIVE_SUBTITLE_SECTION_ID}
-      style={[
-        styles.textZone,
-        containerAnimatedStyle,
-      ]}>
+      style={[styles.textZone, containerAnimatedStyle]}
+    >
       <GlassPanel style={styles.textPanel}>
         <View style={styles.textPanelHeader}>
           <Pressable
             onPress={handlePanelPress}
             style={styles.textPanelHeaderCopy}
-            testID={ACTIVE_SUBTITLE_HEADER_ID}>
+            testID={ACTIVE_SUBTITLE_HEADER_ID}
+          >
             <View>
               <Text style={styles.textLabel}>{t('activeSubtitle')}</Text>
               <Text style={styles.textTiming}>
                 {selectedSubtitle
-                  ? `${formatDuration(selectedSubtitle.startTime)} - ${formatDuration(selectedSubtitle.endTime)}`
+                  ? `${formatDuration(
+                      selectedSubtitle.startTime,
+                    )} - ${formatDuration(selectedSubtitle.endTime)}`
                   : t('noSubtitleSelected')}
               </Text>
             </View>
@@ -1854,8 +2034,13 @@ function TextEditorSection({
                 styles.subtitleNavButton,
                 !canNavigatePrev && styles.subtitleNavButtonDisabled,
               ]}
-              testID={ACTIVE_SUBTITLE_PREV_BUTTON_ID}>
-              <Feather color={palette.textPrimary} name="chevron-left" size={16} />
+              testID={ACTIVE_SUBTITLE_PREV_BUTTON_ID}
+            >
+              <Feather
+                color={palette.textPrimary}
+                name="chevron-left"
+                size={16}
+              />
             </Pressable>
             <Pressable
               disabled={!canNavigateNext}
@@ -1864,8 +2049,13 @@ function TextEditorSection({
                 styles.subtitleNavButton,
                 !canNavigateNext && styles.subtitleNavButtonDisabled,
               ]}
-              testID={ACTIVE_SUBTITLE_NEXT_BUTTON_ID}>
-              <Feather color={palette.textPrimary} name="chevron-right" size={16} />
+              testID={ACTIVE_SUBTITLE_NEXT_BUTTON_ID}
+            >
+              <Feather
+                color={palette.textPrimary}
+                name="chevron-right"
+                size={16}
+              />
             </Pressable>
           </View>
         </View>
@@ -1876,7 +2066,8 @@ function TextEditorSection({
           scrollEnabled={false}
           showsVerticalScrollIndicator={false}
           style={styles.textPanelBody}
-          contentContainerStyle={styles.textPanelBodyContent}>
+          contentContainerStyle={styles.textPanelBodyContent}
+        >
           {selectedSubtitle ? (
             <View>
               <TextInput
@@ -1900,29 +2091,42 @@ function TextEditorSection({
                 }}
                 placeholder={t('rewriteSubtitleText')}
                 placeholderTextColor={palette.textSecondary}
-                style={[styles.subtitlePreview, styles.textInput, styles.textInputTransparent]}
+                style={[
+                  styles.subtitlePreview,
+                  styles.textInput,
+                  styles.textInputTransparent,
+                ]}
               />
               <View style={StyleSheet.absoluteFill} pointerEvents="none">
                 {isEditing ? (
                   <Text style={[styles.subtitlePreview, styles.textInput]}>
-                    {draftText.split(/(\s+)/).reduce<{ nodes: React.ReactNode[]; wordIdx: number }>(
-                      (acc, token) => {
-                        if (/\S/.test(token)) {
-                          acc.nodes.push(
-                            <Text
-                              key={acc.wordIdx}
-                              style={acc.wordIdx === activeEditWordIndex ? { color: stylePreset.accentColor } : undefined}>
-                              {token}
-                            </Text>,
-                          );
-                          acc.wordIdx++;
-                        } else {
-                          acc.nodes.push(token);
-                        }
-                        return acc;
-                      },
-                      { nodes: [], wordIdx: 0 },
-                    ).nodes}
+                    {
+                      draftText
+                        .split(/(\s+)/)
+                        .reduce<{ nodes: React.ReactNode[]; wordIdx: number }>(
+                          (acc, token) => {
+                            if (/\S/.test(token)) {
+                              acc.nodes.push(
+                                <Text
+                                  key={acc.wordIdx}
+                                  style={
+                                    acc.wordIdx === activeEditWordIndex
+                                      ? { color: stylePreset.accentColor }
+                                      : undefined
+                                  }
+                                >
+                                  {token}
+                                </Text>,
+                              );
+                              acc.wordIdx++;
+                            } else {
+                              acc.nodes.push(token);
+                            }
+                            return acc;
+                          },
+                          { nodes: [], wordIdx: 0 },
+                        ).nodes
+                    }
                   </Text>
                 ) : (
                   <HighlightedSubtitleText
@@ -1935,7 +2139,9 @@ function TextEditorSection({
               </View>
             </View>
           ) : (
-            <Text style={styles.subtitlePreview}>{t('selectSubtitleToEdit')}</Text>
+            <Text style={styles.subtitlePreview}>
+              {t('selectSubtitleToEdit')}
+            </Text>
           )}
         </ScrollView>
       </GlassPanel>
@@ -1950,7 +2156,9 @@ function StyleSelectorsPanel({
 }: {
   currentStyle: Project['globalStyle'];
   onChangeStyle: (style: Project['globalStyle']) => void;
-  onUpdatePositionPreset: (position: Project['globalStyle']['position']) => void;
+  onUpdatePositionPreset: (
+    position: Project['globalStyle']['position'],
+  ) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -1960,7 +2168,8 @@ function StyleSelectorsPanel({
         bounces
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.styleSelectorsContent}>
+        contentContainerStyle={styles.styleSelectorsContent}
+      >
         <StyleRow
           label={t('fonts')}
           options={subtitleFontOptions.map(option => ({
@@ -2028,7 +2237,10 @@ function StyleSelectorsPanel({
             id: option.id,
             label: option.label,
             active: currentStyle.backgroundColor === option.backgroundColor,
-            swatch: option.backgroundColor === 'transparent' ? undefined : option.backgroundColor,
+            swatch:
+              option.backgroundColor === 'transparent'
+                ? undefined
+                : option.backgroundColor,
             onPress: () =>
               onChangeStyle({
                 ...currentStyle,
@@ -2102,7 +2314,8 @@ function StyleRow({
               style={[
                 styles.styleOption,
                 option.active ? styles.styleOptionActive : undefined,
-              ]}>
+              ]}
+            >
               {option.swatch ? (
                 <View
                   style={[
@@ -2115,7 +2328,8 @@ function StyleRow({
                 style={[
                   styles.styleOptionText,
                   option.active ? styles.styleOptionTextActive : undefined,
-                ]}>
+                ]}
+              >
                 {option.label}
               </Text>
             </Pressable>

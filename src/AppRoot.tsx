@@ -31,7 +31,6 @@ import { haptics } from './services/haptics';
 import { resolveLocale } from './i18n/translations';
 import { useTranslation } from './i18n/useTranslation';
 import {
-  AUTO_DETECT_LOCALE_VALUE,
   findSpeechLocaleOption,
   resolveRememberedSpeechLocale,
 } from './lib/speech-locale';
@@ -51,11 +50,14 @@ export function AppRoot() {
   const { t } = useTranslation();
   const hydrated = useAppStore(state => state.hydrated);
   const projects = useAppStore(state => state.projects);
+  const folders = useAppStore(state => state.folders);
   const processing = useAppStore(state => state.processing);
   const settings = useAppStore(state => state.settings);
   const route = useAppStore(state => state.route);
   const activeProjectId = useAppStore(state => state.activeProjectId);
-  const hasCompletedOnboarding = useAppStore(state => state.hasCompletedOnboarding);
+  const hasCompletedOnboarding = useAppStore(
+    state => state.hasCompletedOnboarding,
+  );
   const uiLocale = useAppStore(state => state.uiLocale);
   const setUiLocale = useAppStore(state => state.setUiLocale);
 
@@ -63,6 +65,15 @@ export function AppRoot() {
   const openProject = useAppStore(state => state.openProject);
   const addProject = useAppStore(state => state.addProject);
   const deleteProject = useAppStore(state => state.deleteProject);
+  const renameProject = useAppStore(state => state.renameProject);
+  const duplicateProject = useAppStore(state => state.duplicateProject);
+  const moveProjectToFolder = useAppStore(state => state.moveProjectToFolder);
+  const moveProjectToTrash = useAppStore(state => state.moveProjectToTrash);
+  const recoverProject = useAppStore(state => state.recoverProject);
+  const createFolder = useAppStore(state => state.createFolder);
+  const renameFolder = useAppStore(state => state.renameFolder);
+  const removeFolder = useAppStore(state => state.removeFolder);
+  const emptyTrash = useAppStore(state => state.emptyTrash);
   const beginProcessing = useAppStore(state => state.beginProcessing);
   const setProcessingPhase = useAppStore(state => state.setProcessingPhase);
   const finishProcessing = useAppStore(state => state.finishProcessing);
@@ -71,9 +82,8 @@ export function AppRoot() {
   const setPreferredExportResolution = useAppStore(
     state => state.setPreferredExportResolution,
   );
-  const setHighlightEditedWords = useAppStore(state => state.setHighlightEditedWords);
-  const setTranscriptionLanguageMode = useAppStore(
-    state => state.setTranscriptionLanguageMode,
+  const setHighlightEditedWords = useAppStore(
+    state => state.setHighlightEditedWords,
   );
   const setRememberLastTranscriptionLanguage = useAppStore(
     state => state.setRememberLastTranscriptionLanguage,
@@ -104,9 +114,12 @@ export function AppRoot() {
       });
   }, [hydrated, uiLocale, setUiLocale]);
   const repairedProjectIdsRef = useRef(new Set<string>());
-  const [pendingSpeechAsset, setPendingSpeechAsset] = useState<Asset | null>(null);
-  const [speechAccessStatus, setSpeechAccessStatus] =
-    useState<PermissionSummary['speech'] | null>(null);
+  const [pendingSpeechAsset, setPendingSpeechAsset] = useState<Asset | null>(
+    null,
+  );
+  const [speechAccessStatus, setSpeechAccessStatus] = useState<
+    PermissionSummary['speech'] | null
+  >(null);
   const [speechAccessPending, setSpeechAccessPending] = useState(false);
   const [pendingTranscriptionAsset, setPendingTranscriptionAsset] =
     useState<Asset | null>(null);
@@ -114,30 +127,36 @@ export function AppRoot() {
     SpeechLocaleOption[]
   >([]);
   const [speechLocalesLoading, setSpeechLocalesLoading] = useState(false);
-  const [selectedTranscriptionLocale, setSelectedTranscriptionLocale] = useState(
-    AUTO_DETECT_LOCALE_VALUE,
+  const [selectedTranscriptionLocale, setSelectedTranscriptionLocale] =
+    useState('');
+
+  const showSpeechAccessError = useCallback(
+    (error: unknown) => {
+      const rawMessage =
+        error instanceof Error && error.message ? error.message : null;
+      const message =
+        rawMessage === 'Unable to open the photo library.'
+          ? t('photoLibraryOpenFailed')
+          : rawMessage === 'The selected video could not be read.'
+          ? t('selectedVideoUnreadable')
+          : rawMessage ?? t('speechAccessFailedBody');
+
+      Alert.alert(t('speechAccessFailedTitle'), message);
+    },
+    [t],
   );
 
-  const showSpeechAccessError = useCallback((error: unknown) => {
-    const rawMessage = error instanceof Error && error.message ? error.message : null;
-    const message =
-      rawMessage === 'Unable to open the photo library.'
-        ? t('photoLibraryOpenFailed')
-        : rawMessage === 'The selected video could not be read.'
-        ? t('selectedVideoUnreadable')
-        : rawMessage ?? t('speechAccessFailedBody');
+  const showLanguageListError = useCallback(
+    (error: unknown) => {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : t('languageListFailedBody');
 
-    Alert.alert(t('speechAccessFailedTitle'), message);
-  }, [t]);
-
-  const showLanguageListError = useCallback((error: unknown) => {
-    const message =
-      error instanceof Error && error.message
-        ? error.message
-        : t('languageListFailedBody');
-
-    Alert.alert(t('languageListFailedTitle'), message);
-  }, [t]);
+      Alert.alert(t('languageListFailedTitle'), message);
+    },
+    [t],
+  );
 
   const loadSpeechLocales = useCallback(async () => {
     if (availableSpeechLocales.length > 0) {
@@ -205,97 +224,77 @@ export function AppRoot() {
     setSpeechAccessPending(false);
   }, []);
 
-  const resolveDefaultTranscriptionLocale = useCallback((
-    locales: SpeechLocaleOption[],
-  ) => {
-    if (settings.rememberLastTranscriptionLanguage) {
-      const rememberedLocale = resolveRememberedSpeechLocale(
-        settings.lastTranscriptionLocale,
-        locales,
-      );
-      if (rememberedLocale) {
-        return rememberedLocale;
+  const processAsset = useCallback(
+    async (asset: Asset, localeOverride: string | null = null) => {
+      beginProcessing(asset.uri);
+
+      try {
+        if (localeOverride && settings.rememberLastTranscriptionLanguage) {
+          setLastTranscriptionLocale(localeOverride);
+        }
+
+        const project = await buildProjectFromAsset(
+          asset,
+          localeOverride,
+          setProcessingPhase,
+        );
+        addProject(project);
+        haptics.success();
+        startTransition(() => {
+          openProject(project.id);
+        });
+      } catch (error) {
+        const fallbackProject = await buildPersistedManualFallbackProject(
+          asset,
+          error,
+        );
+        addProject(fallbackProject);
+        startTransition(() => {
+          openProject(fallbackProject.id);
+        });
+      } finally {
+        finishProcessing();
       }
-    }
+    },
+    [
+      addProject,
+      beginProcessing,
+      finishProcessing,
+      openProject,
+      setLastTranscriptionLocale,
+      setProcessingPhase,
+      settings.rememberLastTranscriptionLanguage,
+    ],
+  );
 
-    return null;
-  }, [
-    settings.lastTranscriptionLocale,
-    settings.rememberLastTranscriptionLanguage,
-  ]);
+  const openTranscriptionLanguageSheet = useCallback(
+    async (asset: Asset) => {
+      const locales = await loadSpeechLocales();
+      const rememberedLocale = settings.rememberLastTranscriptionLanguage
+        ? resolveRememberedSpeechLocale(
+            settings.lastTranscriptionLocale,
+            locales,
+          )
+        : null;
 
-  const processAsset = useCallback(async (
-    asset: Asset,
-    localeOverride: string | null = null,
-  ) => {
-    beginProcessing(asset.uri);
-
-    try {
-      if (localeOverride && settings.rememberLastTranscriptionLanguage) {
-        setLastTranscriptionLocale(localeOverride);
-      }
-
-      const project = await buildProjectFromAsset(
-        asset,
-        localeOverride,
-        setProcessingPhase,
+      setSelectedTranscriptionLocale(
+        rememberedLocale ?? locales[0]?.value ?? '',
       );
-      addProject(project);
-      haptics.success();
-      startTransition(() => {
-        openProject(project.id);
-      });
-    } catch (error) {
-      const fallbackProject = await buildPersistedManualFallbackProject(asset, error);
-      addProject(fallbackProject);
-      startTransition(() => {
-        openProject(fallbackProject.id);
-      });
-    } finally {
-      finishProcessing();
-    }
-  }, [
-    addProject,
-    beginProcessing,
-    finishProcessing,
-    openProject,
-    setLastTranscriptionLocale,
-    setProcessingPhase,
-    settings.rememberLastTranscriptionLanguage,
-  ]);
+      setPendingTranscriptionAsset(asset);
+    },
+    [
+      loadSpeechLocales,
+      settings.lastTranscriptionLocale,
+      settings.rememberLastTranscriptionLanguage,
+    ],
+  );
 
-  const openTranscriptionLanguageSheet = useCallback(async (asset: Asset) => {
-    const locales = await loadSpeechLocales();
-    const rememberedLocale = settings.rememberLastTranscriptionLanguage
-      ? resolveRememberedSpeechLocale(settings.lastTranscriptionLocale, locales)
-      : null;
-
-    setSelectedTranscriptionLocale(
-      rememberedLocale ?? AUTO_DETECT_LOCALE_VALUE,
-    );
-    setPendingTranscriptionAsset(asset);
-  }, [
-    loadSpeechLocales,
-    settings.lastTranscriptionLocale,
-    settings.rememberLastTranscriptionLanguage,
-  ]);
-
-  const prepareProjectImport = useCallback(async (asset: Asset) => {
-    if (settings.transcriptionLanguageMode === 'ask') {
+  const prepareProjectImport = useCallback(
+    async (asset: Asset) => {
       await openTranscriptionLanguageSheet(asset);
-      return;
-    }
-
-    const locales = await loadSpeechLocales();
-    const localeOverride = resolveDefaultTranscriptionLocale(locales);
-    await processAsset(asset, localeOverride);
-  }, [
-    loadSpeechLocales,
-    openTranscriptionLanguageSheet,
-    processAsset,
-    resolveDefaultTranscriptionLocale,
-    settings.transcriptionLanguageMode,
-  ]);
+    },
+    [openTranscriptionLanguageSheet],
+  );
 
   const closeTranscriptionLanguageSheet = useCallback(() => {
     setPendingTranscriptionAsset(null);
@@ -307,18 +306,13 @@ export function AppRoot() {
     }
 
     const asset = pendingTranscriptionAsset;
-    const localeOverride =
-      selectedTranscriptionLocale === AUTO_DETECT_LOCALE_VALUE
-        ? null
-        : selectedTranscriptionLocale;
+    if (!selectedTranscriptionLocale) {
+      return;
+    }
 
     setPendingTranscriptionAsset(null);
-    await processAsset(asset, localeOverride);
-  }, [
-    pendingTranscriptionAsset,
-    processAsset,
-    selectedTranscriptionLocale,
-  ]);
+    await processAsset(asset, selectedTranscriptionLocale);
+  }, [pendingTranscriptionAsset, processAsset, selectedTranscriptionLocale]);
 
   const continueWithManualSubtitles = useCallback(async () => {
     if (!pendingSpeechAsset) {
@@ -332,7 +326,10 @@ export function AppRoot() {
         : new Error(t('permDenied'));
 
     closeSpeechAccessSheet();
-    const fallbackProject = await buildPersistedManualFallbackProject(asset, error);
+    const fallbackProject = await buildPersistedManualFallbackProject(
+      asset,
+      error,
+    );
     addProject(fallbackProject);
     startTransition(() => {
       openProject(fallbackProject.id);
@@ -437,22 +434,29 @@ export function AppRoot() {
             onCreateProject={() => {
               handleCreateProject().catch(showSpeechAccessError);
             }}
-            onDeleteProject={deleteProject}
+            onCleanTrash={emptyTrash}
+            onCreateFolder={createFolder}
+            onDeleteProject={moveProjectToTrash}
+            onDeleteProjectPermanently={deleteProject}
+            onDuplicateProject={duplicateProject}
+            onMoveProjectToFolder={moveProjectToFolder}
             onOpenProject={projectId => {
               startTransition(() => {
                 openProject(projectId);
               });
             }}
             onOpenSettings={openSettings}
+            onRecoverProject={recoverProject}
+            onRemoveFolder={removeFolder}
+            onRenameFolder={renameFolder}
+            onRenameProject={renameProject}
+            folders={folders}
             processingVisible={processing.visible}
             projects={projects}
           />
 
           {route === 'editor' && activeProject ? (
-            <EditorScreen
-              onClose={() => {}}
-              project={activeProject}
-            />
+            <EditorScreen onClose={() => {}} project={activeProject} />
           ) : null}
 
           {route === 'settings' ? (
@@ -467,7 +471,6 @@ export function AppRoot() {
                 resetOnboarding();
               }}
               onResolutionChange={setPreferredExportResolution}
-              onTranscriptionLanguageModeChange={setTranscriptionLanguageMode}
               onUiLocaleChange={setUiLocale}
               highlightEditedWords={settings.highlightEditedWords}
               lastTranscriptionLanguageLabel={lastTranscriptionLanguageLabel}
@@ -475,7 +478,6 @@ export function AppRoot() {
               rememberLastTranscriptionLanguage={
                 settings.rememberLastTranscriptionLanguage
               }
-              transcriptionLanguageMode={settings.transcriptionLanguageMode}
               uiLocale={uiLocale}
             />
           ) : null}
@@ -506,12 +508,16 @@ export function AppRoot() {
         }}
         pending={speechAccessPending}
         speechStatus={speechAccessStatus}
-        visible={pendingSpeechAsset !== null && speechAccessStatus !== 'authorized'}
+        visible={
+          pendingSpeechAsset !== null && speechAccessStatus !== 'authorized'
+        }
       />
 
       <ProcessingOverlay processing={processing} />
 
-      {showSplash ? <SplashSequence onComplete={() => setShowSplash(false)} /> : null}
+      {showSplash ? (
+        <SplashSequence onComplete={() => setShowSplash(false)} />
+      ) : null}
     </View>
   );
 }

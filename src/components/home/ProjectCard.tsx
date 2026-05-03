@@ -1,4 +1,5 @@
 import React from 'react';
+import { MenuView, type MenuAction } from '@react-native-menu/menu';
 import {
   ImageBackground,
   StyleSheet,
@@ -26,31 +27,47 @@ interface ProjectCardProps {
   project: Project;
   width: number;
   height: number;
-  onDelete: (projectId: string) => void;
-  onOpen: (projectId: string) => void;
+  contextMenuActions?: MenuAction[];
+  contextMenuTitle?: string;
+  onContextMenuAction?: (actionId: string, projectId: string) => void;
+  onDelete?: (projectId: string) => void;
+  onOpen?: (projectId: string) => void;
+  removeLabel?: string;
+  swipeEnabled?: boolean;
 }
 
 export function ProjectCard({
   project,
   width,
   height,
+  contextMenuActions = [],
+  contextMenuTitle,
+  onContextMenuAction,
   onDelete,
   onOpen,
+  removeLabel,
+  swipeEnabled = true,
 }: ProjectCardProps) {
   const { t } = useTranslation();
   const translateX = useSharedValue(0);
   const subtitleCount = countRenderableSubtitles(project.subtitles);
   const displayTitle = project.title === 'Untitled Cut' ? t('untitledCut') : project.title;
+  const resolvedRemoveLabel = removeLabel ?? t('projectRemove');
 
   const panGesture = Gesture.Pan()
+    .enabled(swipeEnabled)
     .activeOffsetX([-12, 12])
     .failOffsetY([-10, 10])
     .onUpdate(event => {
+      if (!swipeEnabled) {
+        return;
+      }
+
       translateX.value = Math.min(0, event.translationX);
     })
     .onEnd(() => {
       const shouldDelete = Math.abs(translateX.value) > width * 0.4;
-      if (shouldDelete) {
+      if (shouldDelete && swipeEnabled && onDelete) {
         translateX.value = withSpring(-width * 1.15, springConfig);
         runOnJS(haptics.heavy)();
         runOnJS(onDelete)(project.id);
@@ -61,6 +78,9 @@ export function ProjectCard({
 
   const tapGesture = Gesture.Tap().onEnd((_event, success) => {
     if (!success) {
+      return;
+    }
+    if (!onOpen) {
       return;
     }
     runOnJS(haptics.light)();
@@ -75,49 +95,67 @@ export function ProjectCard({
     opacity: interpolate(Math.abs(translateX.value), [0, width * 0.48], [0.18, 1]),
   }));
 
+  const card = (
+    <GestureDetector gesture={Gesture.Simultaneous(panGesture, tapGesture)}>
+      <Animated.View style={[styles.cardWrap, cardStyle]}>
+        <GlassPanel style={styles.card}>
+          <ImageBackground
+            source={{ uri: project.thumbnailUri ?? emptyStateImage }}
+            style={styles.media}
+            imageStyle={styles.mediaImage}>
+            <View style={styles.mediaShade} />
+            <View style={styles.badgeRow}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{formatDuration(project.duration)}</Text>
+              </View>
+              <View
+                style={[
+                  styles.statusDot,
+                  project.recognitionStatus === 'ready'
+                    ? styles.statusReady
+                    : project.recognitionStatus === 'failed'
+                    ? styles.statusFailed
+                    : styles.statusManual,
+                ]}
+              />
+            </View>
+          </ImageBackground>
+
+          <View style={styles.meta}>
+            <Text numberOfLines={2} style={styles.title}>
+              {displayTitle}
+            </Text>
+            <Text style={styles.subtitleMeta}>
+              {subtitleCount} {subtitleCount === 1 ? t('projectSubtitleBlock') : t('projectSubtitleBlocks')}
+            </Text>
+          </View>
+        </GlassPanel>
+      </Animated.View>
+    </GestureDetector>
+  );
+
   return (
     <View style={{ width, height }}>
-      <Animated.View style={[styles.deleteAction, deleteStyle]}>
-        <Feather color={palette.textPrimary} name="trash-2" size={18} />
-        <Text style={styles.deleteText}>{t('projectDelete')}</Text>
-      </Animated.View>
-
-      <GestureDetector gesture={Gesture.Simultaneous(panGesture, tapGesture)}>
-        <Animated.View style={[styles.cardWrap, cardStyle]}>
-          <GlassPanel style={styles.card}>
-            <ImageBackground
-              source={{ uri: project.thumbnailUri ?? emptyStateImage }}
-              style={styles.media}
-              imageStyle={styles.mediaImage}>
-              <View style={styles.mediaShade} />
-              <View style={styles.badgeRow}>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{formatDuration(project.duration)}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.statusDot,
-                    project.recognitionStatus === 'ready'
-                      ? styles.statusReady
-                      : project.recognitionStatus === 'failed'
-                      ? styles.statusFailed
-                      : styles.statusManual,
-                  ]}
-                />
-              </View>
-            </ImageBackground>
-
-            <View style={styles.meta}>
-              <Text numberOfLines={2} style={styles.title}>
-                {displayTitle}
-              </Text>
-              <Text style={styles.subtitleMeta}>
-                {subtitleCount} {subtitleCount === 1 ? t('projectSubtitleBlock') : t('projectSubtitleBlocks')}
-              </Text>
-            </View>
-          </GlassPanel>
+      {swipeEnabled && onDelete ? (
+        <Animated.View style={[styles.deleteAction, deleteStyle]}>
+          <Feather color={palette.textPrimary} name="trash-2" size={18} />
+          <Text style={styles.deleteText}>{resolvedRemoveLabel}</Text>
         </Animated.View>
-      </GestureDetector>
+      ) : null}
+
+      {contextMenuActions.length > 0 && onContextMenuAction ? (
+        <MenuView
+          actions={contextMenuActions}
+          onPressAction={({ nativeEvent }) => {
+            onContextMenuAction(nativeEvent.event, project.id);
+          }}
+          shouldOpenOnLongPress
+          title={contextMenuTitle ?? displayTitle}>
+          {card}
+        </MenuView>
+      ) : (
+        card
+      )}
     </View>
   );
 }

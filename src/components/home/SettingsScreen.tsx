@@ -13,29 +13,20 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { useTranslation } from '../../i18n/useTranslation';
 import { supportedLocales } from '../../i18n/translations';
-import {
-  exportResolutions,
-  palette,
-} from '../../theme/tokens';
-import type {
-  ExportResolution,
-  SupportedLocale,
-  TranscriptionLanguageMode,
-} from '../../types/models';
+import { exportResolutions, palette } from '../../theme/tokens';
+import type { ExportResolution, SupportedLocale } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { useIosScreenTransition } from '../common/useIosScreenTransition';
 
 interface SettingsScreenProps {
   preferredExportResolution: ExportResolution;
   highlightEditedWords: boolean;
-  transcriptionLanguageMode: TranscriptionLanguageMode;
   rememberLastTranscriptionLanguage: boolean;
   lastTranscriptionLanguageLabel?: string;
   uiLocale: SupportedLocale;
   onClose: () => void;
   onResolutionChange: (resolution: ExportResolution) => void;
   onHighlightEditedWordsChange: (value: boolean) => void;
-  onTranscriptionLanguageModeChange: (mode: TranscriptionLanguageMode) => void;
   onRememberLastTranscriptionLanguageChange: (value: boolean) => void;
   onUiLocaleChange: (locale: SupportedLocale) => void;
   onResetOnboarding: () => void;
@@ -44,14 +35,12 @@ interface SettingsScreenProps {
 export function SettingsScreen({
   preferredExportResolution,
   highlightEditedWords,
-  transcriptionLanguageMode,
   rememberLastTranscriptionLanguage,
   lastTranscriptionLanguageLabel,
   uiLocale,
   onClose,
   onResolutionChange,
   onHighlightEditedWordsChange,
-  onTranscriptionLanguageModeChange,
   onRememberLastTranscriptionLanguageChange,
   onUiLocaleChange,
   onResetOnboarding,
@@ -63,14 +52,20 @@ export function SettingsScreen({
 
   return (
     <Animated.View
-      style={[styles.root, styles.screenTransitionShadow, screenTransitionStyle]}>
+      style={[
+        styles.root,
+        styles.screenTransitionShadow,
+        screenTransitionStyle,
+      ]}
+    >
       <AtmosphereCanvas intensity={1.04} />
 
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Pressable
           accessibilityLabel={t('back')}
           onPress={() => closeWithTransition()}
-          style={styles.backButton}>
+          style={styles.backButton}
+        >
           <Feather color={palette.textPrimary} name="chevron-left" size={20} />
         </Pressable>
         <Text style={styles.headerTitle}>{t('settingsTitle')}</Text>
@@ -83,10 +78,13 @@ export function SettingsScreen({
           styles.content,
           { paddingBottom: Math.max(insets.bottom, 18) + 24 },
         ]}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{t('settingsAppLanguage')}</Text>
-          <Text style={styles.sectionHint}>{t('settingsAppLanguageDescription')}</Text>
+          <Text style={styles.sectionHint}>
+            {t('settingsAppLanguageDescription')}
+          </Text>
           <View style={styles.optionStack}>
             {supportedLocales.map(locale => (
               <SettingsOption
@@ -113,14 +111,16 @@ export function SettingsScreen({
                   preferredExportResolution === option.value
                     ? styles.pillActive
                     : undefined,
-                ]}>
+                ]}
+              >
                 <Text
                   style={[
                     styles.pillText,
                     preferredExportResolution === option.value
                       ? styles.pillTextActive
                       : undefined,
-                  ]}>
+                  ]}
+                >
                   {option.label}
                 </Text>
               </Pressable>
@@ -129,30 +129,28 @@ export function SettingsScreen({
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('transcribingLanguageTitle')}</Text>
+          <Text style={styles.sectionLabel}>
+            {t('transcribingLanguageTitle')}
+          </Text>
           <View style={styles.optionStack}>
             <SettingsOption
-              active={transcriptionLanguageMode === 'auto'}
-              description={t('retrySubtitlesBody')}
-              icon="zap"
-              onPress={() => onTranscriptionLanguageModeChange('auto')}
-              title={t('autoDetect')}
-            />
-            <SettingsOption
-              active={transcriptionLanguageMode === 'ask'}
+              active
               description={t('settingsAskBeforeTranscriptionDescription')}
               icon="message-square"
-              onPress={() => onTranscriptionLanguageModeChange('ask')}
               title={t('settingsAskBeforeTranscription')}
             />
           </View>
 
           <View style={styles.toggleCard}>
             <View style={styles.toggleCopy}>
-              <Text style={styles.toggleLabel}>{t('settingsRememberLastLanguage')}</Text>
+              <Text style={styles.toggleLabel}>
+                {t('settingsRememberLastLanguage')}
+              </Text>
               <Text style={styles.toggleHint}>
                 {lastTranscriptionLanguageLabel
-                  ? `${t('settingsLastUsed')}: ${lastTranscriptionLanguageLabel}.`
+                  ? `${t(
+                      'settingsLastUsed',
+                    )}: ${lastTranscriptionLanguageLabel}.`
                   : t('settingsRememberLastLanguageDescription')}
               </Text>
             </View>
@@ -170,10 +168,14 @@ export function SettingsScreen({
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('settingsSubtitleHighlighting')}</Text>
+          <Text style={styles.sectionLabel}>
+            {t('settingsSubtitleHighlighting')}
+          </Text>
           <View style={styles.toggleCard}>
             <View style={styles.toggleCopy}>
-              <Text style={styles.toggleLabel}>{t('settingsHighlightEditedWords')}</Text>
+              <Text style={styles.toggleLabel}>
+                {t('settingsHighlightEditedWords')}
+              </Text>
               <Text style={styles.toggleHint}>
                 {t('settingsHighlightEditedWordsDescription')}
               </Text>
@@ -198,7 +200,8 @@ export function SettingsScreen({
 
         <Pressable
           onPress={() => closeWithTransition(onResetOnboarding)}
-          style={styles.resetRow}>
+          style={styles.resetRow}
+        >
           <Feather color={palette.cyan} name="refresh-ccw" size={16} />
           <Text style={styles.resetText}>{t('settingsReplayOnboarding')}</Text>
         </Pressable>
@@ -217,18 +220,29 @@ function SettingsOption({
   active: boolean;
   description: string;
   icon: string;
-  onPress: () => void;
+  onPress?: () => void;
   title: string;
 }) {
   return (
     <Pressable
+      disabled={!onPress}
       onPress={onPress}
-      style={[styles.optionCard, active ? styles.optionCardActive : undefined]}>
+      style={[styles.optionCard, active ? styles.optionCardActive : undefined]}
+    >
       <View style={styles.optionIcon}>
-        <Feather color={active ? palette.cyan : palette.textSecondary} name={icon} size={16} />
+        <Feather
+          color={active ? palette.cyan : palette.textSecondary}
+          name={icon}
+          size={16}
+        />
       </View>
       <View style={styles.optionCopy}>
-        <Text style={[styles.optionTitle, active ? styles.optionTitleActive : undefined]}>
+        <Text
+          style={[
+            styles.optionTitle,
+            active ? styles.optionTitleActive : undefined,
+          ]}
+        >
           {title}
         </Text>
         <Text style={styles.optionDescription}>{description}</Text>

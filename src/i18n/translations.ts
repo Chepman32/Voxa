@@ -1,8 +1,28 @@
 export type SupportedLocale =
-  | 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'ru' | 'ja' | 'ko' | 'zh' | 'ar';
+  | 'en'
+  | 'es'
+  | 'pt'
+  | 'fr'
+  | 'de'
+  | 'it'
+  | 'ru'
+  | 'ja'
+  | 'ko'
+  | 'zh'
+  | 'ar';
 
 export const supportedLocales: SupportedLocale[] = [
-  'en', 'es', 'pt', 'fr', 'de', 'it', 'ru', 'ja', 'ko', 'zh', 'ar',
+  'en',
+  'es',
+  'pt',
+  'fr',
+  'de',
+  'it',
+  'ru',
+  'ja',
+  'ko',
+  'zh',
+  'ar',
 ];
 
 export interface Translations {
@@ -193,8 +213,7 @@ const en: Translations = {
     'Based on what you picked, these are the parts Voxa will handle for you.',
   solutionSpeedPain: 'Captioning takes too long',
   solutionSpeedSolution: 'Generate subtitles in under 60 seconds',
-  solutionSpeedStat:
-    'On-device speech recognition, with no uploads',
+  solutionSpeedStat: 'On-device speech recognition, with no uploads',
   solutionPrivacyPain: 'Online tools feel risky',
   solutionPrivacySolution: 'Your footage stays on your phone',
   solutionPrivacyStat: 'No cloud processing. No video collection.',
@@ -221,8 +240,7 @@ const en: Translations = {
   permPhotoBody:
     'Import videos and save finished clips back to your camera roll.',
   permSpeechTitle: 'Speech Recognition',
-  permSpeechBody:
-    'Turn audio into subtitles directly on your device.',
+  permSpeechBody: 'Turn audio into subtitles directly on your device.',
   permGranted: 'Granted',
   permLimited: 'Limited access',
   permDenied: 'Access denied',
@@ -269,9 +287,12 @@ const en: Translations = {
   continue: 'Continue',
   skip: 'Skip',
   back: 'Back',
+  cancel: 'Cancel',
+  save: 'Save',
   untitledCut: 'Untitled Cut',
   carouselRequestingPermissions: 'Requesting iOS permissions...',
-  carouselPermissionPull: 'Pull this card upward to request Photos and Speech permissions.',
+  carouselPermissionPull:
+    'Pull this card upward to request Photos and Speech permissions.',
   carouselLibrary: 'Library',
   carouselSpeech: 'Speech',
 
@@ -280,6 +301,8 @@ const en: Translations = {
   homeCreateProjectHint: 'Create a new project',
   homeOpenSettingsLabel: 'Open settings',
   homeOpenSettingsHint: 'Open app settings',
+  homeAllProjectsFolder: 'All Projects',
+  homeTrashFolder: 'Trash',
   homeEmptyProjectTitle: 'Pull down to create',
   homeEmptyProjectFileName: 'Empty',
   homeEmptyTitle: 'Tap + to create.',
@@ -289,8 +312,29 @@ const en: Translations = {
   greetingAfternoon: 'Good Afternoon',
   greetingEvening: 'Good Evening',
   projectDelete: 'Delete',
+  projectRemove: 'Remove',
+  projectRename: 'Rename',
+  projectRenameMessage: 'Enter a new project name.',
+  projectDuplicate: 'Duplicate',
+  projectMoveToFolder: 'Move to Folder',
+  projectRecover: 'Recover',
+  projectRemovePermanently: 'Remove Permanently',
+  projectRemovePermanentlyMessage:
+    'This project will be removed permanently. This cannot be undone.',
   projectSubtitleBlocks: 'subtitle blocks',
   projectSubtitleBlock: 'subtitle block',
+  folderCreate: 'New Folder',
+  folderCreateHint: 'Create a folder',
+  folderCreateMessage: 'Enter a folder name.',
+  folderRename: 'Rename',
+  folderRenameMessage: 'Enter a new folder name.',
+  folderRemove: 'Remove',
+  folderRemoveMessage:
+    'This folder will be removed. Projects inside it will stay in All Projects.',
+  folderCleanTrash: 'Clean Trash',
+  folderCleanTrashMessage:
+    'All projects in Trash will be removed permanently. This cannot be undone.',
+  folderEmpty: 'No projects in this folder.',
 
   transcribingLanguageTitle: 'Transcribing Language',
   transcribingLanguageBody:
@@ -328,11 +372,13 @@ const en: Translations = {
   settingsReplayOnboarding: 'Replay onboarding',
 
   speechAccessFailedTitle: 'Speech Access Failed',
-  speechAccessFailedBody: 'Unable to request Speech Recognition access right now.',
+  speechAccessFailedBody:
+    'Unable to request Speech Recognition access right now.',
   photoLibraryOpenFailed: 'Unable to open the photo library.',
   selectedVideoUnreadable: 'The selected video could not be read.',
   languageListFailedTitle: 'Language List Failed',
-  languageListFailedBody: 'Unable to load on-device transcription languages right now.',
+  languageListFailedBody:
+    'Unable to load on-device transcription languages right now.',
   selectedVideo: 'Selected video',
   enableSpeechAccess: 'Enable Speech Access',
   grantSpeechAccess: 'Grant Speech Access',
@@ -364,21 +410,21 @@ const en: Translations = {
   retrySubtitles: 'Retry Subtitles',
   retrying: 'Retrying...',
   retrySubtitlesBody:
-    'Auto Detect picks the best on-device language. Choose a locale manually if detection missed the clip.',
-  autoDetect: 'Auto Detect',
+    'Choose the spoken language for this video, then Voxa will regenerate subtitles on-device.',
   subtitlesCreatedNeedsReview:
     'Subtitles were created, but this project is still marked as requiring review.',
   noSubtitlesGenerated:
-    'No subtitles were generated for this clip. Try Auto Detect or pick a language manually.',
+    'No subtitles were generated for this clip. Pick a language manually and try again.',
   manualEditingAvailable: 'Manual subtitle editing remains available.',
   lastAttempt: 'Last attempt',
   manual: 'manual',
   auto: 'auto',
-  chooseLanguageToRetry: 'Choose Auto Detect or a specific on-device language to retry.',
+  chooseLanguageToRetry: 'Choose a specific on-device language to retry.',
   subtitleRetryFailedTitle: 'Subtitle Retry Failed',
   subtitleRetryFailedBody: 'Unable to regenerate subtitles right now.',
   noSubtitlesCreatedTitle: 'No Subtitles Created',
-  noSubtitlesSelectedLanguage: 'No subtitles were generated with the selected language.',
+  noSubtitlesSelectedLanguage:
+    'No subtitles were generated with the selected language.',
   regenerateSubtitles: 'Regenerate Subtitles',
   regenerating: 'Regenerating...',
 
@@ -485,7 +531,8 @@ const es: Translations = {
     'Preparamos Reels para tres marcas. Voxa nos acelera mucho la parte de subtítulos y editar con gestos se siente muy natural.',
 
   tinderHeadline: '¿Cuáles te suenan familiares?',
-  tinderSubheadline: 'Desliza a la derecha si encaja. A la izquierda para pasar.',
+  tinderSubheadline:
+    'Desliza a la derecha si encaja. A la izquierda para pasar.',
   tinderSkip: 'Pasar',
   tinderRelate: 'Me pasa',
   tinderRemaining: 'tarjetas restantes',
@@ -507,7 +554,8 @@ const es: Translations = {
   solutionStyleStat: 'Fuentes, colores, efectos y posiciones incluidos',
   solutionCostPain: 'Las suscripciones se acumulan',
   solutionCostSolution: 'Una app. Sin pagos recurrentes. Sin marcas de agua.',
-  solutionCostStat: 'Las herramientas principales están incluidas desde el inicio',
+  solutionCostStat:
+    'Las herramientas principales están incluidas desde el inicio',
   solutionCta: 'Ver los estilos',
 
   prefHeadline: 'Elige tu estilo de subtítulos',
@@ -522,8 +570,7 @@ const es: Translations = {
   permSubheadline:
     'Voxa necesita acceso a tus videos y al reconocimiento de voz del dispositivo. Tus clips se quedan offline.',
   permPhotoTitle: 'Fotos',
-  permPhotoBody:
-    'Importa videos y guarda los clips terminados en tu carrete.',
+  permPhotoBody: 'Importa videos y guarda los clips terminados en tu carrete.',
   permSpeechTitle: 'Reconocimiento de voz',
   permSpeechBody:
     'Convierte audio en subtítulos directamente en tu dispositivo.',
@@ -575,7 +622,8 @@ const es: Translations = {
   back: 'Atrás',
   untitledCut: 'Corte sin título',
   carouselRequestingPermissions: 'Solicitando permisos de iOS...',
-  carouselPermissionPull: 'Desliza esta tarjeta hacia arriba para solicitar permisos de Fotos y Voz.',
+  carouselPermissionPull:
+    'Desliza esta tarjeta hacia arriba para solicitar permisos de Fotos y Voz.',
   carouselLibrary: 'Biblioteca',
   carouselSpeech: 'Voz',
 
@@ -632,11 +680,13 @@ const es: Translations = {
   settingsReplayOnboarding: 'Repetir onboarding',
 
   speechAccessFailedTitle: 'Error de acceso a voz',
-  speechAccessFailedBody: 'No se pudo solicitar acceso al reconocimiento de voz ahora.',
+  speechAccessFailedBody:
+    'No se pudo solicitar acceso al reconocimiento de voz ahora.',
   photoLibraryOpenFailed: 'No se pudo abrir la fototeca.',
   selectedVideoUnreadable: 'No se pudo leer el video seleccionado.',
   languageListFailedTitle: 'Error de lista de idiomas',
-  languageListFailedBody: 'No se pudieron cargar los idiomas de transcripción del dispositivo ahora.',
+  languageListFailedBody:
+    'No se pudieron cargar los idiomas de transcripción del dispositivo ahora.',
   selectedVideo: 'Video seleccionado',
   enableSpeechAccess: 'Activar acceso a voz',
   grantSpeechAccess: 'Permitir acceso a voz',
@@ -653,7 +703,8 @@ const es: Translations = {
   processingExtractingAudio: 'Extrayendo audio...',
   processingDetectingLanguage: 'Detectando idioma hablado...',
   processingSelectedLanguage: 'Transcribiendo con el idioma seleccionado...',
-  processingBestLanguage: 'Transcribiendo con el mejor idioma del dispositivo...',
+  processingBestLanguage:
+    'Transcribiendo con el mejor idioma del dispositivo...',
   processingGeneratingTimeline: 'Generando línea de tiempo...',
 
   exportTitle: 'Exportar',
@@ -668,21 +719,22 @@ const es: Translations = {
   retrySubtitles: 'Reintentar subtítulos',
   retrying: 'Reintentando...',
   retrySubtitlesBody:
-    'Auto Detect elige el mejor idioma del dispositivo. Elige un idioma manualmente si la detección falló.',
-  autoDetect: 'Detección automática',
+    'Elige el idioma hablado de este video y Voxa regenerará los subtítulos en el dispositivo.',
   subtitlesCreatedNeedsReview:
     'Se crearon subtítulos, pero este proyecto sigue marcado como pendiente de revisión.',
   noSubtitlesGenerated:
-    'No se generaron subtítulos para este clip. Prueba detección automática o elige un idioma manualmente.',
+    'No se generaron subtítulos para este clip. Elige un idioma manualmente e inténtalo de nuevo.',
   manualEditingAvailable: 'La edición manual de subtítulos sigue disponible.',
   lastAttempt: 'Último intento',
   manual: 'manual',
   auto: 'auto',
-  chooseLanguageToRetry: 'Elige detección automática o un idioma específico del dispositivo para reintentar.',
+  chooseLanguageToRetry:
+    'Elige un idioma específico del dispositivo para reintentar.',
   subtitleRetryFailedTitle: 'Error al reintentar subtítulos',
   subtitleRetryFailedBody: 'No se pudieron regenerar los subtítulos ahora.',
   noSubtitlesCreatedTitle: 'No se crearon subtítulos',
-  noSubtitlesSelectedLanguage: 'No se generaron subtítulos con el idioma seleccionado.',
+  noSubtitlesSelectedLanguage:
+    'No se generaron subtítulos con el idioma seleccionado.',
   regenerateSubtitles: 'Regenerar subtítulos',
   regenerating: 'Regenerando...',
 
@@ -789,7 +841,8 @@ const pt: Translations = {
     'Produzimos Reels em lote para três marcas. O Voxa agilizou muito a etapa das legendas, e editar por gestos é bem natural.',
 
   tinderHeadline: 'Quais dessas situações parecem familiares?',
-  tinderSubheadline: 'Deslize para a direita se combina. Para a esquerda para pular.',
+  tinderSubheadline:
+    'Deslize para a direita se combina. Para a esquerda para pular.',
   tinderSkip: 'Pular',
   tinderRelate: 'Acontece comigo',
   tinderRemaining: 'cartões restantes',
@@ -801,8 +854,7 @@ const pt: Translations = {
     'Com base no que você escolheu, estas são as partes que o Voxa resolve para você.',
   solutionSpeedPain: 'Legendar demora demais',
   solutionSpeedSolution: 'Gere legendas em menos de 60 segundos',
-  solutionSpeedStat:
-    'Reconhecimento de voz no aparelho, sem uploads',
+  solutionSpeedStat: 'Reconhecimento de voz no aparelho, sem uploads',
   solutionPrivacyPain: 'Ferramentas online dão pouca confiança',
   solutionPrivacySolution: 'Seus vídeos ficam no seu celular',
   solutionPrivacyStat: 'Sem processamento na nuvem. Sem coleta de vídeos.',
@@ -829,8 +881,7 @@ const pt: Translations = {
   permPhotoBody:
     'Importe vídeos e salve os clipes finalizados no rolo da câmera.',
   permSpeechTitle: 'Reconhecimento de voz',
-  permSpeechBody:
-    'Transforme áudio em legendas diretamente no aparelho.',
+  permSpeechBody: 'Transforme áudio em legendas diretamente no aparelho.',
   permGranted: 'Permitido',
   permLimited: 'Acesso limitado',
   permDenied: 'Acesso negado',
@@ -879,7 +930,8 @@ const pt: Translations = {
   back: 'Voltar',
   untitledCut: 'Corte sem título',
   carouselRequestingPermissions: 'Solicitando permissões do iOS...',
-  carouselPermissionPull: 'Deslize este cartão para cima para solicitar permissões de Fotos e Fala.',
+  carouselPermissionPull:
+    'Deslize este cartão para cima para solicitar permissões de Fotos e Fala.',
   carouselLibrary: 'Biblioteca',
   carouselSpeech: 'Fala',
 
@@ -936,11 +988,13 @@ const pt: Translations = {
   settingsReplayOnboarding: 'Repetir onboarding',
 
   speechAccessFailedTitle: 'Falha no acesso à voz',
-  speechAccessFailedBody: 'Não foi possível solicitar acesso ao reconhecimento de voz agora.',
+  speechAccessFailedBody:
+    'Não foi possível solicitar acesso ao reconhecimento de voz agora.',
   photoLibraryOpenFailed: 'Não foi possível abrir a biblioteca de fotos.',
   selectedVideoUnreadable: 'Não foi possível ler o vídeo selecionado.',
   languageListFailedTitle: 'Falha na lista de idiomas',
-  languageListFailedBody: 'Não foi possível carregar os idiomas de transcrição do aparelho agora.',
+  languageListFailedBody:
+    'Não foi possível carregar os idiomas de transcrição do aparelho agora.',
   selectedVideo: 'Vídeo selecionado',
   enableSpeechAccess: 'Ativar acesso à voz',
   grantSpeechAccess: 'Permitir acesso à voz',
@@ -972,21 +1026,22 @@ const pt: Translations = {
   retrySubtitles: 'Tentar legendas de novo',
   retrying: 'Tentando...',
   retrySubtitlesBody:
-    'A detecção automática escolhe o melhor idioma no aparelho. Escolha um idioma manualmente se a detecção errou o clipe.',
-  autoDetect: 'Detecção automática',
+    'Escolha o idioma falado neste vídeo, e o Voxa vai gerar as legendas de novo no aparelho.',
   subtitlesCreatedNeedsReview:
     'As legendas foram criadas, mas este projeto ainda está marcado para revisão.',
   noSubtitlesGenerated:
-    'Nenhuma legenda foi gerada para este clipe. Tente detecção automática ou escolha um idioma manualmente.',
+    'Nenhuma legenda foi gerada para este clipe. Escolha um idioma manualmente e tente de novo.',
   manualEditingAvailable: 'A edição manual de legendas continua disponível.',
   lastAttempt: 'Última tentativa',
   manual: 'manual',
   auto: 'auto',
-  chooseLanguageToRetry: 'Escolha detecção automática ou um idioma específico no aparelho para tentar de novo.',
+  chooseLanguageToRetry:
+    'Escolha um idioma específico no aparelho para tentar de novo.',
   subtitleRetryFailedTitle: 'Falha ao tentar legendas de novo',
   subtitleRetryFailedBody: 'Não foi possível gerar as legendas de novo agora.',
   noSubtitlesCreatedTitle: 'Nenhuma legenda criada',
-  noSubtitlesSelectedLanguage: 'Nenhuma legenda foi gerada com o idioma selecionado.',
+  noSubtitlesSelectedLanguage:
+    'Nenhuma legenda foi gerada com o idioma selecionado.',
   regenerateSubtitles: 'Gerar legendas de novo',
   regenerating: 'Gerando de novo...',
 
@@ -1093,7 +1148,8 @@ const fr: Translations = {
     'On prépare des Reels en série pour trois marques. Voxa accélère vraiment la partie sous-titres, et les gestes d’édition sont naturels.',
 
   tinderHeadline: 'Qu’est-ce qui te parle ?',
-  tinderSubheadline: 'Glisse à droite si ça te correspond. À gauche pour passer.',
+  tinderSubheadline:
+    'Glisse à droite si ça te correspond. À gauche pour passer.',
   tinderSkip: 'Passer',
   tinderRelate: 'Ça me parle',
   tinderRemaining: 'cartes restantes',
@@ -1105,13 +1161,13 @@ const fr: Translations = {
     'D’après tes choix, voici ce que Voxa peut prendre en charge pour toi.',
   solutionSpeedPain: 'Sous-titrer prend trop de temps',
   solutionSpeedSolution: 'Génère des sous-titres en moins de 60 secondes',
-  solutionSpeedStat:
-    'Reconnaissance vocale sur l’appareil, sans envoi',
+  solutionSpeedStat: 'Reconnaissance vocale sur l’appareil, sans envoi',
   solutionPrivacyPain: 'Les outils en ligne ne rassurent pas',
   solutionPrivacySolution: 'Tes vidéos restent sur ton téléphone',
   solutionPrivacyStat: 'Pas de traitement cloud. Pas de collecte de vidéos.',
   solutionStylePain: 'Les sous-titres font trop générique',
-  solutionStyleSolution: 'Choisis un style sobre, impactant, néon, glow ou cinéma',
+  solutionStyleSolution:
+    'Choisis un style sobre, impactant, néon, glow ou cinéma',
   solutionStyleStat: 'Polices, couleurs, effets et positions inclus',
   solutionCostPain: 'Les abonnements s’accumulent',
   solutionCostSolution: 'Une app. Pas de frais récurrents. Pas de filigrane.',
@@ -1171,7 +1227,8 @@ const fr: Translations = {
   valueItemsTitle: 'Déjà configuré :',
   valueGoalFallback: 'Créer de meilleurs sous-titres',
   valueItem1Label: 'Sous-titres rapides',
-  valueItem1Desc: 'Importe une vidéo et obtiens des sous-titres en quelques secondes',
+  valueItem1Desc:
+    'Importe une vidéo et obtiens des sous-titres en quelques secondes',
   valueItem2Label: 'Ton style est enregistré',
   valueItem2Desc: 'Police, couleur et effet sont prêts',
   valueItem3Label: 'Privé par défaut',
@@ -1183,7 +1240,8 @@ const fr: Translations = {
   back: 'Retour',
   untitledCut: 'Montage sans titre',
   carouselRequestingPermissions: 'Demande des autorisations iOS...',
-  carouselPermissionPull: 'Fais glisser cette carte vers le haut pour demander les autorisations Photos et Parole.',
+  carouselPermissionPull:
+    'Fais glisser cette carte vers le haut pour demander les autorisations Photos et Parole.',
   carouselLibrary: 'Bibliothèque',
   carouselSpeech: 'Parole',
 
@@ -1211,7 +1269,8 @@ const fr: Translations = {
   appLanguageFallback: 'app',
   loadingOnDeviceLanguages: 'Chargement des langues sur l’appareil...',
   onDeviceLanguagesAvailable: 'langues disponibles sur cet appareil.',
-  noOnDeviceLanguages: 'Aucune langue sur l’appareil n’est disponible pour le moment.',
+  noOnDeviceLanguages:
+    'Aucune langue sur l’appareil n’est disponible pour le moment.',
   loading: 'Chargement...',
   transcribeVideo: 'Transcrire la vidéo',
 
@@ -1240,11 +1299,13 @@ const fr: Translations = {
   settingsReplayOnboarding: 'Relancer l’onboarding',
 
   speechAccessFailedTitle: 'Échec de l’accès vocal',
-  speechAccessFailedBody: 'Impossible de demander l’accès à la reconnaissance vocale maintenant.',
+  speechAccessFailedBody:
+    'Impossible de demander l’accès à la reconnaissance vocale maintenant.',
   photoLibraryOpenFailed: 'Impossible d’ouvrir la photothèque.',
   selectedVideoUnreadable: 'Impossible de lire la vidéo sélectionnée.',
   languageListFailedTitle: 'Échec de la liste des langues',
-  languageListFailedBody: 'Impossible de charger les langues de transcription sur l’appareil maintenant.',
+  languageListFailedBody:
+    'Impossible de charger les langues de transcription sur l’appareil maintenant.',
   selectedVideo: 'Vidéo sélectionnée',
   enableSpeechAccess: 'Activer l’accès vocal',
   grantSpeechAccess: 'Autoriser l’accès vocal',
@@ -1261,7 +1322,8 @@ const fr: Translations = {
   processingExtractingAudio: 'Extraction de l’audio...',
   processingDetectingLanguage: 'Détection de la langue parlée...',
   processingSelectedLanguage: 'Transcription avec la langue sélectionnée...',
-  processingBestLanguage: 'Transcription avec la meilleure langue sur l’appareil...',
+  processingBestLanguage:
+    'Transcription avec la meilleure langue sur l’appareil...',
   processingGeneratingTimeline: 'Génération de la timeline...',
 
   exportTitle: 'Exporter',
@@ -1276,21 +1338,23 @@ const fr: Translations = {
   retrySubtitles: 'Réessayer les sous-titres',
   retrying: 'Nouvelle tentative...',
   retrySubtitlesBody:
-    'La détection automatique choisit la meilleure langue sur l’appareil. Choisis une langue manuellement si la détection s’est trompée.',
-  autoDetect: 'Détection automatique',
+    'Choisis la langue parlée dans cette vidéo, puis Voxa régénérera les sous-titres sur l’appareil.',
   subtitlesCreatedNeedsReview:
     'Les sous-titres ont été créés, mais ce projet reste marqué comme à vérifier.',
   noSubtitlesGenerated:
-    'Aucun sous-titre n’a été généré pour ce clip. Essaie la détection automatique ou choisis une langue manuellement.',
-  manualEditingAvailable: 'L’édition manuelle des sous-titres reste disponible.',
+    'Aucun sous-titre n’a été généré pour ce clip. Choisis une langue manuellement et réessaie.',
+  manualEditingAvailable:
+    'L’édition manuelle des sous-titres reste disponible.',
   lastAttempt: 'Dernière tentative',
   manual: 'manuel',
   auto: 'auto',
-  chooseLanguageToRetry: 'Choisis la détection automatique ou une langue sur l’appareil pour réessayer.',
+  chooseLanguageToRetry: 'Choisis une langue sur l’appareil pour réessayer.',
   subtitleRetryFailedTitle: 'Échec de la nouvelle tentative',
-  subtitleRetryFailedBody: 'Impossible de régénérer les sous-titres maintenant.',
+  subtitleRetryFailedBody:
+    'Impossible de régénérer les sous-titres maintenant.',
   noSubtitlesCreatedTitle: 'Aucun sous-titre créé',
-  noSubtitlesSelectedLanguage: 'Aucun sous-titre n’a été généré avec la langue sélectionnée.',
+  noSubtitlesSelectedLanguage:
+    'Aucun sous-titre n’a été généré avec la langue sélectionnée.',
   regenerateSubtitles: 'Régénérer les sous-titres',
   regenerating: 'Régénération...',
 
@@ -1397,7 +1461,8 @@ const de: Translations = {
     'Wir erstellen Reels für drei Marken im Batch. Voxa macht den Untertitel-Teil deutlich schneller, und die Gesten fühlen sich direkt richtig an.',
 
   tinderHeadline: 'Was kommt dir bekannt vor?',
-  tinderSubheadline: 'Nach rechts wischen, wenn es passt. Nach links zum Überspringen.',
+  tinderSubheadline:
+    'Nach rechts wischen, wenn es passt. Nach links zum Überspringen.',
   tinderSkip: 'Überspringen',
   tinderRelate: 'Kenne ich',
   tinderRemaining: 'Karten übrig',
@@ -1409,8 +1474,7 @@ const de: Translations = {
     'Aus deinen Antworten ergeben sich die Aufgaben, die Voxa für dich übernimmt.',
   solutionSpeedPain: 'Untertitel dauern zu lange',
   solutionSpeedSolution: 'Erzeuge Untertitel in unter 60 Sekunden',
-  solutionSpeedStat:
-    'Spracherkennung auf dem Gerät, ohne Uploads',
+  solutionSpeedStat: 'Spracherkennung auf dem Gerät, ohne Uploads',
   solutionPrivacyPain: 'Online-Tools fühlen sich riskant an',
   solutionPrivacySolution: 'Deine Videos bleiben auf deinem Smartphone',
   solutionPrivacyStat: 'Keine Cloud-Verarbeitung. Keine Videosammlung.',
@@ -1418,7 +1482,8 @@ const de: Translations = {
   solutionStyleSolution: 'Wähle klare, kräftige, Neon-, Glow- oder Kino-Stile',
   solutionStyleStat: 'Schriften, Farben, Effekte und Positionen inklusive',
   solutionCostPain: 'Abos summieren sich',
-  solutionCostSolution: 'Eine App. Keine laufenden Gebühren. Kein Wasserzeichen.',
+  solutionCostSolution:
+    'Eine App. Keine laufenden Gebühren. Kein Wasserzeichen.',
   solutionCostStat: 'Die wichtigsten Werkzeuge sind von Anfang an dabei',
   solutionCta: 'Stile ansehen',
 
@@ -1437,8 +1502,7 @@ const de: Translations = {
   permPhotoBody:
     'Videos importieren und fertige Clips wieder in deiner Mediathek speichern.',
   permSpeechTitle: 'Spracherkennung',
-  permSpeechBody:
-    'Audio direkt auf deinem Gerät in Untertitel umwandeln.',
+  permSpeechBody: 'Audio direkt auf deinem Gerät in Untertitel umwandeln.',
   permGranted: 'Erlaubt',
   permLimited: 'Eingeschränkter Zugriff',
   permDenied: 'Zugriff abgelehnt',
@@ -1487,7 +1551,8 @@ const de: Translations = {
   back: 'Zurück',
   untitledCut: 'Unbenannter Schnitt',
   carouselRequestingPermissions: 'iOS-Berechtigungen werden angefragt...',
-  carouselPermissionPull: 'Ziehe diese Karte nach oben, um Fotos- und Sprachberechtigungen anzufragen.',
+  carouselPermissionPull:
+    'Ziehe diese Karte nach oben, um Fotos- und Sprachberechtigungen anzufragen.',
   carouselLibrary: 'Mediathek',
   carouselSpeech: 'Sprache',
 
@@ -1544,11 +1609,13 @@ const de: Translations = {
   settingsReplayOnboarding: 'Onboarding erneut starten',
 
   speechAccessFailedTitle: 'Sprachzugriff fehlgeschlagen',
-  speechAccessFailedBody: 'Der Zugriff auf die Spracherkennung kann derzeit nicht angefragt werden.',
+  speechAccessFailedBody:
+    'Der Zugriff auf die Spracherkennung kann derzeit nicht angefragt werden.',
   photoLibraryOpenFailed: 'Die Fotomediathek kann nicht geöffnet werden.',
   selectedVideoUnreadable: 'Das ausgewählte Video konnte nicht gelesen werden.',
   languageListFailedTitle: 'Sprachliste fehlgeschlagen',
-  languageListFailedBody: 'Die Transkriptionssprachen auf dem Gerät können derzeit nicht geladen werden.',
+  languageListFailedBody:
+    'Die Transkriptionssprachen auf dem Gerät können derzeit nicht geladen werden.',
   selectedVideo: 'Ausgewähltes Video',
   enableSpeechAccess: 'Sprachzugriff aktivieren',
   grantSpeechAccess: 'Sprachzugriff erlauben',
@@ -1580,21 +1647,23 @@ const de: Translations = {
   retrySubtitles: 'Untertitel erneut versuchen',
   retrying: 'Wird erneut versucht...',
   retrySubtitlesBody:
-    'Auto-Erkennung wählt die beste Sprache auf dem Gerät. Wähle eine Sprache manuell, wenn die Erkennung den Clip verfehlt hat.',
-  autoDetect: 'Auto-Erkennung',
+    'Wähle die gesprochene Sprache für dieses Video, dann erstellt Voxa die Untertitel auf dem Gerät neu.',
   subtitlesCreatedNeedsReview:
     'Untertitel wurden erstellt, aber dieses Projekt ist noch als prüfbedürftig markiert.',
   noSubtitlesGenerated:
-    'Für diesen Clip wurden keine Untertitel erstellt. Versuche Auto-Erkennung oder wähle eine Sprache manuell.',
+    'Für diesen Clip wurden keine Untertitel erstellt. Wähle eine Sprache manuell und versuche es erneut.',
   manualEditingAvailable: 'Manuelle Untertitelbearbeitung bleibt verfügbar.',
   lastAttempt: 'Letzter Versuch',
   manual: 'manuell',
   auto: 'auto',
-  chooseLanguageToRetry: 'Wähle Auto-Erkennung oder eine bestimmte Gerätesprache, um es erneut zu versuchen.',
+  chooseLanguageToRetry:
+    'Wähle eine bestimmte Gerätesprache, um es erneut zu versuchen.',
   subtitleRetryFailedTitle: 'Untertitelversuch fehlgeschlagen',
-  subtitleRetryFailedBody: 'Untertitel können derzeit nicht neu erstellt werden.',
+  subtitleRetryFailedBody:
+    'Untertitel können derzeit nicht neu erstellt werden.',
   noSubtitlesCreatedTitle: 'Keine Untertitel erstellt',
-  noSubtitlesSelectedLanguage: 'Mit der ausgewählten Sprache wurden keine Untertitel erstellt.',
+  noSubtitlesSelectedLanguage:
+    'Mit der ausgewählten Sprache wurden keine Untertitel erstellt.',
   regenerateSubtitles: 'Untertitel neu erstellen',
   regenerating: 'Wird neu erstellt...',
 
@@ -1713,8 +1782,7 @@ const it: Translations = {
     'In base alle tue scelte, queste sono le parti che Voxa gestisce per te.',
   solutionSpeedPain: 'Sottotitolare richiede troppo tempo',
   solutionSpeedSolution: 'Genera sottotitoli in meno di 60 secondi',
-  solutionSpeedStat:
-    'Riconoscimento vocale sul dispositivo, senza upload',
+  solutionSpeedStat: 'Riconoscimento vocale sul dispositivo, senza upload',
   solutionPrivacyPain: 'Gli strumenti online non mi convincono',
   solutionPrivacySolution: 'I tuoi video restano sul telefono',
   solutionPrivacyStat: 'Nessun cloud. Nessuna raccolta di video.',
@@ -1738,8 +1806,7 @@ const it: Translations = {
   permSubheadline:
     'Voxa deve accedere ai tuoi video e al riconoscimento vocale del dispositivo. I tuoi clip restano offline.',
   permPhotoTitle: 'Foto',
-  permPhotoBody:
-    'Importa video e salva i clip finiti nel rullino.',
+  permPhotoBody: 'Importa video e salva i clip finiti nel rullino.',
   permSpeechTitle: 'Riconoscimento vocale',
   permSpeechBody:
     'Trasforma l’audio in sottotitoli direttamente sul dispositivo.',
@@ -1791,7 +1858,8 @@ const it: Translations = {
   back: 'Indietro',
   untitledCut: 'Montaggio senza titolo',
   carouselRequestingPermissions: 'Richiesta permessi iOS...',
-  carouselPermissionPull: 'Trascina questa scheda verso l’alto per richiedere i permessi Foto e Voce.',
+  carouselPermissionPull:
+    'Trascina questa scheda verso l’alto per richiedere i permessi Foto e Voce.',
   carouselLibrary: 'Libreria',
   carouselSpeech: 'Voce',
 
@@ -1848,11 +1916,13 @@ const it: Translations = {
   settingsReplayOnboarding: 'Ripeti onboarding',
 
   speechAccessFailedTitle: 'Accesso voce non riuscito',
-  speechAccessFailedBody: 'Impossibile richiedere ora l’accesso al riconoscimento vocale.',
+  speechAccessFailedBody:
+    'Impossibile richiedere ora l’accesso al riconoscimento vocale.',
   photoLibraryOpenFailed: 'Impossibile aprire la libreria foto.',
   selectedVideoUnreadable: 'Impossibile leggere il video selezionato.',
   languageListFailedTitle: 'Elenco lingue non riuscito',
-  languageListFailedBody: 'Impossibile caricare ora le lingue di trascrizione sul dispositivo.',
+  languageListFailedBody:
+    'Impossibile caricare ora le lingue di trascrizione sul dispositivo.',
   selectedVideo: 'Video selezionato',
   enableSpeechAccess: 'Attiva accesso voce',
   grantSpeechAccess: 'Consenti accesso voce',
@@ -1865,11 +1935,13 @@ const it: Translations = {
   continueManually: 'Continua manualmente',
 
   processingOfflineAi: 'IA offline',
-  processingBody: 'Voxa sta elaborando il tuo video localmente sul dispositivo.',
+  processingBody:
+    'Voxa sta elaborando il tuo video localmente sul dispositivo.',
   processingExtractingAudio: 'Estrazione audio...',
   processingDetectingLanguage: 'Rilevamento lingua parlata...',
   processingSelectedLanguage: 'Trascrizione con la lingua selezionata...',
-  processingBestLanguage: 'Trascrizione con la migliore lingua sul dispositivo...',
+  processingBestLanguage:
+    'Trascrizione con la migliore lingua sul dispositivo...',
   processingGeneratingTimeline: 'Generazione timeline...',
 
   exportTitle: 'Esporta',
@@ -1884,21 +1956,23 @@ const it: Translations = {
   retrySubtitles: 'Riprova sottotitoli',
   retrying: 'Nuovo tentativo...',
   retrySubtitlesBody:
-    'Il rilevamento automatico sceglie la migliore lingua sul dispositivo. Scegli una lingua manualmente se il rilevamento non ha capito il clip.',
-  autoDetect: 'Rilevamento automatico',
+    'Scegli la lingua parlata in questo video e Voxa rigenererà i sottotitoli sul dispositivo.',
   subtitlesCreatedNeedsReview:
     'I sottotitoli sono stati creati, ma questo progetto è ancora contrassegnato per revisione.',
   noSubtitlesGenerated:
-    'Non sono stati generati sottotitoli per questo clip. Prova il rilevamento automatico o scegli una lingua manualmente.',
-  manualEditingAvailable: 'La modifica manuale dei sottotitoli resta disponibile.',
+    'Non sono stati generati sottotitoli per questo clip. Scegli una lingua manualmente e riprova.',
+  manualEditingAvailable:
+    'La modifica manuale dei sottotitoli resta disponibile.',
   lastAttempt: 'Ultimo tentativo',
   manual: 'manuale',
   auto: 'auto',
-  chooseLanguageToRetry: 'Scegli il rilevamento automatico o una lingua specifica sul dispositivo per riprovare.',
+  chooseLanguageToRetry:
+    'Scegli una lingua specifica sul dispositivo per riprovare.',
   subtitleRetryFailedTitle: 'Riprova sottotitoli non riuscito',
   subtitleRetryFailedBody: 'Impossibile rigenerare i sottotitoli ora.',
   noSubtitlesCreatedTitle: 'Nessun sottotitolo creato',
-  noSubtitlesSelectedLanguage: 'Non sono stati generati sottotitoli con la lingua selezionata.',
+  noSubtitlesSelectedLanguage:
+    'Non sono stati generati sottotitoli con la lingua selezionata.',
   regenerateSubtitles: 'Rigenera sottotitoli',
   regenerating: 'Rigenerazione...',
 
@@ -2017,16 +2091,17 @@ const ru: Translations = {
     'По твоим ответам Voxa возьмёт на себя вот эти части работы.',
   solutionSpeedPain: 'Субтитры занимают слишком много времени',
   solutionSpeedSolution: 'Генерируй субтитры меньше чем за 60 секунд',
-  solutionSpeedStat:
-    'Распознавание речи на устройстве, без загрузок',
+  solutionSpeedStat: 'Распознавание речи на устройстве, без загрузок',
   solutionPrivacyPain: 'Онлайн-инструменты кажутся рискованными',
   solutionPrivacySolution: 'Видео остаётся на твоём телефоне',
   solutionPrivacyStat: 'Без облачной обработки. Без сбора видео.',
   solutionStylePain: 'Субтитры выглядят шаблонно',
-  solutionStyleSolution: 'Выбирай чистые, яркие, неоновые, glow- или кино-стили',
+  solutionStyleSolution:
+    'Выбирай чистые, яркие, неоновые, glow- или кино-стили',
   solutionStyleStat: 'Шрифты, цвета, эффекты и позиции уже внутри',
   solutionCostPain: 'Подписки набегают',
-  solutionCostSolution: 'Одно приложение. Без регулярных платежей. Без водяных знаков.',
+  solutionCostSolution:
+    'Одно приложение. Без регулярных платежей. Без водяных знаков.',
   solutionCostStat: 'Основные инструменты доступны сразу',
   solutionCta: 'Показать стили',
 
@@ -2045,8 +2120,7 @@ const ru: Translations = {
   permPhotoBody:
     'Импортировать видео и сохранять готовые клипы обратно в медиатеку.',
   permSpeechTitle: 'Распознавание речи',
-  permSpeechBody:
-    'Преобразовывать звук в субтитры прямо на устройстве.',
+  permSpeechBody: 'Преобразовывать звук в субтитры прямо на устройстве.',
   permGranted: 'Разрешено',
   permLimited: 'Ограниченный доступ',
   permDenied: 'Доступ запрещён',
@@ -2095,7 +2169,8 @@ const ru: Translations = {
   back: 'Назад',
   untitledCut: 'Безымянный клип',
   carouselRequestingPermissions: 'Запрашиваем разрешения iOS...',
-  carouselPermissionPull: 'Потяни эту карточку вверх, чтобы запросить доступ к Фото и распознаванию речи.',
+  carouselPermissionPull:
+    'Потяни эту карточку вверх, чтобы запросить доступ к Фото и распознаванию речи.',
   carouselLibrary: 'Медиатека',
   carouselSpeech: 'Речь',
 
@@ -2152,11 +2227,13 @@ const ru: Translations = {
   settingsReplayOnboarding: 'Повторить онбординг',
 
   speechAccessFailedTitle: 'Ошибка доступа к речи',
-  speechAccessFailedBody: 'Сейчас не удалось запросить доступ к распознаванию речи.',
+  speechAccessFailedBody:
+    'Сейчас не удалось запросить доступ к распознаванию речи.',
   photoLibraryOpenFailed: 'Не удалось открыть медиатеку.',
   selectedVideoUnreadable: 'Не удалось прочитать выбранное видео.',
   languageListFailedTitle: 'Ошибка списка языков',
-  languageListFailedBody: 'Сейчас не удалось загрузить языки транскрибации на устройстве.',
+  languageListFailedBody:
+    'Сейчас не удалось загрузить языки транскрибации на устройстве.',
   selectedVideo: 'Выбранное видео',
   enableSpeechAccess: 'Включи доступ к речи',
   grantSpeechAccess: 'Разреши доступ к речи',
@@ -2188,17 +2265,16 @@ const ru: Translations = {
   retrySubtitles: 'Повторить субтитры',
   retrying: 'Повторяем...',
   retrySubtitlesBody:
-    'Автоопределение выбирает лучший язык на устройстве. Выбери язык вручную, если определение ошиблось.',
-  autoDetect: 'Автоопределение',
+    'Выбери язык речи в этом видео, и Voxa заново создаст субтитры на устройстве.',
   subtitlesCreatedNeedsReview:
     'Субтитры созданы, но проект всё ещё помечен как требующий проверки.',
   noSubtitlesGenerated:
-    'Для этого клипа не удалось создать субтитры. Попробуй автоопределение или выбери язык вручную.',
+    'Для этого клипа не удалось создать субтитры. Выбери язык вручную и попробуй ещё раз.',
   manualEditingAvailable: 'Ручное редактирование субтитров всё ещё доступно.',
   lastAttempt: 'Последняя попытка',
   manual: 'вручную',
   auto: 'авто',
-  chooseLanguageToRetry: 'Выбери автоопределение или конкретный язык на устройстве для повтора.',
+  chooseLanguageToRetry: 'Выбери конкретный язык на устройстве для повтора.',
   subtitleRetryFailedTitle: 'Не удалось повторить субтитры',
   subtitleRetryFailedBody: 'Сейчас не удалось заново создать субтитры.',
   noSubtitlesCreatedTitle: 'Субтитры не созданы',
@@ -2292,8 +2368,7 @@ const ja: Translations = {
   painCtaSome: '続ける',
 
   socialHeadline: 'クリエイターは字幕作業の時間を減らしています',
-  socialSubheadline:
-    '1行ずつ手で打つ代わりに、端末上で字幕を作成できます。',
+  socialSubheadline: '1行ずつ手で打つ代わりに、端末上で字幕を作成できます。',
   socialCta: '続ける',
   socialTestimonial1Name: 'マヤ K.',
   socialTestimonial1Tag: 'TikTokクリエイター',
@@ -2321,8 +2396,7 @@ const ja: Translations = {
     'あなたの回答に合わせて、Voxa が次の作業をサポートします。',
   solutionSpeedPain: '字幕作成に時間がかかる',
   solutionSpeedSolution: '60秒以内に字幕を生成',
-  solutionSpeedStat:
-    '端末上の音声認識。アップロードは不要です',
+  solutionSpeedStat: '端末上の音声認識。アップロードは不要です',
   solutionPrivacyPain: 'オンラインツールは不安',
   solutionPrivacySolution: '動画はスマホの中に残ります',
   solutionPrivacyStat: 'クラウド処理なし。動画収集なし。',
@@ -2346,11 +2420,9 @@ const ja: Translations = {
   permSubheadline:
     'Voxa は動画と端末の音声認識へのアクセスが必要です。クリップはオフラインのままです。',
   permPhotoTitle: '写真',
-  permPhotoBody:
-    '動画を読み込み、完成したクリップをカメラロールに保存します。',
+  permPhotoBody: '動画を読み込み、完成したクリップをカメラロールに保存します。',
   permSpeechTitle: '音声認識',
-  permSpeechBody:
-    '音声を端末上で直接字幕に変換します。',
+  permSpeechBody: '音声を端末上で直接字幕に変換します。',
   permGranted: '許可済み',
   permLimited: '制限付きアクセス',
   permDenied: 'アクセスが拒否されました',
@@ -2399,7 +2471,8 @@ const ja: Translations = {
   back: '戻る',
   untitledCut: '無題のカット',
   carouselRequestingPermissions: 'iOS の許可をリクエスト中...',
-  carouselPermissionPull: 'このカードを上に引いて、写真と音声の許可をリクエストします。',
+  carouselPermissionPull:
+    'このカードを上に引いて、写真と音声の許可をリクエストします。',
   carouselLibrary: 'ライブラリ',
   carouselSpeech: '音声',
 
@@ -2492,17 +2565,17 @@ const ja: Translations = {
   retrySubtitles: '字幕を再試行',
   retrying: '再試行中...',
   retrySubtitlesBody:
-    '自動検出はデバイス上で最適な言語を選びます。検出が外れた場合は手動で言語を選んでください。',
-  autoDetect: '自動検出',
+    'この動画で話されている言語を選ぶと、Voxa がデバイス上で字幕を再生成します。',
   subtitlesCreatedNeedsReview:
     '字幕は作成されましたが、このプロジェクトはまだ確認が必要としてマークされています。',
   noSubtitlesGenerated:
-    'このクリップの字幕は生成されませんでした。自動検出を試すか、手動で言語を選択してください。',
+    'このクリップの字幕は生成されませんでした。言語を手動で選んでもう一度お試しください。',
   manualEditingAvailable: '字幕の手動編集は引き続き利用できます。',
   lastAttempt: '前回の試行',
   manual: '手動',
   auto: '自動',
-  chooseLanguageToRetry: '再試行するには、自動検出または特定のデバイス上の言語を選択してください。',
+  chooseLanguageToRetry:
+    '再試行するには、特定のデバイス上の言語を選択してください。',
   subtitleRetryFailedTitle: '字幕の再試行に失敗しました',
   subtitleRetryFailedBody: '現在、字幕を再生成できません。',
   noSubtitlesCreatedTitle: '字幕が作成されませんでした',
@@ -2583,8 +2656,7 @@ const ko: Translations = {
   goalCta: '계속',
 
   painHeadline: '가장 시간을 잡아먹는 건 무엇인가요?',
-  painSubheadline:
-    '작업을 막는 항목을 모두 선택하세요. 첫 설정에 반영할게요.',
+  painSubheadline: '작업을 막는 항목을 모두 선택하세요. 첫 설정에 반영할게요.',
   painTyping: '자막을 직접 치는 데 시간이 너무 오래 걸림',
   painTools: '온라인 도구가 느리거나 불안함',
   painCost: '구독 비용이 계속 쌓임',
@@ -2625,8 +2697,7 @@ const ko: Translations = {
     '선택한 답변을 바탕으로 Voxa가 아래 작업을 대신 덜어줍니다.',
   solutionSpeedPain: '자막 작업에 시간이 너무 오래 걸림',
   solutionSpeedSolution: '60초 안에 자막 생성',
-  solutionSpeedStat:
-    '업로드 없이 기기에서 음성 인식',
+  solutionSpeedStat: '업로드 없이 기기에서 음성 인식',
   solutionPrivacyPain: '온라인 도구가 불안함',
   solutionPrivacySolution: '영상은 휴대폰 안에 그대로',
   solutionPrivacyStat: '클라우드 처리 없음. 영상 수집 없음.',
@@ -2650,11 +2721,9 @@ const ko: Translations = {
   permSubheadline:
     'Voxa는 영상 접근 권한과 기기 음성 인식 권한이 필요합니다. 클립은 오프라인에 남아 있어요.',
   permPhotoTitle: '사진',
-  permPhotoBody:
-    '영상을 가져오고 완성된 클립을 카메라 롤에 저장합니다.',
+  permPhotoBody: '영상을 가져오고 완성된 클립을 카메라 롤에 저장합니다.',
   permSpeechTitle: '음성 인식',
-  permSpeechBody:
-    '오디오를 기기에서 바로 자막으로 바꿉니다.',
+  permSpeechBody: '오디오를 기기에서 바로 자막으로 바꿉니다.',
   permGranted: '허용됨',
   permLimited: '제한된 접근',
   permDenied: '접근 거부됨',
@@ -2796,17 +2865,16 @@ const ko: Translations = {
   retrySubtitles: '자막 다시 시도',
   retrying: '다시 시도 중...',
   retrySubtitlesBody:
-    '자동 감지는 기기에서 가장 적합한 언어를 선택합니다. 감지가 맞지 않으면 언어를 직접 선택하세요.',
-  autoDetect: '자동 감지',
+    '이 동영상에서 말하는 언어를 선택하면 Voxa가 기기에서 자막을 다시 생성합니다.',
   subtitlesCreatedNeedsReview:
     '자막은 생성되었지만 이 프로젝트는 아직 검토 필요로 표시되어 있습니다.',
   noSubtitlesGenerated:
-    '이 클립에 대한 자막이 생성되지 않았습니다. 자동 감지를 시도하거나 언어를 직접 선택하세요.',
+    '이 클립에 대한 자막이 생성되지 않았습니다. 언어를 직접 선택하고 다시 시도하세요.',
   manualEditingAvailable: '수동 자막 편집은 계속 사용할 수 있습니다.',
   lastAttempt: '마지막 시도',
   manual: '수동',
   auto: '자동',
-  chooseLanguageToRetry: '다시 시도하려면 자동 감지 또는 특정 기기 내 언어를 선택하세요.',
+  chooseLanguageToRetry: '다시 시도하려면 특정 기기 내 언어를 선택하세요.',
   subtitleRetryFailedTitle: '자막 다시 시도 실패',
   subtitleRetryFailedBody: '지금은 자막을 다시 생성할 수 없습니다.',
   noSubtitlesCreatedTitle: '자막이 생성되지 않음',
@@ -2876,8 +2944,7 @@ const zh: Translations = {
   welcomeCta: '开始',
 
   goalHeadline: '你想先解决什么？',
-  goalSubheadline:
-    '选择现在最重要的一项。Voxa 会根据它设置你的初始偏好。',
+  goalSubheadline: '选择现在最重要的一项。Voxa 会根据它设置你的初始偏好。',
   goalViral: '让观众看得更久',
   goalAccessible: '让内容更容易看懂',
   goalBrand: '建立统一的视觉风格',
@@ -2887,8 +2954,7 @@ const zh: Translations = {
   goalCta: '继续',
 
   painHeadline: '最拖慢你的是什么？',
-  painSubheadline:
-    '选出所有影响你流程的内容。Voxa 会在首次设置里考虑这些。',
+  painSubheadline: '选出所有影响你流程的内容。Voxa 会在首次设置里考虑这些。',
   painTyping: '手打字幕太耗时间',
   painTools: '在线工具慢，或让人不放心',
   painCost: '订阅费用越攒越多',
@@ -2900,8 +2966,7 @@ const zh: Translations = {
   painCtaSome: '继续',
 
   socialHeadline: '创作者已经在字幕上节省时间',
-  socialSubheadline:
-    '不用一行行手打，直接在设备上生成字幕。',
+  socialSubheadline: '不用一行行手打，直接在设备上生成字幕。',
   socialCta: '继续',
   socialTestimonial1Name: 'Maya K.',
   socialTestimonial1Tag: 'TikTok 创作者',
@@ -2925,12 +2990,10 @@ const zh: Translations = {
   tinderSkipRemaining: '跳过剩余',
 
   solutionHeadline: 'Voxa 可以这样帮你',
-  solutionSubheadline:
-    '根据你的选择，Voxa 会帮你处理这些部分。',
+  solutionSubheadline: '根据你的选择，Voxa 会帮你处理这些部分。',
   solutionSpeedPain: '字幕制作太花时间',
   solutionSpeedSolution: '60 秒内生成字幕',
-  solutionSpeedStat:
-    '设备端语音识别，无需上传',
+  solutionSpeedStat: '设备端语音识别，无需上传',
   solutionPrivacyPain: '在线工具让人不放心',
   solutionPrivacySolution: '你的视频留在手机里',
   solutionPrivacyStat: '不做云端处理。不收集视频。',
@@ -2943,22 +3006,18 @@ const zh: Translations = {
   solutionCta: '看看样式',
 
   prefHeadline: '选择你的字幕风格',
-  prefSubheadline:
-    '第一个项目会使用这些初始设置。之后你可以随时修改。',
+  prefSubheadline: '第一个项目会使用这些初始设置。之后你可以随时修改。',
   prefSectionFont: '字体',
   prefSectionColor: '强调色',
   prefSectionEffect: '效果',
   prefCta: '继续',
 
   permHeadline: '最后一步设置',
-  permSubheadline:
-    'Voxa 需要访问你的视频和设备语音识别。你的片段会保持离线。',
+  permSubheadline: 'Voxa 需要访问你的视频和设备语音识别。你的片段会保持离线。',
   permPhotoTitle: '照片',
-  permPhotoBody:
-    '导入视频，并把完成的片段保存回相册。',
+  permPhotoBody: '导入视频，并把完成的片段保存回相册。',
   permSpeechTitle: '语音识别',
-  permSpeechBody:
-    '直接在设备上把音频转换成字幕。',
+  permSpeechBody: '直接在设备上把音频转换成字幕。',
   permGranted: '已允许',
   permLimited: '访问受限',
   permDenied: '访问被拒绝',
@@ -2977,8 +3036,7 @@ const zh: Translations = {
   procPhase3: '马上就好...',
 
   demoHeadline: '试试效果',
-  demoSubheadline:
-    '选择字体、颜色和效果，实时预览你的字幕风格。',
+  demoSubheadline: '选择字体、颜色和效果，实时预览你的字幕风格。',
   demoSectionFont: '字体',
   demoSectionAccent: '强调',
   demoSectionEffect: '效果',
@@ -3029,8 +3087,7 @@ const zh: Translations = {
   projectSubtitleBlock: '个字幕块',
 
   transcribingLanguageTitle: '转写语言',
-  transcribingLanguageBody:
-    '在 Voxa 创建字幕前，选择此视频中的口语语言。',
+  transcribingLanguageBody: '在 Voxa 创建字幕前，选择此视频中的口语语言。',
   appLanguageLabel: '应用语言',
   appLanguageFallback: '应用',
   loadingOnDeviceLanguages: '正在加载设备端语言...',
@@ -3048,16 +3105,13 @@ const zh: Translations = {
   settingsUseAppLanguageDescription:
     '当对应语音语言可用时，新视频会使用与应用相同的语言。',
   settingsAskBeforeTranscription: '每次转写前询问',
-  settingsAskBeforeTranscriptionDescription:
-    '每次新转写前显示语言选择器。',
+  settingsAskBeforeTranscriptionDescription: '每次新转写前显示语言选择器。',
   settingsRememberLastLanguage: '记住上次使用的语言',
   settingsLastUsed: '上次使用',
-  settingsRememberLastLanguageDescription:
-    '预选并复用你上次转写使用的语言。',
+  settingsRememberLastLanguageDescription: '预选并复用你上次转写使用的语言。',
   settingsSubtitleHighlighting: '字幕高亮',
   settingsHighlightEditedWords: '高亮编辑过的词',
-  settingsHighlightEditedWordsDescription:
-    '手动编辑字幕后近似生成词级时间。',
+  settingsHighlightEditedWordsDescription: '手动编辑字幕后近似生成词级时间。',
   settingsPrivacy: '隐私',
   settingsPrivacyBody:
     'Voxa 将提取、语音识别、字幕编辑和导出全部保留在设备端。远程媒体仅用于视觉占位。',
@@ -3099,18 +3153,14 @@ const zh: Translations = {
   retry: '重试',
   retrySubtitles: '重试字幕',
   retrying: '正在重试...',
-  retrySubtitlesBody:
-    '自动检测会选择设备上的最佳语言。如果检测不正确，请手动选择语言。',
-  autoDetect: '自动检测',
-  subtitlesCreatedNeedsReview:
-    '字幕已创建，但此项目仍标记为需要检查。',
-  noSubtitlesGenerated:
-    '没有为此片段生成字幕。请尝试自动检测或手动选择语言。',
+  retrySubtitlesBody: '选择此视频的口语语言，Voxa 会在设备端重新生成字幕。',
+  subtitlesCreatedNeedsReview: '字幕已创建，但此项目仍标记为需要检查。',
+  noSubtitlesGenerated: '没有为此片段生成字幕。请手动选择语言并重试。',
   manualEditingAvailable: '仍可手动编辑字幕。',
   lastAttempt: '上次尝试',
   manual: '手动',
   auto: '自动',
-  chooseLanguageToRetry: '选择自动检测或特定设备端语言来重试。',
+  chooseLanguageToRetry: '选择特定设备端语言来重试。',
   subtitleRetryFailedTitle: '重试字幕失败',
   subtitleRetryFailedBody: '现在无法重新生成字幕。',
   noSubtitlesCreatedTitle: '未创建字幕',
@@ -3204,8 +3254,7 @@ const ar: Translations = {
   painCtaSome: 'متابعة',
 
   socialHeadline: 'صنّاع المحتوى يوفرون ساعات في إعداد الترجمات',
-  socialSubheadline:
-    'استخدم الترجمة على الجهاز بدل كتابة كل سطر يدويًا.',
+  socialSubheadline: 'استخدم الترجمة على الجهاز بدل كتابة كل سطر يدويًا.',
   socialCta: 'متابعة',
   socialTestimonial1Name: 'مايا ك.',
   socialTestimonial1Tag: 'صانعة محتوى على TikTok',
@@ -3233,13 +3282,13 @@ const ar: Translations = {
     'بناءً على اختياراتك، هذه هي الأجزاء التي يمكن أن يتولاها Voxa عنك.',
   solutionSpeedPain: 'إضافة الترجمة تستغرق وقتًا طويلًا',
   solutionSpeedSolution: 'أنشئ ترجمات في أقل من 60 ثانية',
-  solutionSpeedStat:
-    'تعرف صوتي على الجهاز، بدون رفع',
+  solutionSpeedStat: 'تعرف صوتي على الجهاز، بدون رفع',
   solutionPrivacyPain: 'الأدوات أونلاين لا تطمئنني',
   solutionPrivacySolution: 'فيديوهاتك تبقى على هاتفك',
   solutionPrivacyStat: 'لا معالجة سحابية. لا جمع للفيديوهات.',
   solutionStylePain: 'الترجمة تبدو عادية',
-  solutionStyleSolution: 'اختر أسلوبًا نظيفًا، بارزًا، نيون، توهج، أو سينمائيًا',
+  solutionStyleSolution:
+    'اختر أسلوبًا نظيفًا، بارزًا، نيون، توهج، أو سينمائيًا',
   solutionStyleStat: 'خطوط وألوان وتأثيرات ومواضع جاهزة',
   solutionCostPain: 'الاشتراكات تتراكم',
   solutionCostSolution: 'تطبيق واحد. بدون رسوم متكررة. بدون علامة مائية.',
@@ -3258,11 +3307,9 @@ const ar: Translations = {
   permSubheadline:
     'يحتاج Voxa إلى الوصول إلى الفيديوهات والتعرف الصوتي على الجهاز. مقاطعك تبقى أوفلاين.',
   permPhotoTitle: 'الصور',
-  permPhotoBody:
-    'استيراد الفيديوهات وحفظ المقاطع النهائية في ألبوم الكاميرا.',
+  permPhotoBody: 'استيراد الفيديوهات وحفظ المقاطع النهائية في ألبوم الكاميرا.',
   permSpeechTitle: 'التعرف على الكلام',
-  permSpeechBody:
-    'تحويل الصوت إلى ترجمة مباشرة على جهازك.',
+  permSpeechBody: 'تحويل الصوت إلى ترجمة مباشرة على جهازك.',
   permGranted: 'مسموح',
   permLimited: 'وصول محدود',
   permDenied: 'تم رفض الوصول',
@@ -3281,8 +3328,7 @@ const ar: Translations = {
   procPhase3: 'اقتربنا...',
 
   demoHeadline: 'جرّب الشكل',
-  demoSubheadline:
-    'اختر الخط واللون والتأثير، وشاهد أسلوب الترجمة مباشرة.',
+  demoSubheadline: 'اختر الخط واللون والتأثير، وشاهد أسلوب الترجمة مباشرة.',
   demoSectionFont: 'الخط',
   demoSectionAccent: 'التمييز',
   demoSectionEffect: 'التأثير',
@@ -3404,17 +3450,16 @@ const ar: Translations = {
   retrySubtitles: 'إعادة محاولة الترجمة',
   retrying: 'جارٍ إعادة المحاولة...',
   retrySubtitlesBody:
-    'يختار الاكتشاف التلقائي أفضل لغة على الجهاز. اختر لغة يدويًا إذا أخطأ الاكتشاف.',
-  autoDetect: 'اكتشاف تلقائي',
+    'اختر اللغة المنطوقة في هذا الفيديو، وسيعيد Voxa إنشاء الترجمة على الجهاز.',
   subtitlesCreatedNeedsReview:
     'تم إنشاء الترجمة، لكن هذا المشروع ما زال محددًا للمراجعة.',
   noSubtitlesGenerated:
-    'لم يتم إنشاء ترجمة لهذا المقطع. جرّب الاكتشاف التلقائي أو اختر لغة يدويًا.',
+    'لم يتم إنشاء ترجمة لهذا المقطع. اختر لغة يدويًا وحاول مرة أخرى.',
   manualEditingAvailable: 'يبقى تحرير الترجمة يدويًا متاحًا.',
   lastAttempt: 'آخر محاولة',
   manual: 'يدوي',
   auto: 'تلقائي',
-  chooseLanguageToRetry: 'اختر الاكتشاف التلقائي أو لغة محددة على الجهاز لإعادة المحاولة.',
+  chooseLanguageToRetry: 'اختر لغة محددة على الجهاز لإعادة المحاولة.',
   subtitleRetryFailedTitle: 'فشلت إعادة محاولة الترجمة',
   subtitleRetryFailedBody: 'لا يمكن إعادة إنشاء الترجمة الآن.',
   noSubtitlesCreatedTitle: 'لم يتم إنشاء ترجمة',
