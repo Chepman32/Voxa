@@ -1,11 +1,6 @@
 import React from 'react';
 import { MenuView, type MenuAction } from '@react-native-menu/menu';
-import {
-  ImageBackground,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -51,7 +46,8 @@ export function ProjectCard({
   const { t } = useTranslation();
   const translateX = useSharedValue(0);
   const subtitleCount = countRenderableSubtitles(project.subtitles);
-  const displayTitle = project.title === 'Untitled Cut' ? t('untitledCut') : project.title;
+  const displayTitle =
+    project.title === 'Untitled Cut' ? t('untitledCut') : project.title;
   const resolvedRemoveLabel = removeLabel ?? t('projectRemove');
 
   const panGesture = Gesture.Pan()
@@ -92,7 +88,11 @@ export function ProjectCard({
   }));
 
   const deleteStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(Math.abs(translateX.value), [0, width * 0.48], [0.18, 1]),
+    opacity: interpolate(
+      Math.abs(translateX.value),
+      [0, width * 0.48],
+      [0.18, 1],
+    ),
   }));
 
   const card = (
@@ -102,11 +102,14 @@ export function ProjectCard({
           <ImageBackground
             source={{ uri: project.thumbnailUri ?? emptyStateImage }}
             style={styles.media}
-            imageStyle={styles.mediaImage}>
+            imageStyle={styles.mediaImage}
+          >
             <View style={styles.mediaShade} />
             <View style={styles.badgeRow}>
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{formatDuration(project.duration)}</Text>
+                <Text style={styles.badgeText}>
+                  {formatDuration(project.duration)}
+                </Text>
               </View>
               <View
                 style={[
@@ -126,7 +129,10 @@ export function ProjectCard({
               {displayTitle}
             </Text>
             <Text style={styles.subtitleMeta}>
-              {subtitleCount} {subtitleCount === 1 ? t('projectSubtitleBlock') : t('projectSubtitleBlocks')}
+              {subtitleCount}{' '}
+              {subtitleCount === 1
+                ? t('projectSubtitleBlock')
+                : t('projectSubtitleBlocks')}
             </Text>
           </View>
         </GlassPanel>
@@ -150,7 +156,9 @@ export function ProjectCard({
             onContextMenuAction(nativeEvent.event, project.id);
           }}
           shouldOpenOnLongPress
-          title={contextMenuTitle ?? displayTitle}>
+          style={styles.menuHost}
+          title={contextMenuTitle ?? displayTitle}
+        >
           {card}
         </MenuView>
       ) : (
@@ -161,6 +169,9 @@ export function ProjectCard({
 }
 
 const styles = StyleSheet.create({
+  menuHost: {
+    flex: 1,
+  },
   cardWrap: {
     flex: 1,
   },

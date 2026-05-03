@@ -31,6 +31,10 @@ const ALL_PROJECTS_SECTION_ID = 'all-projects';
 const TRASH_SECTION_ID = 'trash';
 const MOVE_TO_FOLDER_PREFIX = 'move-to-folder:';
 
+function getDefaultSectionExpanded(sectionId: string) {
+  return sectionId === ALL_PROJECTS_SECTION_ID;
+}
+
 type HomeSection =
   | {
       id: typeof ALL_PROJECTS_SECTION_ID;
@@ -113,7 +117,9 @@ export function HomeScreen({
   const scrollY = useSharedValue(0);
   const pullDistance = useSharedValue(0);
   const armedRef = useRef(false);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     [ALL_PROJECTS_SECTION_ID]: true,
   });
 
@@ -123,11 +129,12 @@ export function HomeScreen({
   const contentTop = headerTop + 100;
   const pullIndicatorTop = insets.top + 12;
   const hour = new Date().getHours();
-  const greeting = hour < 12
-    ? t('greetingMorning')
-    : hour < 18
-    ? t('greetingAfternoon')
-    : t('greetingEvening');
+  const greeting =
+    hour < 12
+      ? t('greetingMorning')
+      : hour < 18
+      ? t('greetingAfternoon')
+      : t('greetingEvening');
 
   const activeProjects = useMemo(
     () => deferredProjects.filter(project => !project.deletedAt),
@@ -143,7 +150,9 @@ export function HomeScreen({
       id: folder.id,
       title: folder.title,
       type: 'folder' as const,
-      projects: activeProjects.filter(project => project.folderId === folder.id),
+      projects: activeProjects.filter(
+        project => project.folderId === folder.id,
+      ),
     }));
     const nextSections: HomeSection[] = [
       {
@@ -274,12 +283,14 @@ export function HomeScreen({
   const toggleSection = (sectionId: string) => {
     setExpandedSections(current => ({
       ...current,
-      [sectionId]: !(current[sectionId] ?? true),
+      [sectionId]: !(
+        current[sectionId] ?? getDefaultSectionExpanded(sectionId)
+      ),
     }));
   };
 
   const isSectionExpanded = (sectionId: string) =>
-    expandedSections[sectionId] ?? true;
+    expandedSections[sectionId] ?? getDefaultSectionExpanded(sectionId);
 
   const buildProjectMenuActions = (project: Project): MenuAction[] => {
     if (project.deletedAt) {
@@ -298,12 +309,15 @@ export function HomeScreen({
       ];
     }
 
-    const folderTargets = folders.map(folder => ({
-      id: `${MOVE_TO_FOLDER_PREFIX}${folder.id}`,
-      title: folder.title,
-      image: icon('folder', 'ic_menu_upload'),
-      state: project.folderId === folder.id ? 'on' : 'off',
-    } satisfies MenuAction));
+    const folderTargets = folders.map(
+      folder =>
+        ({
+          id: `${MOVE_TO_FOLDER_PREFIX}${folder.id}`,
+          title: folder.title,
+          image: icon('folder', 'ic_menu_upload'),
+          state: project.folderId === folder.id ? 'on' : 'off',
+        } satisfies MenuAction),
+    );
 
     return [
       {
@@ -339,7 +353,10 @@ export function HomeScreen({
     }
 
     if (actionId.startsWith(MOVE_TO_FOLDER_PREFIX)) {
-      onMoveProjectToFolder(projectId, actionId.replace(MOVE_TO_FOLDER_PREFIX, ''));
+      onMoveProjectToFolder(
+        projectId,
+        actionId.replace(MOVE_TO_FOLDER_PREFIX, ''),
+      );
       return;
     }
 
@@ -387,15 +404,15 @@ export function HomeScreen({
 
     return [
       {
-        id: 'rename-folder',
-        title: t('folderRename'),
-        image: icon('pencil', 'ic_menu_edit'),
-      },
-      {
         id: 'remove-folder',
         title: t('folderRemove'),
         image: icon('trash', 'ic_menu_delete'),
         attributes: { destructive: true },
+      },
+      {
+        id: 'rename-folder',
+        title: t('folderRename'),
+        image: icon('pencil', 'ic_menu_edit'),
       },
     ];
   };
@@ -428,34 +445,37 @@ export function HomeScreen({
     }
   };
 
-  const emptyProject = useMemo<Project>(() => ({
-    id: 'empty-card',
-    title: t('homeEmptyProjectTitle'),
-    sourceFileName: t('homeEmptyProjectFileName'),
-    videoLocalURI: emptyStateImage,
-    thumbnailUri: emptyStateImage,
-    duration: 18000,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    subtitles: [],
-    globalStyle: {
-      fontPresetId: 'display',
-      fontFamily: 'System',
-      fontWeight: '800',
-      fontSize: 32,
-      letterSpacing: 0.3,
-      textColor: '#FFFFFF',
-      backgroundColor: 'rgba(10, 10, 12, 0.62)',
-      accentColor: '#00F0FF',
-      wordHighlightEnabled: true,
-      position: 'bottom',
-      positionOffsetYRatio: 0,
-      casing: 'sentence',
-    },
-    waveform: [],
-    recognitionStatus: 'manual',
-    metrics: { width: 1080, height: 1920 },
-  }), [t]);
+  const emptyProject = useMemo<Project>(
+    () => ({
+      id: 'empty-card',
+      title: t('homeEmptyProjectTitle'),
+      sourceFileName: t('homeEmptyProjectFileName'),
+      videoLocalURI: emptyStateImage,
+      thumbnailUri: emptyStateImage,
+      duration: 18000,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      subtitles: [],
+      globalStyle: {
+        fontPresetId: 'display',
+        fontFamily: 'System',
+        fontWeight: '800',
+        fontSize: 32,
+        letterSpacing: 0.3,
+        textColor: '#FFFFFF',
+        backgroundColor: 'rgba(10, 10, 12, 0.62)',
+        accentColor: '#00F0FF',
+        wordHighlightEnabled: true,
+        position: 'bottom',
+        positionOffsetYRatio: 0,
+        casing: 'sentence',
+      },
+      waveform: [],
+      recognitionStatus: 'manual',
+      metrics: { width: 1080, height: 1920 },
+    }),
+    [t],
+  );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -477,7 +497,8 @@ export function HomeScreen({
     section: HomeSection,
     index: number,
   ) => {
-    const isTrashProject = section.type === 'trash' || Boolean(project.deletedAt);
+    const isTrashProject =
+      section.type === 'trash' || Boolean(project.deletedAt);
 
     return (
       <View key={`${section.id}-${project.id}`} style={styles.projectSlot}>
@@ -507,11 +528,7 @@ export function HomeScreen({
     }
 
     if (section.projects.length === 0) {
-      return (
-        <Text style={styles.emptyFolderText}>
-          {t('folderEmpty')}
-        </Text>
-      );
+      return <Text style={styles.emptyFolderText}>{t('folderEmpty')}</Text>;
     }
 
     const [leftColumn, rightColumn] = splitProjects(section.projects);
@@ -519,10 +536,14 @@ export function HomeScreen({
     return (
       <View style={styles.projectGrid}>
         <View style={styles.projectColumn}>
-          {leftColumn.map((project, index) => renderProject(project, section, index * 2))}
+          {leftColumn.map((project, index) =>
+            renderProject(project, section, index * 2),
+          )}
         </View>
         <View style={styles.projectColumn}>
-          {rightColumn.map((project, index) => renderProject(project, section, index * 2 + 1))}
+          {rightColumn.map((project, index) =>
+            renderProject(project, section, index * 2 + 1),
+          )}
         </View>
       </View>
     );
@@ -535,7 +556,8 @@ export function HomeScreen({
       <Pressable
         accessibilityLabel={section.title}
         onPress={() => toggleSection(section.id)}
-        style={styles.folderHeader}>
+        style={styles.folderHeader}
+      >
         <View style={styles.folderTitleRow}>
           <Feather
             color={palette.textSecondary}
@@ -566,7 +588,9 @@ export function HomeScreen({
           handleFolderMenuAction(nativeEvent.event, section);
         }}
         shouldOpenOnLongPress
-        title={section.title}>
+        style={styles.folderMenuHost}
+        title={section.title}
+      >
         {header}
       </MenuView>
     );
@@ -597,7 +621,8 @@ export function HomeScreen({
             style={[
               styles.createButton,
               processingVisible ? styles.actionButtonDisabled : undefined,
-            ]}>
+            ]}
+          >
             <Feather color={palette.canvas} name="plus" size={20} />
           </Pressable>
 
@@ -605,7 +630,8 @@ export function HomeScreen({
             accessibilityHint={t('folderCreateHint')}
             accessibilityLabel={t('folderCreate')}
             onPress={promptCreateFolder}
-            style={styles.secondaryHeaderButton}>
+            style={styles.secondaryHeaderButton}
+          >
             <Feather color={palette.textPrimary} name="folder-plus" size={18} />
           </Pressable>
 
@@ -613,7 +639,8 @@ export function HomeScreen({
             accessibilityHint={t('homeOpenSettingsHint')}
             accessibilityLabel={t('homeOpenSettingsLabel')}
             onPress={onOpenSettings}
-            style={styles.secondaryHeaderButton}>
+            style={styles.secondaryHeaderButton}
+          >
             <Feather color={palette.textPrimary} name="settings" size={18} />
           </Pressable>
         </View>
@@ -624,7 +651,8 @@ export function HomeScreen({
         onScroll={handleScroll}
         onScrollEndDrag={handleScrollEnd}
         scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         {sections.map(section => (
           <View key={section.id} style={styles.folderSection}>
             {renderSectionHeader(section)}
@@ -699,6 +727,9 @@ const styles = StyleSheet.create({
   },
   folderSection: {
     gap: 12,
+  },
+  folderMenuHost: {
+    alignSelf: 'stretch',
   },
   folderHeader: {
     minHeight: 44,
