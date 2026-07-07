@@ -135,6 +135,10 @@ function createMockSubtitles(duration = 12000): NativeSubtitleSegment[] {
 }
 
 export async function requestAuthorizations() {
+  if (nativeModule?.requestAuthorizations) {
+    return nativeModule.requestAuthorizations();
+  }
+
   if (Platform.OS !== 'ios') {
     return {
       photoLibrary: 'authorized',
@@ -147,6 +151,10 @@ export async function requestAuthorizations() {
 }
 
 export async function getSpeechAuthorizationStatus() {
+  if (nativeModule?.getSpeechAuthorizationStatus) {
+    return nativeModule.getSpeechAuthorizationStatus();
+  }
+
   if (Platform.OS !== 'ios') {
     return 'authorized' satisfies PermissionSummary['speech'];
   }
@@ -155,6 +163,10 @@ export async function getSpeechAuthorizationStatus() {
 }
 
 export async function requestSpeechAuthorization() {
+  if (nativeModule?.requestSpeechAuthorization) {
+    return nativeModule.requestSpeechAuthorization();
+  }
+
   if (Platform.OS !== 'ios') {
     return 'authorized' satisfies PermissionSummary['speech'];
   }
@@ -163,6 +175,10 @@ export async function requestSpeechAuthorization() {
 }
 
 export async function getDeviceLocale() {
+  if (nativeModule?.getDeviceLocale) {
+    return nativeModule.getDeviceLocale();
+  }
+
   if (Platform.OS !== 'ios') {
     return 'en-US';
   }
@@ -171,6 +187,10 @@ export async function getDeviceLocale() {
 }
 
 export async function getAvailableSpeechLocales() {
+  if (nativeModule?.getAvailableSpeechLocales) {
+    return nativeModule.getAvailableSpeechLocales();
+  }
+
   if (Platform.OS !== 'ios') {
     return [
       { label: 'English (United States)', value: 'en-US' },
@@ -187,6 +207,10 @@ export async function prepareProject(
   localeOverride: string | null,
   fallbackDuration = 12000,
 ) {
+  if (nativeModule?.prepareProject) {
+    return nativeModule.prepareProject(videoURI, localeOverride);
+  }
+
   if (Platform.OS !== 'ios') {
     return {
       duration: fallbackDuration,
@@ -207,6 +231,10 @@ export async function prepareProject(
 }
 
 export async function persistProjectVideo(videoURI: string) {
+  if (nativeModule?.persistProjectVideo) {
+    return nativeModule.persistProjectVideo(videoURI);
+  }
+
   if (Platform.OS !== 'ios') {
     return {
       videoUri: videoURI,
@@ -222,6 +250,10 @@ export async function resolveProjectMedia(payload: {
   thumbnailUri?: string;
   thumbnailFileName?: string;
 }) {
+  if (nativeModule?.resolveProjectMedia) {
+    return nativeModule.resolveProjectMedia(payload);
+  }
+
   if (Platform.OS !== 'ios') {
     return {
       videoUri: payload.videoURI,
@@ -240,6 +272,10 @@ export async function exportProject(payload: {
   style: SubtitleStyle;
   resolution: ExportResolution;
 }) {
+  if (nativeModule?.exportProject) {
+    return nativeModule.exportProject(payload);
+  }
+
   if (Platform.OS !== 'ios') {
     return {
       outputUri: payload.videoURI,
@@ -250,6 +286,10 @@ export async function exportProject(payload: {
 }
 
 export async function saveVideoToPhotos(videoURI: string) {
+  if (nativeModule?.saveVideoToPhotos) {
+    return nativeModule.saveVideoToPhotos(videoURI);
+  }
+
   if (Platform.OS !== 'ios') {
     return {
       localIdentifier: videoURI,
