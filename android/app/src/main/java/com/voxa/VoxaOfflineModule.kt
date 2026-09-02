@@ -43,6 +43,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -174,7 +175,11 @@ class VoxaOfflineModule(
 
             val localeOverride = locale?.trim().orEmpty()
             val resolvedLocale =
-                if (localeOverride.isNotEmpty()) localeOverride else Locale.getDefault().toLanguageTag()
+                if (localeOverride.isNotEmpty()) {
+                  normalizeLocaleTag(localeOverride)
+                } else {
+                  Locale.getDefault().toLanguageTag()
+                }
             recognitionMode = if (localeOverride.isNotEmpty()) "manual" else "auto"
             recognitionLocale = resolvedLocale
             subtitles = recognizeSpeech(pcm, resolvedLocale, temporaryFiles)
@@ -780,7 +785,12 @@ class VoxaOfflineModule(
     val finished = AtomicBoolean(false)
     val segments = mutableListOf<SubtitleSegment>()
     val errors = mutableListOf<RecognitionFailure>()
-    val pfd = ParcelFileDescriptor.open(chunkFile, ParcelFileDescriptor.MODE_READ_ONLY)
+    val untimedSegmentResults = mutableListOf<RecognitionText>()
+    var finalUntimedResult: RecognitionText? = null
+    val recognizerRef = AtomicReference<SpeechRecognizer?>()
+    val pipe = ParcelFileDescriptor.createPipe()
+    val audioSource = pipe[0]
+    val audioSink = pipe[1]
 
     fun finish() {
       if (finished.compareAndSet(false, true)) {
@@ -788,11 +798,24 @@ class VoxaOfflineModule(
       }
     }
 
+    fun appendUntimedFallback() {
+      if (segments.isNotEmpty()) {
+        return
+      }
+
+      val fallback = finalUntimedResult ?: mergeRecognitionTexts(untimedSegmentResults)
+      if (fallback != null) {
+        segments.addAll(
+            segmentsFromUntimedTranscript(fallback, chunkStartMs, chunkDurationMs))
+      }
+    }
+
     mainHandler.post {
       try {
-        val recognizer = SpeechRecognizer.createSpeechRecognizer(reactContext)
+        val recognizer = createVideoSpeechRecognizer()
+        recognizerRef.set(recognizer)
         val intent = IntentFactory.createSpeechIntent(
-            pfd = pfd,
+            pfd = audioSource,
             sampleRate = sampleRate,
             channelCount = channelCount,
             localeTag = localeTag)
@@ -809,43 +832,89 @@ class VoxaOfflineModule(
 
               override fun onError(error: Int) {
                 errors.add(RecognitionFailure(error, speechErrorMessage(error)))
+                recognizerRef.compareAndSet(recognizer, null)
                 recognizer.destroy()
                 finish()
               }
 
               override fun onResults(results: Bundle?) {
-                if (segments.isEmpty() && results != null) {
-                  segments.addAll(parseRecognitionBundle(results, chunkStartMs, chunkDurationMs))
+                if (results != null) {
+                  val timedWords = timedWordsFromRecognitionParts(results)
+                  if (timedWords.isNotEmpty()) {
+                    segments.addAll(
+                        segmentsFromRecognitionParts(
+                            timedWords, chunkStartMs, chunkDurationMs))
+                  } else {
+                    finalUntimedResult = recognitionTextFromBundle(results)
+                  }
                 }
+                appendUntimedFallback()
+                recognizerRef.compareAndSet(recognizer, null)
                 recognizer.destroy()
                 finish()
               }
 
               override fun onSegmentResults(segmentResults: Bundle) {
-                segments.addAll(parseRecognitionBundle(segmentResults, chunkStartMs, chunkDurationMs))
+                val timedWords = timedWordsFromRecognitionParts(segmentResults)
+                if (timedWords.isNotEmpty()) {
+                  segments.addAll(
+                      segmentsFromRecognitionParts(
+                          timedWords, chunkStartMs, chunkDurationMs))
+                } else {
+                  recognitionTextFromBundle(segmentResults)?.let {
+                    untimedSegmentResults.add(it)
+                  }
+                }
               }
 
               override fun onEndOfSegmentedSession() {
+                appendUntimedFallback()
+                recognizerRef.compareAndSet(recognizer, null)
                 recognizer.destroy()
                 finish()
               }
             })
 
         recognizer.startListening(intent)
+        streamPcmAtRealtime(
+            chunkFile = chunkFile,
+            destination = audioSink,
+            sampleRate = sampleRate,
+            channelCount = channelCount,
+            isFinished = finished,
+            onFailure = { error ->
+              errors.add(
+                  RecognitionFailure(
+                      null,
+                      error.message ?: "Unable to stream audio for speech recognition."))
+              mainHandler.post {
+                recognizerRef.getAndSet(null)?.let { activeRecognizer ->
+                  activeRecognizer.cancel()
+                  activeRecognizer.destroy()
+                }
+              }
+              finish()
+            })
       } catch (error: Exception) {
         errors.add(RecognitionFailure(null, error.message ?: "Speech recognition failed."))
+        recognizerRef.getAndSet(null)?.destroy()
+        closeQuietly(audioSink)
         finish()
       }
     }
 
     val timeoutMs = max(MIN_RECOGNITION_TIMEOUT_MS, chunkDurationMs * 3L + 30_000L)
     val completed = latch.await(timeoutMs, TimeUnit.MILLISECONDS)
-    try {
-      pfd.close()
-    } catch (_: IOException) {
-    }
+    closeQuietly(audioSource)
+    closeQuietly(audioSink)
 
     if (!completed) {
+      mainHandler.post {
+        recognizerRef.getAndSet(null)?.let { recognizer ->
+          recognizer.cancel()
+          recognizer.destroy()
+        }
+      }
       throw RecognitionFailure(null, "Speech recognition timed out.")
     }
 
@@ -856,40 +925,137 @@ class VoxaOfflineModule(
     return segments
   }
 
-  private fun parseRecognitionBundle(
-      bundle: Bundle,
-      chunkStartMs: Int,
-      chunkDurationMs: Int
-  ): List<SubtitleSegment> {
-    val recognitionParts = timedWordsFromRecognitionParts(bundle)
-    if (recognitionParts.isNotEmpty()) {
-      return segmentsFromRecognitionParts(recognitionParts, chunkStartMs, chunkDurationMs)
+  private fun createVideoSpeechRecognizer(): SpeechRecognizer {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        SpeechRecognizer.isOnDeviceRecognitionAvailable(reactContext)) {
+      SpeechRecognizer.createOnDeviceSpeechRecognizer(reactContext)
+    } else {
+      SpeechRecognizer.createSpeechRecognizer(reactContext)
     }
+  }
 
-    val texts = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-    val text = texts?.firstOrNull()?.trim().orEmpty()
+  private fun streamPcmAtRealtime(
+      chunkFile: File,
+      destination: ParcelFileDescriptor,
+      sampleRate: Int,
+      channelCount: Int,
+      isFinished: AtomicBoolean,
+      onFailure: (Exception) -> Unit
+  ) {
+    Thread({
+      try {
+        val bytesPerFrame = channelCount * BYTES_PER_PCM_16_SAMPLE
+        val bytesPerSecond = sampleRate.toLong() * bytesPerFrame
+        val targetBufferBytes =
+            max(bytesPerFrame, (bytesPerSecond * AUDIO_STREAM_INTERVAL_MS / 1000).toInt())
+        val bufferSize = targetBufferBytes - (targetBufferBytes % bytesPerFrame)
+        val buffer = ByteArray(max(bytesPerFrame, bufferSize))
+        val startedAtNanos = System.nanoTime()
+        var streamedBytes = 0L
+
+        BufferedInputStream(FileInputStream(chunkFile)).use { input ->
+          ParcelFileDescriptor.AutoCloseOutputStream(destination).use { output ->
+            while (!isFinished.get()) {
+              val read = input.read(buffer)
+              if (read <= 0) {
+                break
+              }
+
+              output.write(buffer, 0, read)
+              streamedBytes += read
+
+              val targetElapsedNanos =
+                  streamedBytes * TimeUnit.SECONDS.toNanos(1) / bytesPerSecond
+              val remainingNanos =
+                  targetElapsedNanos - (System.nanoTime() - startedAtNanos)
+              if (remainingNanos > 0) {
+                TimeUnit.NANOSECONDS.sleep(remainingNanos)
+              }
+            }
+            output.flush()
+          }
+        }
+      } catch (error: Exception) {
+        if (!isFinished.get()) {
+          onFailure(error)
+        }
+      }
+    }, AUDIO_STREAM_THREAD_NAME).start()
+  }
+
+  private fun closeQuietly(descriptor: ParcelFileDescriptor) {
+    try {
+      descriptor.close()
+    } catch (_: IOException) {
+    }
+  }
+
+  private fun recognitionTextFromBundle(bundle: Bundle): RecognitionText? {
+    val text = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+        ?.firstOrNull()
+        ?.trim()
+        .orEmpty()
     if (text.isBlank()) {
-      return emptyList()
+      return null
     }
 
     val confidence = bundle.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES)
         ?.firstOrNull()
         ?.takeIf { it >= 0f }
         ?.toDouble()
+    return RecognitionText(text, confidence)
+  }
 
-    return listOf(
-        SubtitleSegment(
-            id = UUID.randomUUID().toString(),
-            startTime = chunkStartMs,
-            endTime = chunkStartMs + chunkDurationMs,
-            text = text,
-            words = listOf(
-                SubtitleWord(
-                    text = text,
-                    startTime = chunkStartMs,
-                    endTime = chunkStartMs + chunkDurationMs,
-                    confidence = confidence)),
-            confidence = confidence))
+  private fun mergeRecognitionTexts(results: List<RecognitionText>): RecognitionText? {
+    if (results.isEmpty()) {
+      return null
+    }
+
+    val texts = results.map { it.text.trim() }.filter { it.isNotBlank() }
+    if (texts.isEmpty()) {
+      return null
+    }
+
+    return RecognitionText(
+        text = texts.fold(mutableListOf<String>()) { merged, text ->
+          if (merged.lastOrNull() != text) {
+            merged.add(text)
+          }
+          merged
+        }.joinToString(" "),
+        confidence = results.mapNotNull { it.confidence }.minOrNull())
+  }
+
+  private fun segmentsFromUntimedTranscript(
+      result: RecognitionText,
+      chunkStartMs: Int,
+      chunkDurationMs: Int
+  ): List<SubtitleSegment> {
+    val words = result.text.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+    if (words.isEmpty()) {
+      return emptyList()
+    }
+
+    val usableDurationMs = max(words.size, chunkDurationMs)
+    return words.mapIndexed { index, text ->
+      val start =
+          chunkStartMs + (usableDurationMs.toLong() * index / words.size).toInt()
+      val end =
+          chunkStartMs + (usableDurationMs.toLong() * (index + 1) / words.size).toInt()
+      val subtitleWord = SubtitleWord(text, start, end, result.confidence)
+      SubtitleSegment(
+          id = UUID.randomUUID().toString(),
+          startTime = start,
+          endTime = end,
+          text = text,
+          words = listOf(subtitleWord),
+          confidence = result.confidence)
+    }
+  }
+
+  private fun normalizeLocaleTag(localeTag: String): String {
+    val normalized = Locale.forLanguageTag(localeTag.replace('_', '-')).toLanguageTag()
+    return if (normalized == "und") localeTag.replace('_', '-') else normalized
   }
 
   @Suppress("DEPRECATION")
@@ -1108,6 +1274,10 @@ class VoxaOfflineModule(
       val localStartMs: Int,
       val confidence: Double?)
 
+  private data class RecognitionText(
+      val text: String,
+      val confidence: Double?)
+
   private class RecognitionFailure(
       val errorCode: Int?,
       message: String
@@ -1130,6 +1300,7 @@ class VoxaOfflineModule(
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, localeTag)
         putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+        putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
         putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, pfd)
         putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_CHANNEL_COUNT, channelCount)
         putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
@@ -1155,6 +1326,8 @@ class VoxaOfflineModule(
     private const val PCM_READ_BUFFER_SIZE = 64 * 1024
     private const val RECOGNITION_CHUNK_DURATION_MS = 45_000
     private const val MIN_RECOGNITION_TIMEOUT_MS = 45_000L
+    private const val AUDIO_STREAM_INTERVAL_MS = 20L
+    private const val AUDIO_STREAM_THREAD_NAME = "voxa-speech-audio"
     private const val MIN_SCRIPT_VALIDATION_LETTERS = 4
     private const val MIN_SCRIPT_MATCH_RATIO = 0.35
     private const val RECOGNITION_PARTS_KEY = "recognition_parts"

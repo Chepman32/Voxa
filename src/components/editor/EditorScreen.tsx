@@ -50,6 +50,7 @@ import {
   resolveSubtitleStyleFromVerticalOrigin,
   setSubtitlePositionPreset,
 } from '../../lib/project';
+import { resolveRememberedSpeechLocale } from '../../lib/speech-locale';
 import {
   getAvailableSpeechLocales,
   exportProject,
@@ -473,14 +474,14 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
   const resolveInitialRetryLocale = useCallback(
     (locales: SpeechLocaleOption[]) => {
-      if (
-        project.recognitionLocale &&
-        locales.some(locale => locale.value === project.recognitionLocale)
-      ) {
-        return project.recognitionLocale;
-      }
-
-      return locales[0]?.value ?? '';
+      return (
+        resolveRememberedSpeechLocale(
+          project.recognitionLocale ?? null,
+          locales,
+        ) ??
+        locales[0]?.value ??
+        ''
+      );
     },
     [project.recognitionLocale],
   );

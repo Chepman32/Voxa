@@ -54,7 +54,9 @@ describe('project processor', () => {
           startTime: 0,
           endTime: 620,
           text: 'hello',
-          words: [{ text: 'hello', startTime: 0, endTime: 620, confidence: 0.92 }],
+          words: [
+            { text: 'hello', startTime: 0, endTime: 620, confidence: 0.92 },
+          ],
           confidence: 0.92,
         },
       ],
@@ -99,7 +101,8 @@ describe('project processor', () => {
       recognitionStatus: 'failed',
       recognitionLocale: undefined,
       recognitionMode: 'auto',
-      errorMessage: 'No supported on-device speech locale could transcribe this video.',
+      errorMessage:
+        'No supported on-device speech locale could transcribe this video.',
     });
 
     const project = await buildProjectFromAsset(asset);
@@ -127,7 +130,9 @@ describe('project processor', () => {
     expect(mockPersistProjectVideo).toHaveBeenCalledWith(
       'file:///tmp/detect-language.mov',
     );
-    expect(project.videoLocalURI).toBe('file:///app-support/project-media/manual.mov');
+    expect(project.videoLocalURI).toBe(
+      'file:///app-support/project-media/manual.mov',
+    );
     expect(project.videoFileName).toBe('manual.mov');
     expect(project.recognitionStatus).toBe('failed');
   });
@@ -186,7 +191,9 @@ describe('project processor', () => {
           startTime: 0,
           endTime: 780,
           text: 'privet',
-          words: [{ text: 'privet', startTime: 0, endTime: 780, confidence: 0.88 }],
+          words: [
+            { text: 'privet', startTime: 0, endTime: 780, confidence: 0.88 },
+          ],
           confidence: 0.88,
         },
       ],
@@ -241,5 +248,47 @@ describe('project processor', () => {
       text: 'privet',
       startTime: 0,
     });
+  });
+
+  it('creates readable timed subtitle blocks from a coarse Russian transcript', async () => {
+    const transcript =
+      'Привет сегодня мы проверяем распознавание русской речи и создание субтитров';
+    mockPrepareProject.mockResolvedValue({
+      duration: 7000,
+      thumbnailUri: 'file:///tmp/ru-thumb.jpg',
+      width: 1080,
+      height: 1920,
+      waveform: [0.3, 0.6],
+      subtitles: [
+        {
+          id: 'ru-coarse',
+          startTime: 0,
+          endTime: 7000,
+          text: transcript,
+          words: [{ text: transcript, startTime: 0, endTime: 7000 }],
+          confidence: 0.88,
+        },
+      ],
+      transcriptTimeOffsetMs: 0,
+      recognitionStatus: 'ready',
+      recognitionLocale: 'ru_RU',
+      recognitionMode: 'manual',
+      errorMessage: undefined,
+    });
+
+    const project = await buildProjectFromAsset(asset, 'ru_RU');
+    const words = project.subtitles.flatMap(subtitle =>
+      'words' in subtitle ? subtitle.words ?? [] : [],
+    );
+
+    expect(mockPrepareProject).toHaveBeenCalledWith(
+      'file:///tmp/detect-language.mov',
+      'ru-RU',
+      12000,
+    );
+    expect(project.recognitionLocale).toBe('ru-RU');
+    expect(project.subtitles.length).toBeGreaterThan(1);
+    expect(words.map(word => word.text)).toEqual(transcript.split(' '));
+    expect(words.every(word => word.endTime > word.startTime)).toBe(true);
   });
 });

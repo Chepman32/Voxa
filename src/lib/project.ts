@@ -75,7 +75,9 @@ export function normalizeVideoUri(uri: string) {
   return `file://${uri}`;
 }
 
-export function isPlaceholderSubtitle(subtitle?: Pick<SubtitleBlock, 'text' | 'isPlaceholder'> | null) {
+export function isPlaceholderSubtitle(
+  subtitle?: Pick<SubtitleBlock, 'text' | 'isPlaceholder'> | null,
+) {
   if (!subtitle) {
     return false;
   }
@@ -154,7 +156,82 @@ function mergeSubtitleWords(...groups: Array<SubtitleWord[] | undefined>) {
   return normalizeSubtitleWords(groups.flatMap(group => group ?? []));
 }
 
-export function offsetSubtitleWords(words: SubtitleWord[] | undefined, deltaMs: number) {
+function normalizeSubtitleText(text: string) {
+  return text
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.:;!?%…)\]}»])/g, '$1')
+    .replace(/([([{«])\s+/g, '$1')
+    .trim();
+}
+
+function joinSubtitleText(left: string, right: string) {
+  return normalizeSubtitleText(`${left} ${right}`);
+}
+
+export function expandCoarseSubtitleSegments(segments: SubtitleBlock[]) {
+  return segments.flatMap(segment => {
+    const tokens = segment.text.trim().split(/\s+/).filter(Boolean);
+    const normalizedWords = normalizeSubtitleWords(segment.words);
+    const hasCoarseTiming =
+      tokens.length > 1 &&
+      (!normalizedWords ||
+        (normalizedWords.length === 1 &&
+          normalizeSubtitleText(normalizedWords[0]?.text ?? '') ===
+            normalizeSubtitleText(segment.text)));
+
+    if (!hasCoarseTiming) {
+      return [
+        {
+          ...segment,
+          words:
+            normalizedWords ??
+            (tokens.length === 1
+              ? [
+                  {
+                    text: tokens[0]!,
+                    startTime: segment.startTime,
+                    endTime: segment.endTime,
+                    confidence: segment.confidence,
+                  },
+                ]
+              : undefined),
+        },
+      ];
+    }
+
+    const duration = Math.max(
+      tokens.length,
+      segment.endTime - segment.startTime,
+    );
+    return tokens.map((token, index) => {
+      const startTime =
+        segment.startTime + Math.round((duration * index) / tokens.length);
+      const endTime =
+        segment.startTime +
+        Math.round((duration * (index + 1)) / tokens.length);
+      const word = {
+        text: token,
+        startTime,
+        endTime,
+        confidence: normalizedWords?.[0]?.confidence ?? segment.confidence,
+      };
+
+      return {
+        ...segment,
+        id: `${segment.id}-word-${index}`,
+        startTime,
+        endTime,
+        text: token,
+        words: [word],
+      };
+    });
+  });
+}
+
+export function offsetSubtitleWords(
+  words: SubtitleWord[] | undefined,
+  deltaMs: number,
+) {
   const normalized = normalizeSubtitleWords(words);
   if (!normalized || deltaMs === 0) {
     return normalized;
@@ -226,7 +303,7 @@ export function mergeSegmentsIntoBlocks(segments: SubtitleBlock[]) {
     }
 
     const gap = segment.startTime - previous.endTime;
-    const combinedText = `${previous.text} ${segment.text}`.trim();
+    const combinedText = joinSubtitleText(previous.text, segment.text);
     const shouldMerge =
       gap <= 220 &&
       combinedText.length <= 28 &&
@@ -251,8 +328,12 @@ export function mergeSegmentsIntoBlocks(segments: SubtitleBlock[]) {
 
   return merged.map(block => ({
     ...block,
-    text: block.text.replace(/\s+/g, ' ').trim(),
-    words: clampSubtitleWordsToRange(block.words, block.startTime, block.endTime),
+    text: normalizeSubtitleText(block.text),
+    words: clampSubtitleWordsToRange(
+      block.words,
+      block.startTime,
+      block.endTime,
+    ),
   }));
 }
 
@@ -287,7 +368,10 @@ function resolveKnownOffsetToApply(
     return 0;
   }
 
-  const minExpectedStart = Math.max(0, knownOffsetMs - KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS);
+  const minExpectedStart = Math.max(
+    0,
+    knownOffsetMs - KNOWN_OFFSET_ALIGNMENT_TOLERANCE_MS,
+  );
   if (firstStart < minExpectedStart) {
     return 0;
   }
@@ -305,7 +389,10 @@ function resolveKnownOffsetToApply(
   return Math.min(knownOffsetMs, firstStart);
 }
 
-function shouldApplyLegacyOffsetShift(subtitles: SubtitleBlock[], duration: number) {
+function shouldApplyLegacyOffsetShift(
+  subtitles: SubtitleBlock[],
+  duration: number,
+) {
   if (subtitles.length === 0) {
     return false;
   }
@@ -386,21 +473,32 @@ export function ensureSubtitles(
     return {
       ...block,
       endTime: clampedEnd,
-      words: clampSubtitleWordsToRange(block.words, block.startTime, clampedEnd),
+      words: clampSubtitleWordsToRange(
+        block.words,
+        block.startTime,
+        clampedEnd,
+      ),
     };
   });
 }
 
-export function findActiveSubtitle(subtitles: SubtitleBlock[], playheadPosition: number) {
+export function findActiveSubtitle(
+  subtitles: SubtitleBlock[],
+  playheadPosition: number,
+) {
   return subtitles.find(
     subtitle =>
-      playheadPosition >= subtitle.startTime && playheadPosition <= subtitle.endTime,
+      playheadPosition >= subtitle.startTime &&
+      playheadPosition <= subtitle.endTime,
   );
 }
 
 export function findActiveSubtitleWordIndex(
   subtitle:
-    | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
+    | Pick<
+        SubtitleBlock,
+        'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'
+      >
     | null
     | undefined,
   playheadPosition: number,
@@ -414,7 +512,8 @@ export function findActiveSubtitleWordIndex(
   }
 
   return words.findIndex(
-    word => playheadPosition >= word.startTime && playheadPosition <= word.endTime,
+    word =>
+      playheadPosition >= word.startTime && playheadPosition <= word.endTime,
   );
 }
 
@@ -425,16 +524,16 @@ export function hasTimedSubtitleWords(
 }
 
 function synthesizeSubtitleWords(
-  subtitle: Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text'> | null | undefined,
+  subtitle:
+    | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text'>
+    | null
+    | undefined,
 ) {
   if (!subtitle || isPlaceholderSubtitle(subtitle)) {
     return undefined;
   }
 
-  const tokens = subtitle.text
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const tokens = subtitle.text.trim().split(/\s+/).filter(Boolean);
 
   if (tokens.length === 0) {
     return undefined;
@@ -465,7 +564,10 @@ function synthesizeSubtitleWords(
 
 export function getRenderableSubtitleWords(
   subtitle:
-    | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
+    | Pick<
+        SubtitleBlock,
+        'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'
+      >
     | null
     | undefined,
   options?: {
@@ -485,7 +587,10 @@ export function getRenderableSubtitleWords(
 
 export function hasRenderableSubtitleWords(
   subtitle:
-    | Pick<SubtitleBlock, 'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'>
+    | Pick<
+        SubtitleBlock,
+        'endTime' | 'startTime' | 'text' | 'words' | 'isPlaceholder'
+      >
     | null
     | undefined,
   options?: {
@@ -507,8 +612,14 @@ export function normalizeEditableSubtitleText(text: string) {
   return text.replace(/\s+/g, ' ').trim();
 }
 
-export function isSameEditableSubtitleText(currentText: string, nextText: string) {
-  return normalizeEditableSubtitleText(currentText) === normalizeEditableSubtitleText(nextText);
+export function isSameEditableSubtitleText(
+  currentText: string,
+  nextText: string,
+) {
+  return (
+    normalizeEditableSubtitleText(currentText) ===
+    normalizeEditableSubtitleText(nextText)
+  );
 }
 
 function subtitleAnchorTop(
@@ -531,7 +642,10 @@ export function clampSubtitleVerticalOrigin(
   videoHeight: number,
   subtitleHeight: number,
 ) {
-  const { maxTop, minTop } = getSubtitleVerticalBounds(videoHeight, subtitleHeight);
+  const { maxTop, minTop } = getSubtitleVerticalBounds(
+    videoHeight,
+    subtitleHeight,
+  );
 
   return clamp(top, minTop, maxTop);
 }
@@ -604,7 +718,10 @@ export function resolveSubtitleStyleFromVerticalOrigin(
   } satisfies SubtitleStyle;
 }
 
-export function applyManualSubtitleTextEdit(subtitle: SubtitleBlock, text: string) {
+export function applyManualSubtitleTextEdit(
+  subtitle: SubtitleBlock,
+  text: string,
+) {
   if (isSameEditableSubtitleText(subtitle.text, text)) {
     return subtitle;
   }
@@ -650,8 +767,10 @@ export function snapSubtitleRange(
 export function buildProjectDefaults() {
   return {
     globalStyle: defaultSubtitleStyle,
-    waveform: Array.from({ length: 120 }, (_, index) =>
-      0.16 + Math.sin(index / 6) * 0.1 + (index % 5 === 0 ? 0.18 : 0),
+    waveform: Array.from(
+      { length: 120 },
+      (_, index) =>
+        0.16 + Math.sin(index / 6) * 0.1 + (index % 5 === 0 ? 0.18 : 0),
     ),
   };
 }

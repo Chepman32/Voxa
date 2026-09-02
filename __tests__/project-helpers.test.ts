@@ -3,6 +3,7 @@ import {
   clampSubtitleWordsToRange,
   createPlaceholderSubtitle,
   ensureSubtitles,
+  expandCoarseSubtitleSegments,
   getRenderableSubtitleWords,
   getSubtitleVerticalOrigin,
   mergeSegmentsIntoBlocks,
@@ -40,6 +41,71 @@ describe('project helpers', () => {
       { text: 'offline', startTime: 0, endTime: 420 },
       { text: 'editing', startTime: 470, endTime: 840 },
     ]);
+  });
+
+  it('keeps Russian punctuation attached while merging recognized words', () => {
+    const blocks = mergeSegmentsIntoBlocks([
+      {
+        id: 'ru-1',
+        startTime: 0,
+        endTime: 400,
+        text: 'Привет',
+        words: [{ text: 'Привет', startTime: 0, endTime: 400 }],
+      },
+      {
+        id: 'ru-2',
+        startTime: 400,
+        endTime: 520,
+        text: '!',
+        words: [{ text: '!', startTime: 400, endTime: 520 }],
+      },
+      {
+        id: 'ru-3',
+        startTime: 520,
+        endTime: 900,
+        text: 'Сегодня',
+        words: [{ text: 'Сегодня', startTime: 520, endTime: 900 }],
+      },
+    ]);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]?.text).toBe('Привет! Сегодня');
+  });
+
+  it('expands a coarse Russian transcript into individually timed words', () => {
+    const segments = expandCoarseSubtitleSegments([
+      {
+        id: 'ru-coarse',
+        startTime: 1000,
+        endTime: 6000,
+        text: 'Привет сегодня проверяем русские субтитры',
+        words: [
+          {
+            text: 'Привет сегодня проверяем русские субтитры',
+            startTime: 1000,
+            endTime: 6000,
+          },
+        ],
+      },
+    ]);
+
+    expect(segments.map(segment => segment.text)).toEqual([
+      'Привет',
+      'сегодня',
+      'проверяем',
+      'русские',
+      'субтитры',
+    ]);
+    expect(
+      segments.map(segment => [segment.startTime, segment.endTime]),
+    ).toEqual([
+      [1000, 2000],
+      [2000, 3000],
+      [3000, 4000],
+      [4000, 5000],
+      [5000, 6000],
+    ]);
+    expect(segments.every(segment => segment.words?.length === 1)).toBe(true);
   });
 
   it('creates a placeholder subtitle when no blocks are available', () => {
@@ -98,8 +164,18 @@ describe('project helpers', () => {
   it('does not relocate a short late transcript window to the start of the video', () => {
     const subtitles = ensureSubtitles(
       [
-        { id: 'late-window-1', startTime: 362000, endTime: 365000, text: 'tail' },
-        { id: 'late-window-2', startTime: 366200, endTime: 368400, text: 'only' },
+        {
+          id: 'late-window-1',
+          startTime: 362000,
+          endTime: 365000,
+          text: 'tail',
+        },
+        {
+          id: 'late-window-2',
+          startTime: 366200,
+          endTime: 368400,
+          text: 'only',
+        },
       ],
       375000,
       { knownOffsetMs: 362000 },
@@ -278,7 +354,9 @@ describe('project helpers', () => {
     );
 
     expect(style.position).toBe('bottom');
-    expect(style.positionOffsetYRatio).toBeCloseTo((30 - (320 - 60 - 18)) / 320);
+    expect(style.positionOffsetYRatio).toBeCloseTo(
+      (30 - (320 - 60 - 18)) / 320,
+    );
   });
 
   it('clamps dragged subtitle origins to the safe preview bounds', () => {

@@ -5,9 +5,11 @@ import {
   buildProjectDefaults,
   deriveProjectTitle,
   ensureSubtitles,
+  expandCoarseSubtitleSegments,
   mergeSegmentsIntoBlocks,
   normalizeVideoUri,
 } from '../lib/project';
+import { normalizeSpeechLocale } from '../lib/speech-locale';
 import { defaultSubtitleStyle } from '../theme/tokens';
 import {
   persistProjectVideo,
@@ -47,15 +49,26 @@ async function prepareProjectResult({
   onPhaseChange,
   videoURI,
 }: ProjectPreparationInput) {
+  const normalizedLocaleOverride = normalizeSpeechLocale(localeOverride);
   onPhaseChange?.('extracting', 'Extracting audio...');
-  const nativeTask = prepareProject(videoURI, localeOverride, fallbackDuration);
+  const nativeTask = prepareProject(
+    videoURI,
+    normalizedLocaleOverride,
+    fallbackDuration,
+  );
 
   await wait(220);
-  onPhaseChange?.('recognizing', resolveRecognitionLabel(localeOverride));
+  onPhaseChange?.(
+    'recognizing',
+    resolveRecognitionLabel(normalizedLocaleOverride),
+  );
 
-  if (!localeOverride) {
+  if (!normalizedLocaleOverride) {
     await wait(320);
-    onPhaseChange?.('recognizing', 'Transcribing with the best on-device language...');
+    onPhaseChange?.(
+      'recognizing',
+      'Transcribing with the best on-device language...',
+    );
   }
 
   const result = await nativeTask;
@@ -65,22 +78,13 @@ async function prepareProjectResult({
 
   const mergedSubtitles = ensureSubtitles(
     mergeSegmentsIntoBlocks(
-      result.subtitles.map(segment => ({
-        ...segment,
-        id: segment.id || createId('subtitle'),
-        isGenerated: true,
-        words:
-          segment.words && segment.words.length > 0
-            ? segment.words
-            : [
-                {
-                  text: segment.text,
-                  startTime: segment.startTime,
-                  endTime: segment.endTime,
-                  confidence: segment.confidence,
-                },
-              ],
-      })),
+      expandCoarseSubtitleSegments(
+        result.subtitles.map(segment => ({
+          ...segment,
+          id: segment.id || createId('subtitle'),
+          isGenerated: true,
+        })),
+      ),
     ),
     result.duration || fallbackDuration,
     { knownOffsetMs: result.transcriptTimeOffsetMs },
@@ -88,6 +92,9 @@ async function prepareProjectResult({
 
   return {
     ...result,
+    recognitionLocale:
+      normalizeSpeechLocale(result.recognitionLocale) ??
+      result.recognitionLocale,
     mergedSubtitles,
   };
 }
@@ -102,7 +109,10 @@ export async function buildProjectFromAsset(
   onPhaseChange?: ProjectPhaseHandler,
 ) {
   const uri = getAssetVideoUri(asset);
-  const fallbackDuration = Math.max(8000, Math.round((asset.duration ?? 12) * 1000));
+  const fallbackDuration = Math.max(
+    8000,
+    Math.round((asset.duration ?? 12) * 1000),
+  );
   const result = await prepareProjectResult({
     fallbackDuration,
     localeOverride,
@@ -123,7 +133,10 @@ export async function buildProjectFromAsset(
     updatedAt: Date.now(),
     subtitles: result.mergedSubtitles,
     globalStyle: defaultSubtitleStyle,
-    waveform: result.waveform.length > 0 ? result.waveform : buildProjectDefaults().waveform,
+    waveform:
+      result.waveform.length > 0
+        ? result.waveform
+        : buildProjectDefaults().waveform,
     recognitionStatus: result.recognitionStatus,
     recognitionLocale: result.recognitionLocale,
     recognitionMode: result.recognitionMode,
@@ -141,7 +154,10 @@ export async function retryProjectSubtitles(
   localeOverride: string | null = null,
   onPhaseChange?: ProjectPhaseHandler,
 ) {
-  const fallbackDuration = Math.max(8000, Math.round(project.duration || 12000));
+  const fallbackDuration = Math.max(
+    8000,
+    Math.round(project.duration || 12000),
+  );
   const result = await prepareProjectResult({
     fallbackDuration,
     localeOverride,
@@ -174,7 +190,8 @@ export async function retryProjectSubtitles(
 export function buildManualFallbackProject(asset: Asset, error: unknown) {
   const defaults = buildProjectDefaults();
   const duration = Math.max(8000, Math.round((asset.duration ?? 12) * 1000));
-  const message = error instanceof Error ? error.message : 'Subtitle generation failed.';
+  const message =
+    error instanceof Error ? error.message : 'Subtitle generation failed.';
   const videoUri = getAssetVideoUri(asset);
 
   return {
@@ -199,9 +216,14 @@ export function buildManualFallbackProject(asset: Asset, error: unknown) {
   } satisfies Project;
 }
 
-export async function buildPersistedManualFallbackProject(asset: Asset, error: unknown) {
+export async function buildPersistedManualFallbackProject(
+  asset: Asset,
+  error: unknown,
+) {
   const project = buildManualFallbackProject(asset, error);
-  const media = await persistProjectVideo(project.videoLocalURI).catch(() => null);
+  const media = await persistProjectVideo(project.videoLocalURI).catch(
+    () => null,
+  );
 
   return {
     ...project,
