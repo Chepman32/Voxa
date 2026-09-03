@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { DeviceEventEmitter, NativeModules, Platform } from 'react-native';
 
 import { createId } from '../lib/id';
 import type {
@@ -58,6 +58,14 @@ interface ResolveProjectMediaResponse {
   thumbnailFileName?: string;
 }
 
+export interface SpeechModelDownloadEvent {
+  localeTag: string;
+  status: 'downloading' | 'ready';
+  progress: number | null;
+}
+
+export const SPEECH_MODEL_DOWNLOAD_EVENT = 'VoxaSpeechModelDownloadProgress';
+
 interface VoxaNativeModule {
   requestAuthorizations(): Promise<PermissionSummary>;
   getSpeechAuthorizationStatus(): Promise<PermissionSummary['speech']>;
@@ -84,7 +92,9 @@ interface VoxaNativeModule {
   saveVideoToPhotos(videoURI: string): Promise<SaveResponse>;
 }
 
-const nativeModule = NativeModules.VoxaOfflineModule as VoxaNativeModule | undefined;
+const nativeModule = NativeModules.VoxaOfflineModule as
+  | VoxaNativeModule
+  | undefined;
 
 function requireNativeMethod<K extends keyof VoxaNativeModule>(methodName: K) {
   if (!nativeModule?.[methodName]) {
@@ -206,28 +216,55 @@ export async function prepareProject(
   videoURI: string,
   localeOverride: string | null,
   fallbackDuration = 12000,
+  onModelDownloadProgress?: (event: SpeechModelDownloadEvent) => void,
 ) {
-  if (nativeModule?.prepareProject) {
-    return nativeModule.prepareProject(videoURI, localeOverride);
-  }
+  const requestedLocale = localeOverride?.replace(/_/g, '-').toLowerCase();
+  const progressSubscription =
+    Platform.OS === 'android' &&
+    nativeModule?.prepareProject &&
+    onModelDownloadProgress
+      ? DeviceEventEmitter.addListener(
+          SPEECH_MODEL_DOWNLOAD_EVENT,
+          (event: SpeechModelDownloadEvent) => {
+            const eventLocale = event.localeTag
+              ?.replace(/_/g, '-')
+              .toLowerCase();
+            if (requestedLocale && eventLocale !== requestedLocale) {
+              return;
+            }
+            onModelDownloadProgress(event);
+          },
+        )
+      : undefined;
 
-  if (Platform.OS !== 'ios') {
-    return {
-      duration: fallbackDuration,
-      videoUri: videoURI,
-      videoFileName: undefined,
-      width: 1080,
-      height: 1920,
-      waveform: createMockWaveform(),
-      subtitles: createMockSubtitles(fallbackDuration),
-      transcriptTimeOffsetMs: 0,
-      recognitionStatus: 'ready',
-      recognitionLocale: localeOverride ?? 'en-US',
-      recognitionMode: localeOverride ? 'manual' : 'auto',
-    } satisfies PrepareProjectResponse;
-  }
+  try {
+    if (nativeModule?.prepareProject) {
+      return await nativeModule.prepareProject(videoURI, localeOverride);
+    }
 
-  return requireNativeMethod('prepareProject')(videoURI, localeOverride);
+    if (Platform.OS !== 'ios') {
+      return {
+        duration: fallbackDuration,
+        videoUri: videoURI,
+        videoFileName: undefined,
+        width: 1080,
+        height: 1920,
+        waveform: createMockWaveform(),
+        subtitles: createMockSubtitles(fallbackDuration),
+        transcriptTimeOffsetMs: 0,
+        recognitionStatus: 'ready',
+        recognitionLocale: localeOverride ?? 'en-US',
+        recognitionMode: localeOverride ? 'manual' : 'auto',
+      } satisfies PrepareProjectResponse;
+    }
+
+    return await requireNativeMethod('prepareProject')(
+      videoURI,
+      localeOverride,
+    );
+  } finally {
+    progressSubscription?.remove();
+  }
 }
 
 export async function persistProjectVideo(videoURI: string) {

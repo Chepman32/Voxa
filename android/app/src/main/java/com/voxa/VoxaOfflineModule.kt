@@ -16,9 +16,12 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.Parcelable
+import android.os.SystemClock
 import android.provider.OpenableColumns
 import android.speech.ModelDownloadListener
 import android.speech.RecognitionListener
+import android.speech.RecognitionSupport
+import android.speech.RecognitionSupportCallback
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import com.facebook.react.bridge.Arguments
@@ -53,18 +56,100 @@ import kotlin.math.sqrt
 
 internal enum class SpeechRecognitionRecovery {
   DOWNLOAD_MODEL_AND_RETRY,
+  RETRY_AFTER_SERVICE_RECONNECT,
+  FAIL,
+}
+
+internal enum class SpeechModelPreparation {
+  READY,
+  DOWNLOAD,
+  PENDING,
+  UNSUPPORTED,
+  UNKNOWN,
+}
+
+internal enum class SpeechModelDownloadStatus {
+  AVAILABLE,
+  SCHEDULED,
+  FAILED,
+}
+
+internal enum class SpeechModelDownloadContinuation {
+  CONTINUE,
+  WAIT_FOR_MODEL,
   FAIL,
 }
 
 internal fun speechRecognitionRecovery(
     errorCode: Int?,
-    modelDownloadAttempted: Boolean
+    modelDownloadAttempted: Boolean,
+    serviceReconnectAttempted: Boolean = false
 ): SpeechRecognitionRecovery =
-    if (errorCode == SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE && !modelDownloadAttempted) {
-      SpeechRecognitionRecovery.DOWNLOAD_MODEL_AND_RETRY
-    } else {
-      SpeechRecognitionRecovery.FAIL
+    when {
+      errorCode == SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE && !modelDownloadAttempted ->
+        SpeechRecognitionRecovery.DOWNLOAD_MODEL_AND_RETRY
+      errorCode == SpeechRecognizer.ERROR_SERVER_DISCONNECTED && !serviceReconnectAttempted ->
+        SpeechRecognitionRecovery.RETRY_AFTER_SERVICE_RECONNECT
+      else -> SpeechRecognitionRecovery.FAIL
     }
+
+internal fun speechModelDownloadContinuation(
+    status: SpeechModelDownloadStatus
+): SpeechModelDownloadContinuation =
+    when (status) {
+      SpeechModelDownloadStatus.AVAILABLE -> SpeechModelDownloadContinuation.CONTINUE
+      SpeechModelDownloadStatus.SCHEDULED -> SpeechModelDownloadContinuation.WAIT_FOR_MODEL
+      SpeechModelDownloadStatus.FAILED -> SpeechModelDownloadContinuation.FAIL
+    }
+
+internal fun normalizedSpeechModelProgress(completedPercent: Int): Int =
+    completedPercent.coerceIn(0, 100)
+
+internal fun speechModelPreparation(
+    requestedLocaleTag: String,
+    installedOnDeviceLanguages: Collection<String>,
+    pendingOnDeviceLanguages: Collection<String>,
+    supportedOnDeviceLanguages: Collection<String>
+): SpeechModelPreparation {
+  fun matchesRequestedLocale(candidateLocaleTag: String): Boolean {
+    val requested = Locale.forLanguageTag(requestedLocaleTag.replace('_', '-'))
+    val candidate = Locale.forLanguageTag(candidateLocaleTag.replace('_', '-'))
+    if (requested.language.isBlank() || candidate.language.isBlank()) {
+      return requestedLocaleTag.equals(candidateLocaleTag, ignoreCase = true)
+    }
+    if (!requested.language.equals(candidate.language, ignoreCase = true)) {
+      return false
+    }
+
+    val regionsMatch =
+        requested.country.isBlank() ||
+            candidate.country.isBlank() ||
+            requested.country.equals(candidate.country, ignoreCase = true)
+    val scriptsMatch =
+        requested.script.isBlank() ||
+            candidate.script.isBlank() ||
+            requested.script.equals(candidate.script, ignoreCase = true)
+    return regionsMatch && scriptsMatch
+  }
+
+  if (installedOnDeviceLanguages.any(::matchesRequestedLocale)) {
+    return SpeechModelPreparation.READY
+  }
+  if (pendingOnDeviceLanguages.any(::matchesRequestedLocale)) {
+    return SpeechModelPreparation.PENDING
+  }
+  if (supportedOnDeviceLanguages.any(::matchesRequestedLocale)) {
+    return SpeechModelPreparation.DOWNLOAD
+  }
+
+  return if (installedOnDeviceLanguages.isEmpty() &&
+      pendingOnDeviceLanguages.isEmpty() &&
+      supportedOnDeviceLanguages.isEmpty()) {
+    SpeechModelPreparation.UNKNOWN
+  } else {
+    SpeechModelPreparation.UNSUPPORTED
+  }
+}
 
 class VoxaOfflineModule(
     private val reactContext: ReactApplicationContext
@@ -717,6 +802,8 @@ class VoxaOfflineModule(
       throw IOException("On-device speech recognition is not available on this device.")
     }
 
+    ensureOnDeviceSpeechModel(localeTag)
+
     val segments = mutableListOf<SubtitleSegment>()
     val chunkDurationMs = RECOGNITION_CHUNK_DURATION_MS
     var chunkStartMs = 0
@@ -798,6 +885,7 @@ class VoxaOfflineModule(
       chunkDurationMs: Int
   ): List<SubtitleSegment> {
     var modelDownloadAttempted = false
+    var serviceReconnectAttempted = false
 
     while (true) {
       try {
@@ -809,24 +897,20 @@ class VoxaOfflineModule(
             chunkStartMs = chunkStartMs,
             chunkDurationMs = chunkDurationMs)
       } catch (error: RecognitionFailure) {
-        if (speechRecognitionRecovery(error.errorCode, modelDownloadAttempted) !=
-            SpeechRecognitionRecovery.DOWNLOAD_MODEL_AND_RETRY) {
-          throw error
-        }
-
-        modelDownloadAttempted = true
-        val download = requestOnDeviceSpeechModel(localeTag)
-        when (download.status) {
-          SpeechModelDownloadStatus.AVAILABLE -> continue
-          SpeechModelDownloadStatus.SCHEDULED ->
-            throw RecognitionFailure(
+        when (
+            speechRecognitionRecovery(
                 error.errorCode,
-                "The offline speech model for $localeTag is downloading. Retry subtitles when the download finishes.")
-          SpeechModelDownloadStatus.FAILED ->
-            throw RecognitionFailure(
-                download.errorCode ?: error.errorCode,
-                download.message
-                    ?: "Unable to download the offline speech model for $localeTag. Check your connection and try again.")
+                modelDownloadAttempted,
+                serviceReconnectAttempted)) {
+          SpeechRecognitionRecovery.DOWNLOAD_MODEL_AND_RETRY -> {
+            modelDownloadAttempted = true
+            downloadOnDeviceSpeechModel(localeTag, error.errorCode)
+          }
+          SpeechRecognitionRecovery.RETRY_AFTER_SERVICE_RECONNECT -> {
+            serviceReconnectAttempted = true
+            SystemClock.sleep(SPEECH_SERVICE_RECONNECT_DELAY_MS)
+          }
+          SpeechRecognitionRecovery.FAIL -> throw error
         }
       }
     }
@@ -984,6 +1068,110 @@ class VoxaOfflineModule(
     return segments
   }
 
+  private fun ensureOnDeviceSpeechModel(localeTag: String) {
+    when (queryOnDeviceSpeechModel(localeTag)) {
+      SpeechModelPreparation.READY,
+      SpeechModelPreparation.UNKNOWN -> Unit
+      SpeechModelPreparation.DOWNLOAD -> downloadOnDeviceSpeechModel(localeTag)
+      SpeechModelPreparation.PENDING -> waitForOnDeviceSpeechModel(localeTag)
+      SpeechModelPreparation.UNSUPPORTED ->
+        throw RecognitionFailure(
+            SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED,
+            "Offline speech recognition does not support $localeTag on this device.")
+    }
+  }
+
+  private fun queryOnDeviceSpeechModel(localeTag: String): SpeechModelPreparation {
+    val latch = CountDownLatch(1)
+    val finished = AtomicBoolean(false)
+    val result = AtomicReference(SpeechModelPreparation.UNKNOWN)
+    val recognizerRef = AtomicReference<SpeechRecognizer?>()
+
+    fun finish(preparation: SpeechModelPreparation) {
+      if (finished.compareAndSet(false, true)) {
+        result.set(preparation)
+        recognizerRef.getAndSet(null)?.destroy()
+        latch.countDown()
+      }
+    }
+
+    mainHandler.post {
+      try {
+        val recognizer = createVideoSpeechRecognizer()
+        recognizerRef.set(recognizer)
+        recognizer.checkRecognitionSupport(
+            IntentFactory.createModelDownloadIntent(localeTag),
+            reactContext.mainExecutor,
+            object : RecognitionSupportCallback {
+              override fun onSupportResult(recognitionSupport: RecognitionSupport) {
+                finish(
+                    speechModelPreparation(
+                        requestedLocaleTag = localeTag,
+                        installedOnDeviceLanguages =
+                            recognitionSupport.installedOnDeviceLanguages,
+                        pendingOnDeviceLanguages = recognitionSupport.pendingOnDeviceLanguages,
+                        supportedOnDeviceLanguages =
+                            recognitionSupport.supportedOnDeviceLanguages))
+              }
+
+              override fun onError(error: Int) {
+                finish(SpeechModelPreparation.UNKNOWN)
+              }
+            })
+      } catch (_: Exception) {
+        finish(SpeechModelPreparation.UNKNOWN)
+      }
+    }
+
+    if (!latch.await(MODEL_SUPPORT_CHECK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+      if (finished.compareAndSet(false, true)) {
+        mainHandler.post { recognizerRef.getAndSet(null)?.destroy() }
+      }
+    }
+
+    return result.get()
+  }
+
+  private fun downloadOnDeviceSpeechModel(localeTag: String, fallbackErrorCode: Int? = null) {
+    val download = requestOnDeviceSpeechModel(localeTag)
+    when (speechModelDownloadContinuation(download.status)) {
+      SpeechModelDownloadContinuation.CONTINUE -> Unit
+      SpeechModelDownloadContinuation.WAIT_FOR_MODEL ->
+        waitForOnDeviceSpeechModel(localeTag)
+      SpeechModelDownloadContinuation.FAIL ->
+        throw RecognitionFailure(
+            download.errorCode ?: fallbackErrorCode,
+            download.message
+                ?: "Unable to download the offline speech model for $localeTag. Check your connection and try again.")
+    }
+  }
+
+  private fun waitForOnDeviceSpeechModel(localeTag: String) {
+    emitSpeechModelDownloadProgress(localeTag, null)
+    val deadline = SystemClock.elapsedRealtime() + MODEL_DOWNLOAD_READY_TIMEOUT_MS
+
+    while (SystemClock.elapsedRealtime() < deadline) {
+      when (queryOnDeviceSpeechModel(localeTag)) {
+        SpeechModelPreparation.READY -> {
+          emitSpeechModelDownloadReady(localeTag)
+          return
+        }
+        SpeechModelPreparation.UNSUPPORTED ->
+          throw RecognitionFailure(
+              SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED,
+              "Offline speech recognition does not support $localeTag on this device.")
+        SpeechModelPreparation.DOWNLOAD,
+        SpeechModelPreparation.PENDING,
+        SpeechModelPreparation.UNKNOWN ->
+          SystemClock.sleep(MODEL_SUPPORT_POLL_INTERVAL_MS)
+      }
+    }
+
+    throw RecognitionFailure(
+        SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE,
+        "The offline speech model for $localeTag is still downloading. Check your connection and try again.")
+  }
+
   private fun requestOnDeviceSpeechModel(localeTag: String): SpeechModelDownloadResult {
     val latch = CountDownLatch(1)
     val finished = AtomicBoolean(false)
@@ -1003,19 +1191,26 @@ class VoxaOfflineModule(
         val recognizer = createVideoSpeechRecognizer()
         recognizerRef.set(recognizer)
         val intent = IntentFactory.createModelDownloadIntent(localeTag)
+        emitSpeechModelDownloadProgress(localeTag, 0)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
           recognizer.triggerModelDownload(
               intent,
               reactContext.mainExecutor,
               object : ModelDownloadListener {
-                override fun onProgress(completedPercent: Int) = Unit
+                override fun onProgress(completedPercent: Int) {
+                  emitSpeechModelDownloadProgress(
+                      localeTag,
+                      normalizedSpeechModelProgress(completedPercent))
+                }
 
                 override fun onSuccess() {
+                  emitSpeechModelDownloadReady(localeTag)
                   finish(SpeechModelDownloadResult(SpeechModelDownloadStatus.AVAILABLE))
                 }
 
                 override fun onScheduled() {
+                  emitSpeechModelDownloadProgress(localeTag, null)
                   finish(SpeechModelDownloadResult(SpeechModelDownloadStatus.SCHEDULED))
                 }
 
@@ -1029,6 +1224,7 @@ class VoxaOfflineModule(
               })
         } else {
           recognizer.triggerModelDownload(intent)
+          emitSpeechModelDownloadProgress(localeTag, null)
           finish(SpeechModelDownloadResult(SpeechModelDownloadStatus.SCHEDULED))
         }
       } catch (error: Exception) {
@@ -1047,6 +1243,34 @@ class VoxaOfflineModule(
     }
 
     return result.get() ?: SpeechModelDownloadResult(SpeechModelDownloadStatus.SCHEDULED)
+  }
+
+  private fun emitSpeechModelDownloadProgress(localeTag: String, progress: Int?) {
+    if (!reactContext.hasActiveReactInstance()) {
+      return
+    }
+
+    val payload = Arguments.createMap()
+    payload.putString("localeTag", localeTag)
+    payload.putString("status", SPEECH_MODEL_DOWNLOAD_STATUS_DOWNLOADING)
+    if (progress == null) {
+      payload.putNull("progress")
+    } else {
+      payload.putInt("progress", normalizedSpeechModelProgress(progress))
+    }
+    reactContext.emitDeviceEvent(SPEECH_MODEL_DOWNLOAD_EVENT, payload)
+  }
+
+  private fun emitSpeechModelDownloadReady(localeTag: String) {
+    if (!reactContext.hasActiveReactInstance()) {
+      return
+    }
+
+    val payload = Arguments.createMap()
+    payload.putString("localeTag", localeTag)
+    payload.putString("status", SPEECH_MODEL_DOWNLOAD_STATUS_READY)
+    payload.putInt("progress", 100)
+    reactContext.emitDeviceEvent(SPEECH_MODEL_DOWNLOAD_EVENT, payload)
   }
 
   private fun createVideoSpeechRecognizer(): SpeechRecognizer {
@@ -1408,12 +1632,6 @@ class VoxaOfflineModule(
       val text: String,
       val confidence: Double?)
 
-  private enum class SpeechModelDownloadStatus {
-    AVAILABLE,
-    SCHEDULED,
-    FAILED,
-  }
-
   private data class SpeechModelDownloadResult(
       val status: SpeechModelDownloadStatus,
       val errorCode: Int? = null,
@@ -1476,7 +1694,11 @@ class VoxaOfflineModule(
     private const val PCM_READ_BUFFER_SIZE = 64 * 1024
     private const val RECOGNITION_CHUNK_DURATION_MS = 45_000
     private const val MIN_RECOGNITION_TIMEOUT_MS = 45_000L
+    private const val MODEL_SUPPORT_CHECK_TIMEOUT_MS = 10_000L
     private const val MODEL_DOWNLOAD_TIMEOUT_MS = 120_000L
+    private const val MODEL_DOWNLOAD_READY_TIMEOUT_MS = 5 * 60_000L
+    private const val MODEL_SUPPORT_POLL_INTERVAL_MS = 1_500L
+    private const val SPEECH_SERVICE_RECONNECT_DELAY_MS = 750L
     private const val AUDIO_STREAM_INTERVAL_MS = 20L
     private const val AUDIO_STREAM_THREAD_NAME = "voxa-speech-audio"
     private const val MIN_SCRIPT_VALIDATION_LETTERS = 4
@@ -1484,6 +1706,9 @@ class VoxaOfflineModule(
     private const val RECOGNITION_PARTS_KEY = "recognition_parts"
     private const val EXTRA_REQUEST_WORD_TIMING = "android.speech.extra.REQUEST_WORD_TIMING"
     private const val EXTRA_REQUEST_WORD_CONFIDENCE = "android.speech.extra.REQUEST_WORD_CONFIDENCE"
+    private const val SPEECH_MODEL_DOWNLOAD_EVENT = "VoxaSpeechModelDownloadProgress"
+    private const val SPEECH_MODEL_DOWNLOAD_STATUS_DOWNLOADING = "downloading"
+    private const val SPEECH_MODEL_DOWNLOAD_STATUS_READY = "ready"
     private val DISTINCTIVE_SCRIPT_LANGUAGES = setOf("ru", "ja", "ko", "zh", "ar")
   }
 }

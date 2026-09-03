@@ -84,8 +84,9 @@ export interface Project {
 
 export interface ProcessingState {
   visible: boolean;
-  phase: 'extracting' | 'recognizing' | 'composing';
+  phase: 'extracting' | 'downloading' | 'recognizing' | 'composing';
   label: string;
+  progress?: number | null;
   assetUri?: string;
 }
 

@@ -148,3 +148,28 @@ describe('app store project folders', () => {
     expect(useAppStore.getState().projects[0]?.folderId).toBeUndefined();
   });
 });
+
+describe('app store processing progress', () => {
+  it('keeps model download progress visible and clears it for transcription', () => {
+    useAppStore.getState().beginProcessing('file:///documents/video.mov');
+    useAppStore
+      .getState()
+      .setProcessingPhase('downloading', 'Downloading speech model...', 37);
+
+    expect(useAppStore.getState().processing).toMatchObject({
+      visible: true,
+      phase: 'downloading',
+      label: 'Downloading speech model...',
+      progress: 37,
+    });
+
+    useAppStore
+      .getState()
+      .setProcessingPhase(
+        'recognizing',
+        'Transcribing with the selected language...',
+      );
+
+    expect(useAppStore.getState().processing.progress).toBeUndefined();
+  });
+});

@@ -323,7 +323,7 @@ const en: Translations = {
     'This project will be removed permanently. This cannot be undone.',
   projectSubtitleBlocks: 'subtitle blocks',
   projectSubtitleBlock: 'subtitle block',
-  folderCreate: 'New Folder',
+  folderCreate: 'Create New Folder',
   folderCreateHint: 'Create a folder',
   folderCreateMessage: 'Enter a folder name.',
   folderRename: 'Rename',
@@ -395,6 +395,7 @@ const en: Translations = {
   processingExtractingAudio: 'Extracting audio...',
   processingDetectingLanguage: 'Detecting spoken language...',
   processingSelectedLanguage: 'Transcribing with the selected language...',
+  processingDownloadingModel: 'Downloading speech model...',
   processingBestLanguage: 'Transcribing with the best on-device language...',
   processingGeneratingTimeline: 'Generating timeline...',
 
@@ -703,6 +704,7 @@ const es: Translations = {
   processingExtractingAudio: 'Extrayendo audio...',
   processingDetectingLanguage: 'Detectando idioma hablado...',
   processingSelectedLanguage: 'Transcribiendo con el idioma seleccionado...',
+  processingDownloadingModel: 'Descargando el modelo de voz...',
   processingBestLanguage:
     'Transcribiendo con el mejor idioma del dispositivo...',
   processingGeneratingTimeline: 'Generando línea de tiempo...',
@@ -1011,6 +1013,7 @@ const pt: Translations = {
   processingExtractingAudio: 'Extraindo áudio...',
   processingDetectingLanguage: 'Detectando idioma falado...',
   processingSelectedLanguage: 'Transcrevendo com o idioma selecionado...',
+  processingDownloadingModel: 'Baixando o modelo de fala...',
   processingBestLanguage: 'Transcrevendo com o melhor idioma no aparelho...',
   processingGeneratingTimeline: 'Gerando linha do tempo...',
 
@@ -1322,6 +1325,7 @@ const fr: Translations = {
   processingExtractingAudio: 'Extraction de l’audio...',
   processingDetectingLanguage: 'Détection de la langue parlée...',
   processingSelectedLanguage: 'Transcription avec la langue sélectionnée...',
+  processingDownloadingModel: 'Téléchargement du modèle vocal...',
   processingBestLanguage:
     'Transcription avec la meilleure langue sur l’appareil...',
   processingGeneratingTimeline: 'Génération de la timeline...',
@@ -1632,6 +1636,7 @@ const de: Translations = {
   processingExtractingAudio: 'Audio wird extrahiert...',
   processingDetectingLanguage: 'Gesprochene Sprache wird erkannt...',
   processingSelectedLanguage: 'Transkription mit der ausgewählten Sprache...',
+  processingDownloadingModel: 'Sprachmodell wird heruntergeladen...',
   processingBestLanguage: 'Transkription mit der besten Gerätesprache...',
   processingGeneratingTimeline: 'Timeline wird erstellt...',
 
@@ -1940,6 +1945,7 @@ const it: Translations = {
   processingExtractingAudio: 'Estrazione audio...',
   processingDetectingLanguage: 'Rilevamento lingua parlata...',
   processingSelectedLanguage: 'Trascrizione con la lingua selezionata...',
+  processingDownloadingModel: 'Download del modello vocale...',
   processingBestLanguage:
     'Trascrizione con la migliore lingua sul dispositivo...',
   processingGeneratingTimeline: 'Generazione timeline...',
@@ -2250,6 +2256,7 @@ const ru: Translations = {
   processingExtractingAudio: 'Извлекаем аудио...',
   processingDetectingLanguage: 'Определяем язык речи...',
   processingSelectedLanguage: 'Транскрибируем на выбранном языке...',
+  processingDownloadingModel: 'Загружаем речевую модель...',
   processingBestLanguage: 'Транскрибируем на лучшем языке устройства...',
   processingGeneratingTimeline: 'Создаём таймлайн...',
 
@@ -2550,6 +2557,7 @@ const ja: Translations = {
   processingExtractingAudio: '音声を抽出中...',
   processingDetectingLanguage: '話されている言語を検出中...',
   processingSelectedLanguage: '選択した言語で文字起こし中...',
+  processingDownloadingModel: '音声認識モデルをダウンロード中...',
   processingBestLanguage: '最適なデバイス上の言語で文字起こし中...',
   processingGeneratingTimeline: 'タイムラインを生成中...',
 
@@ -2850,6 +2858,7 @@ const ko: Translations = {
   processingExtractingAudio: '오디오 추출 중...',
   processingDetectingLanguage: '말한 언어 감지 중...',
   processingSelectedLanguage: '선택한 언어로 전사 중...',
+  processingDownloadingModel: '음성 인식 모델 다운로드 중...',
   processingBestLanguage: '가장 적합한 기기 내 언어로 전사 중...',
   processingGeneratingTimeline: '타임라인 생성 중...',
 
@@ -3139,6 +3148,7 @@ const zh: Translations = {
   processingExtractingAudio: '正在提取音频...',
   processingDetectingLanguage: '正在检测口语语言...',
   processingSelectedLanguage: '正在使用所选语言转写...',
+  processingDownloadingModel: '正在下载语音识别模型...',
   processingBestLanguage: '正在使用最佳设备端语言转写...',
   processingGeneratingTimeline: '正在生成时间线...',
 
@@ -3435,6 +3445,7 @@ const ar: Translations = {
   processingExtractingAudio: 'جارٍ استخراج الصوت...',
   processingDetectingLanguage: 'جارٍ اكتشاف اللغة المنطوقة...',
   processingSelectedLanguage: 'جارٍ التفريغ باللغة المحددة...',
+  processingDownloadingModel: 'جارٍ تنزيل نموذج التعرّف على الكلام...',
   processingBestLanguage: 'جارٍ التفريغ بأفضل لغة على الجهاز...',
   processingGeneratingTimeline: 'جارٍ إنشاء الخط الزمني...',
 

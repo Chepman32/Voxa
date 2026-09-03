@@ -38,7 +38,11 @@ interface AppState {
   openProject: (projectId: string) => void;
   closeProject: () => void;
   beginProcessing: (assetUri?: string) => void;
-  setProcessingPhase: (phase: ProcessingState['phase'], label: string) => void;
+  setProcessingPhase: (
+    phase: ProcessingState['phase'],
+    label: string,
+    progress?: number | null,
+  ) => void;
   finishProcessing: () => void;
   setPreferredExportResolution: (
     resolution: UserSettings['preferredExportResolution'],
@@ -288,13 +292,14 @@ export const useAppStore = create<AppState>()(
             assetUri,
           },
         }),
-      setProcessingPhase: (phase, label) =>
+      setProcessingPhase: (phase, label, progress) =>
         set(state => ({
           processing: {
             ...state.processing,
             visible: true,
             phase,
             label,
+            progress,
           },
         })),
       finishProcessing: () => set({ processing: defaultProcessing }),

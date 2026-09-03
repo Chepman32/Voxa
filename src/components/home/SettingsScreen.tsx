@@ -82,9 +82,6 @@ export function SettingsScreen({
       >
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{t('settingsAppLanguage')}</Text>
-          <Text style={styles.sectionHint}>
-            {t('settingsAppLanguageDescription')}
-          </Text>
           <View style={styles.optionStack}>
             {supportedLocales.map(locale => (
               <SettingsOption
@@ -301,11 +298,6 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
     fontSize: 15,
     fontWeight: '700',
-  },
-  sectionHint: {
-    color: palette.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
   },
   pillRow: {
     flexDirection: 'row',

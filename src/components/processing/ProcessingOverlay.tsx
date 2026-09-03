@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -23,7 +18,16 @@ import { GlassPanel } from '../common/GlassPanel';
 
 const icons = ['video', 'mic', 'file-text'] as const;
 
-export function ProcessingOverlay({ processing }: { processing: ProcessingState }) {
+export const PROCESSING_DOWNLOAD_PROGRESS_ID =
+  'processing-speech-model-download-progress';
+export const PROCESSING_DOWNLOAD_PERCENT_ID =
+  'processing-speech-model-download-percent';
+
+export function ProcessingOverlay({
+  processing,
+}: {
+  processing: ProcessingState;
+}) {
   const { t } = useTranslation();
   const [iconIndex, setIconIndex] = useState(0);
   const pulse = useSharedValue(0);
@@ -59,6 +63,12 @@ export function ProcessingOverlay({ processing }: { processing: ProcessingState 
     return null;
   }
 
+  const isDownloadingSpeechModel = processing.phase === 'downloading';
+  const measuredDownloadProgress =
+    isDownloadingSpeechModel && typeof processing.progress === 'number'
+      ? Math.round(Math.max(0, Math.min(100, processing.progress)))
+      : null;
+
   const localizedLabel =
     processing.label === 'Extracting audio...'
       ? t('processingExtractingAudio')
@@ -68,6 +78,8 @@ export function ProcessingOverlay({ processing }: { processing: ProcessingState 
       ? t('processingSelectedLanguage')
       : processing.label === 'Transcribing with the best on-device language...'
       ? t('processingBestLanguage')
+      : processing.label === 'Downloading speech model...'
+      ? t('processingDownloadingModel')
       : processing.label === 'Generating timeline...'
       ? t('processingGeneratingTimeline')
       : processing.label;
@@ -90,7 +102,43 @@ export function ProcessingOverlay({ processing }: { processing: ProcessingState 
           <Text style={styles.body}>{t('processingBody')}</Text>
         </View>
 
-        <ActivityIndicator color={palette.cyan} />
+        {isDownloadingSpeechModel ? (
+          <View style={styles.downloadProgressSection}>
+            <View
+              accessibilityLabel={localizedLabel}
+              accessibilityRole="progressbar"
+              accessibilityValue={
+                measuredDownloadProgress === null
+                  ? { min: 0, max: 100, text: localizedLabel }
+                  : { min: 0, max: 100, now: measuredDownloadProgress }
+              }
+              style={styles.downloadProgressTrack}
+              testID={PROCESSING_DOWNLOAD_PROGRESS_ID}
+            >
+              <View
+                style={[
+                  styles.downloadProgressFill,
+                  measuredDownloadProgress === null
+                    ? styles.downloadProgressIndeterminate
+                    : { width: `${measuredDownloadProgress}%` },
+                ]}
+              />
+            </View>
+
+            {measuredDownloadProgress === null ? (
+              <ActivityIndicator color={palette.cyan} size="small" />
+            ) : (
+              <Text
+                style={styles.downloadProgressPercent}
+                testID={PROCESSING_DOWNLOAD_PERCENT_ID}
+              >
+                {measuredDownloadProgress}%
+              </Text>
+            )}
+          </View>
+        ) : (
+          <ActivityIndicator color={palette.cyan} />
+        )}
       </GlassPanel>
     </View>
   );
@@ -154,5 +202,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
+  },
+  downloadProgressSection: {
+    width: '100%',
+    maxWidth: 300,
+    minHeight: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  downloadProgressTrack: {
+    width: '100%',
+    height: 9,
+    overflow: 'hidden',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 240, 255, 0.3)',
+    backgroundColor: 'rgba(0, 240, 255, 0.09)',
+  },
+  downloadProgressFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: palette.cyan,
+  },
+  downloadProgressIndeterminate: {
+    width: '32%',
+    opacity: 0.72,
+  },
+  downloadProgressPercent: {
+    color: palette.cyan,
+    fontSize: 13,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
 });

@@ -16,6 +16,7 @@ import {
   prepareProject,
   resolveProjectMedia,
 } from './native-voxa';
+import type { SpeechModelDownloadEvent } from './native-voxa';
 import type { Project, RecognitionStatus } from '../types/models';
 
 function wait(duration: number) {
@@ -25,7 +26,11 @@ function wait(duration: number) {
 }
 
 interface ProjectPhaseHandler {
-  (phase: 'extracting' | 'recognizing' | 'composing', label: string): void;
+  (
+    phase: 'extracting' | 'downloading' | 'recognizing' | 'composing',
+    label: string,
+    progress?: number | null,
+  ): void;
 }
 
 interface ProjectPreparationInput {
@@ -50,25 +55,45 @@ async function prepareProjectResult({
   videoURI,
 }: ProjectPreparationInput) {
   const normalizedLocaleOverride = normalizeSpeechLocale(localeOverride);
+  let isDownloadingSpeechModel = false;
   onPhaseChange?.('extracting', 'Extracting audio...');
   const nativeTask = prepareProject(
     videoURI,
     normalizedLocaleOverride,
     fallbackDuration,
+    (event: SpeechModelDownloadEvent) => {
+      isDownloadingSpeechModel = event.status === 'downloading';
+      if (isDownloadingSpeechModel) {
+        onPhaseChange?.(
+          'downloading',
+          'Downloading speech model...',
+          event.progress,
+        );
+      } else {
+        onPhaseChange?.(
+          'recognizing',
+          resolveRecognitionLabel(normalizedLocaleOverride),
+        );
+      }
+    },
   );
 
   await wait(220);
-  onPhaseChange?.(
-    'recognizing',
-    resolveRecognitionLabel(normalizedLocaleOverride),
-  );
-
-  if (!normalizedLocaleOverride) {
-    await wait(320);
+  if (!isDownloadingSpeechModel) {
     onPhaseChange?.(
       'recognizing',
-      'Transcribing with the best on-device language...',
+      resolveRecognitionLabel(normalizedLocaleOverride),
     );
+  }
+
+  if (!normalizedLocaleOverride && !isDownloadingSpeechModel) {
+    await wait(320);
+    if (!isDownloadingSpeechModel) {
+      onPhaseChange?.(
+        'recognizing',
+        'Transcribing with the best on-device language...',
+      );
+    }
   }
 
   const result = await nativeTask;

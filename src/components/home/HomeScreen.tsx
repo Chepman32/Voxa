@@ -29,6 +29,7 @@ import { ProjectCard } from './ProjectCard';
 
 const ALL_PROJECTS_SECTION_ID = 'all-projects';
 const TRASH_SECTION_ID = 'trash';
+const CREATE_FOLDER_ACTION_ID = 'create-folder';
 const MOVE_TO_FOLDER_PREFIX = 'move-to-folder:';
 
 function getDefaultSectionExpanded(sectionId: string) {
@@ -319,6 +320,20 @@ export function HomeScreen({
         } satisfies MenuAction),
     );
 
+    const folderAction: MenuAction =
+      folderTargets.length === 0
+        ? {
+            id: CREATE_FOLDER_ACTION_ID,
+            title: t('folderCreate'),
+            image: icon('folder.badge.plus', 'ic_menu_add'),
+          }
+        : {
+            id: 'move-to-folder',
+            title: t('projectMoveToFolder'),
+            image: icon('folder', 'ic_menu_upload'),
+            subactions: folderTargets,
+          };
+
     return [
       {
         id: 'rename',
@@ -330,13 +345,7 @@ export function HomeScreen({
         title: t('projectDuplicate'),
         image: icon('plus.square.on.square', 'ic_menu_add'),
       },
-      {
-        id: 'move-to-folder',
-        title: t('projectMoveToFolder'),
-        image: icon('folder', 'ic_menu_upload'),
-        attributes: folderTargets.length === 0 ? { disabled: true } : undefined,
-        subactions: folderTargets,
-      },
+      folderAction,
       {
         id: 'remove',
         title: t('projectRemove'),
@@ -361,6 +370,9 @@ export function HomeScreen({
     }
 
     switch (actionId) {
+      case CREATE_FOLDER_ACTION_ID:
+        promptCreateFolder();
+        break;
       case 'rename':
         promptRenameProject(project);
         break;

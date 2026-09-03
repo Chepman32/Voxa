@@ -14,6 +14,7 @@ import {
 } from '../src/services/project-processor';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
 import type { Project } from '../src/types/models';
+import type { SpeechModelDownloadEvent } from '../src/services/native-voxa';
 
 const mockPrepareProject = jest.mocked(
   require('../src/services/native-voxa').prepareProject,
@@ -73,6 +74,7 @@ describe('project processor', () => {
       'file:///tmp/detect-language.mov',
       null,
       12000,
+      expect.any(Function),
     );
     expect(project.recognitionStatus).toBe('ready');
     expect(project.recognitionLocale).toBe('en-US');
@@ -236,6 +238,7 @@ describe('project processor', () => {
       'file:///tmp/detect-language.mov',
       'ru-RU',
       12000,
+      expect.any(Function),
     );
     expect(project.id).toBe(existingProject.id);
     expect(project.createdAt).toBe(existingProject.createdAt);
@@ -285,10 +288,75 @@ describe('project processor', () => {
       'file:///tmp/detect-language.mov',
       'ru-RU',
       12000,
+      expect.any(Function),
     );
     expect(project.recognitionLocale).toBe('ru-RU');
     expect(project.subtitles.length).toBeGreaterThan(1);
     expect(words.map(word => word.text)).toEqual(transcript.split(' '));
     expect(words.every(word => word.endTime > word.startTime)).toBe(true);
+  });
+
+  it('reports speech model download progress without ending regeneration', async () => {
+    mockPrepareProject.mockImplementation(
+      async (
+        _videoURI: string,
+        _locale: string | null,
+        _duration: number,
+        onModelDownloadProgress: (event: SpeechModelDownloadEvent) => void,
+      ) => {
+        onModelDownloadProgress({
+          localeTag: 'ko-KR',
+          status: 'downloading',
+          progress: null,
+        });
+        onModelDownloadProgress({
+          localeTag: 'ko-KR',
+          status: 'downloading',
+          progress: 37,
+        });
+        onModelDownloadProgress({
+          localeTag: 'ko-KR',
+          status: 'ready',
+          progress: 100,
+        });
+
+        return {
+          duration: 12000,
+          width: 1080,
+          height: 1920,
+          waveform: [0.2, 0.5],
+          subtitles: [
+            {
+              id: 'seg-ko-1',
+              startTime: 0,
+              endTime: 800,
+              text: '안녕하세요',
+            },
+          ],
+          transcriptTimeOffsetMs: 0,
+          recognitionStatus: 'ready',
+          recognitionLocale: 'ko-KR',
+          recognitionMode: 'manual',
+        };
+      },
+    );
+    const onPhaseChange = jest.fn();
+
+    await buildProjectFromAsset(asset, 'ko-KR', onPhaseChange);
+
+    expect(onPhaseChange).toHaveBeenCalledWith(
+      'downloading',
+      'Downloading speech model...',
+      null,
+    );
+    expect(onPhaseChange).toHaveBeenCalledWith(
+      'downloading',
+      'Downloading speech model...',
+      37,
+    );
+    expect(onPhaseChange).toHaveBeenCalledWith(
+      'recognizing',
+      'Transcribing with the selected language...',
+    );
   });
 });
