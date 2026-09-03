@@ -17,6 +17,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.Parcelable
 import android.provider.OpenableColumns
+import android.speech.ModelDownloadListener
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -49,6 +50,21 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
+
+internal enum class SpeechRecognitionRecovery {
+  DOWNLOAD_MODEL_AND_RETRY,
+  FAIL,
+}
+
+internal fun speechRecognitionRecovery(
+    errorCode: Int?,
+    modelDownloadAttempted: Boolean
+): SpeechRecognitionRecovery =
+    if (errorCode == SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE && !modelDownloadAttempted) {
+      SpeechRecognitionRecovery.DOWNLOAD_MODEL_AND_RETRY
+    } else {
+      SpeechRecognitionRecovery.FAIL
+    }
 
 class VoxaOfflineModule(
     private val reactContext: ReactApplicationContext
@@ -697,8 +713,8 @@ class VoxaOfflineModule(
       throw IOException("Video speech recognition requires Android 13 or later.")
     }
 
-    if (!SpeechRecognizer.isRecognitionAvailable(reactContext)) {
-      throw IOException("Speech recognition is not available on this device.")
+    if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(reactContext)) {
+      throw IOException("On-device speech recognition is not available on this device.")
     }
 
     val segments = mutableListOf<SubtitleSegment>()
@@ -774,6 +790,49 @@ class VoxaOfflineModule(
   }
 
   private fun recognizePcmChunk(
+      chunkFile: File,
+      sampleRate: Int,
+      channelCount: Int,
+      localeTag: String,
+      chunkStartMs: Int,
+      chunkDurationMs: Int
+  ): List<SubtitleSegment> {
+    var modelDownloadAttempted = false
+
+    while (true) {
+      try {
+        return recognizePcmChunkOnce(
+            chunkFile = chunkFile,
+            sampleRate = sampleRate,
+            channelCount = channelCount,
+            localeTag = localeTag,
+            chunkStartMs = chunkStartMs,
+            chunkDurationMs = chunkDurationMs)
+      } catch (error: RecognitionFailure) {
+        if (speechRecognitionRecovery(error.errorCode, modelDownloadAttempted) !=
+            SpeechRecognitionRecovery.DOWNLOAD_MODEL_AND_RETRY) {
+          throw error
+        }
+
+        modelDownloadAttempted = true
+        val download = requestOnDeviceSpeechModel(localeTag)
+        when (download.status) {
+          SpeechModelDownloadStatus.AVAILABLE -> continue
+          SpeechModelDownloadStatus.SCHEDULED ->
+            throw RecognitionFailure(
+                error.errorCode,
+                "The offline speech model for $localeTag is downloading. Retry subtitles when the download finishes.")
+          SpeechModelDownloadStatus.FAILED ->
+            throw RecognitionFailure(
+                download.errorCode ?: error.errorCode,
+                download.message
+                    ?: "Unable to download the offline speech model for $localeTag. Check your connection and try again.")
+        }
+      }
+    }
+  }
+
+  private fun recognizePcmChunkOnce(
       chunkFile: File,
       sampleRate: Int,
       channelCount: Int,
@@ -925,12 +984,83 @@ class VoxaOfflineModule(
     return segments
   }
 
+  private fun requestOnDeviceSpeechModel(localeTag: String): SpeechModelDownloadResult {
+    val latch = CountDownLatch(1)
+    val finished = AtomicBoolean(false)
+    val result = AtomicReference<SpeechModelDownloadResult?>()
+    val recognizerRef = AtomicReference<SpeechRecognizer?>()
+
+    fun finish(downloadResult: SpeechModelDownloadResult) {
+      if (finished.compareAndSet(false, true)) {
+        result.set(downloadResult)
+        recognizerRef.getAndSet(null)?.destroy()
+        latch.countDown()
+      }
+    }
+
+    mainHandler.post {
+      try {
+        val recognizer = createVideoSpeechRecognizer()
+        recognizerRef.set(recognizer)
+        val intent = IntentFactory.createModelDownloadIntent(localeTag)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+          recognizer.triggerModelDownload(
+              intent,
+              reactContext.mainExecutor,
+              object : ModelDownloadListener {
+                override fun onProgress(completedPercent: Int) = Unit
+
+                override fun onSuccess() {
+                  finish(SpeechModelDownloadResult(SpeechModelDownloadStatus.AVAILABLE))
+                }
+
+                override fun onScheduled() {
+                  finish(SpeechModelDownloadResult(SpeechModelDownloadStatus.SCHEDULED))
+                }
+
+                override fun onError(error: Int) {
+                  finish(
+                      SpeechModelDownloadResult(
+                          status = SpeechModelDownloadStatus.FAILED,
+                          errorCode = error,
+                          message = speechModelDownloadErrorMessage(localeTag, error)))
+                }
+              })
+        } else {
+          recognizer.triggerModelDownload(intent)
+          finish(SpeechModelDownloadResult(SpeechModelDownloadStatus.SCHEDULED))
+        }
+      } catch (error: Exception) {
+        finish(
+            SpeechModelDownloadResult(
+                status = SpeechModelDownloadStatus.FAILED,
+                message = error.message))
+      }
+    }
+
+    if (!latch.await(MODEL_DOWNLOAD_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+      if (finished.compareAndSet(false, true)) {
+        result.set(SpeechModelDownloadResult(SpeechModelDownloadStatus.SCHEDULED))
+        mainHandler.post { recognizerRef.getAndSet(null)?.destroy() }
+      }
+    }
+
+    return result.get() ?: SpeechModelDownloadResult(SpeechModelDownloadStatus.SCHEDULED)
+  }
+
   private fun createVideoSpeechRecognizer(): SpeechRecognizer {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-        SpeechRecognizer.isOnDeviceRecognitionAvailable(reactContext)) {
-      SpeechRecognizer.createOnDeviceSpeechRecognizer(reactContext)
-    } else {
-      SpeechRecognizer.createSpeechRecognizer(reactContext)
+    return SpeechRecognizer.createOnDeviceSpeechRecognizer(reactContext)
+  }
+
+  private fun speechModelDownloadErrorMessage(localeTag: String, error: Int): String {
+    return when (error) {
+      SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED ->
+        "Offline speech recognition does not support $localeTag on this device."
+      SpeechRecognizer.ERROR_NETWORK,
+      SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
+        "Unable to download the offline speech model for $localeTag. Check your connection and try again."
+      else -> "Unable to download the offline speech model for $localeTag. Try again."
     }
   }
 
@@ -1278,6 +1408,17 @@ class VoxaOfflineModule(
       val text: String,
       val confidence: Double?)
 
+  private enum class SpeechModelDownloadStatus {
+    AVAILABLE,
+    SCHEDULED,
+    FAILED,
+  }
+
+  private data class SpeechModelDownloadResult(
+      val status: SpeechModelDownloadStatus,
+      val errorCode: Int? = null,
+      val message: String? = null)
+
   private class RecognitionFailure(
       val errorCode: Int?,
       message: String
@@ -1311,6 +1452,15 @@ class VoxaOfflineModule(
         putExtra(EXTRA_REQUEST_WORD_CONFIDENCE, true)
       }
     }
+
+    fun createModelDownloadIntent(localeTag: String): android.content.Intent {
+      return android.content.Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, localeTag)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, localeTag)
+        putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+      }
+    }
   }
 
   companion object {
@@ -1326,6 +1476,7 @@ class VoxaOfflineModule(
     private const val PCM_READ_BUFFER_SIZE = 64 * 1024
     private const val RECOGNITION_CHUNK_DURATION_MS = 45_000
     private const val MIN_RECOGNITION_TIMEOUT_MS = 45_000L
+    private const val MODEL_DOWNLOAD_TIMEOUT_MS = 120_000L
     private const val AUDIO_STREAM_INTERVAL_MS = 20L
     private const val AUDIO_STREAM_THREAD_NAME = "voxa-speech-audio"
     private const val MIN_SCRIPT_VALIDATION_LETTERS = 4
