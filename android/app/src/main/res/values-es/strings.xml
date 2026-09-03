@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">Recordatorios suaves</string>
+    <string name="notification_channel_reminders_description">Recordatorios ocasionales cuando llevas un tiempo sin abrir Voxa.</string>
+</resources>

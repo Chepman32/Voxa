@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">조용한 알림</string>
+    <string name="notification_channel_reminders_description">Voxa를 한동안 열지 않았을 때 가끔 보내는 알림입니다.</string>
+</resources>

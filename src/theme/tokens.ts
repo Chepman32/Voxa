@@ -28,11 +28,11 @@ export const emptyStateImage =
 export interface OnboardingCard {
   id: string;
   image: string;
-  eyebrow: string;
-  title: string;
-  description: string;
+  eyebrowKey: string;
+  titleKey: string;
+  descriptionKey: string;
   kind: 'default' | 'permissions' | 'cta';
-  ctaLabel?: string;
+  ctaLabelKey?: string;
 }
 
 export const onboardingCards: OnboardingCard[] = [
@@ -40,41 +40,37 @@ export const onboardingCards: OnboardingCard[] = [
     id: 'privacy',
     image:
       'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    eyebrow: 'Offline by Default',
-    title: 'Your footage never leaves the device.',
-    description:
-      'Audio extraction, speech recognition, editing, and export stay on the phone. No uploads, no cloud queue, no third-party processing.',
+    eyebrowKey: 'carouselOfflineEyebrow',
+    titleKey: 'carouselOfflineTitle',
+    descriptionKey: 'carouselOfflineDescription',
     kind: 'default',
   },
   {
     id: 'gestures',
     image:
       'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?q=80&w=1600&auto=format&fit=crop',
-    eyebrow: 'Gesture-First Editing',
-    title: 'Scrub, pinch, trim, and snap subtitles with your hands.',
-    description:
-      'Voxa keeps controls out of the way. Pull to create, drag blocks to retime, and swipe through edits without breaking focus.',
+    eyebrowKey: 'carouselGestureEyebrow',
+    titleKey: 'carouselGestureTitle',
+    descriptionKey: 'carouselGestureDescription',
     kind: 'default',
   },
   {
     id: 'permissions',
     image:
       'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1600&auto=format&fit=crop',
-    eyebrow: 'Ready to Process',
-    title: 'Grant library and speech access to unlock local subtitle generation.',
-    description:
-      'Swipe up on this card to request permissions. You can still edit manually if on-device recognition is unavailable for a selected language.',
+    eyebrowKey: 'carouselReadyEyebrow',
+    titleKey: 'carouselReadyTitle',
+    descriptionKey: 'carouselReadyDescription',
     kind: 'permissions',
   },
   {
     id: 'start',
     image: emptyStateImage,
-    eyebrow: 'All Set',
-    title: 'You are ready to start building subtitles.',
-    description:
-      'Import a clip, refine timing with gestures, and export polished captions without sending your footage anywhere.',
+    eyebrowKey: 'carouselAllSetEyebrow',
+    titleKey: 'carouselAllSetTitle',
+    descriptionKey: 'carouselAllSetDescription',
     kind: 'cta',
-    ctaLabel: 'Get Started',
+    ctaLabelKey: 'welcomeCta',
   },
 ];
 
@@ -96,49 +92,49 @@ export const defaultSubtitleStyle: SubtitleStyle = {
 export const subtitleFontOptions = [
   {
     id: 'display',
-    label: 'Default',
+    labelKey: 'fontDefault',
     fontFamily: 'System',
     fontWeight: '800' as const,
     letterSpacing: 0.3,
   },
   {
     id: 'homemade-apple',
-    label: 'Apple',
+    labelKey: 'fontApple',
     fontFamily: 'HomemadeApple-Regular',
     fontWeight: '400' as const,
     letterSpacing: 0.2,
   },
   {
     id: 'oswald',
-    label: 'Oswald',
+    labelKey: 'fontOswald',
     fontFamily: 'Oswald-Bold',
     fontWeight: '700' as const,
     letterSpacing: 0.3,
   },
   {
     id: 'playfair',
-    label: 'Playfair',
+    labelKey: 'fontPlayfair',
     fontFamily: 'PlayfairDisplay-Bold',
     fontWeight: '700' as const,
     letterSpacing: 0.3,
   },
   {
     id: 'fjalla',
-    label: 'Fjalla',
+    labelKey: 'fontFjalla',
     fontFamily: 'FjallaOne-Regular',
     fontWeight: '400' as const,
     letterSpacing: 0.3,
   },
   {
     id: 'anton',
-    label: 'Anton',
+    labelKey: 'fontAnton',
     fontFamily: 'Anton-Regular',
     fontWeight: '400' as const,
     letterSpacing: 0.3,
   },
   {
     id: 'pacifico',
-    label: 'Pacifico',
+    labelKey: 'fontPacifico',
     fontFamily: 'Pacifico-Regular',
     fontWeight: '400' as const,
     letterSpacing: 0.2,
@@ -148,27 +144,27 @@ export const subtitleFontOptions = [
 export const subtitleTextColorOptions = [
   {
     id: 'white',
-    label: 'White',
+    labelKey: 'colorWhite',
     textColor: '#FFFFFF',
   },
   {
     id: 'coral',
-    label: 'Coral',
+    labelKey: 'colorCoral',
     textColor: '#FF7A6B',
   },
   {
     id: 'black',
-    label: 'Black',
+    labelKey: 'colorBlack',
     textColor: '#111111',
   },
   {
     id: 'yellow',
-    label: 'Yellow',
+    labelKey: 'colorYellow',
     textColor: '#FFD84D',
   },
   {
     id: 'beige',
-    label: 'Beige',
+    labelKey: 'colorBeige',
     textColor: '#E8D3B2',
   },
 ];
@@ -176,32 +172,32 @@ export const subtitleTextColorOptions = [
 export const subtitleHighlightColorOptions = [
   {
     id: 'cyan',
-    label: 'Cyan',
+    labelKey: 'colorCyan',
     accentColor: '#00F0FF',
   },
   {
     id: 'violet',
-    label: 'Violet',
+    labelKey: 'colorViolet',
     accentColor: '#8A2BE2',
   },
   {
     id: 'amber',
-    label: 'Amber',
+    labelKey: 'colorAmber',
     accentColor: '#FFB340',
   },
   {
     id: 'red',
-    label: 'Red',
+    labelKey: 'colorRed',
     accentColor: '#FF453A',
   },
   {
     id: 'clean',
-    label: 'Silver',
+    labelKey: 'colorSilver',
     accentColor: '#C7C7CC',
   },
   {
     id: 'lime',
-    label: 'Lime',
+    labelKey: 'colorLime',
     accentColor: '#C7FF52',
   },
 ];
@@ -209,27 +205,27 @@ export const subtitleHighlightColorOptions = [
 export const subtitleBackgroundColorOptions = [
   {
     id: 'dark',
-    label: 'Dark',
+    labelKey: 'backgroundDark',
     backgroundColor: 'rgba(10, 10, 12, 0.62)',
   },
   {
     id: 'none',
-    label: 'None',
+    labelKey: 'backgroundNone',
     backgroundColor: 'transparent',
   },
   {
     id: 'black',
-    label: 'Black',
+    labelKey: 'colorBlack',
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
   },
   {
     id: 'white',
-    label: 'White',
+    labelKey: 'colorWhite',
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
   },
   {
     id: 'navy',
-    label: 'Navy',
+    labelKey: 'backgroundNavy',
     backgroundColor: 'rgba(10, 20, 60, 0.80)',
   },
 ];
@@ -253,12 +249,12 @@ export const subtitleSizeOptions = [
 ];
 
 export const subtitlePositionOptions: Array<{
-  label: string;
+  labelKey: string;
   value: SubtitlePosition;
 }> = [
-  { label: 'Top', value: 'top' },
-  { label: 'Middle', value: 'middle' },
-  { label: 'Bottom', value: 'bottom' },
+  { labelKey: 'positionTop', value: 'top' },
+  { labelKey: 'positionMiddle', value: 'middle' },
+  { labelKey: 'positionBottom', value: 'bottom' },
 ];
 
 export const exportResolutions: Array<{

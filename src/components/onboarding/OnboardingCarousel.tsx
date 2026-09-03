@@ -108,9 +108,9 @@ export function OnboardingCarousel({
 
           const cardBody = (
             <>
-              <Text style={styles.eyebrow}>{item.eyebrow}</Text>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.description}>{item.description}</Text>
+              <Text style={styles.eyebrow}>{t(item.eyebrowKey)}</Text>
+              <Text style={styles.title}>{t(item.titleKey)}</Text>
+              <Text style={styles.description}>{t(item.descriptionKey)}</Text>
 
               {isPermissionCard ? (
                 <GestureDetector gesture={swipeUpGesture}>
@@ -118,7 +118,7 @@ export function OnboardingCarousel({
                     <View style={styles.permissionHeader}>
                       <Feather color={palette.cyan} name="shield" size={18} />
                       <Text style={styles.permissionTitle}>
-                        Swipe up to grant access
+                        {t('carouselGrantAccess')}
                       </Text>
                     </View>
 
@@ -149,7 +149,9 @@ export function OnboardingCarousel({
                   style={styles.primaryButton}
                   testID="onboarding-get-started-button">
                   <Text style={styles.primaryButtonText}>
-                    {item.ctaLabel ?? t('welcomeCta')}
+                    {item.ctaLabelKey
+                      ? t(item.ctaLabelKey)
+                      : t('welcomeCta')}
                   </Text>
                 </Pressable>
               ) : (
@@ -158,7 +160,9 @@ export function OnboardingCarousel({
                   style={styles.progressHint}
                   testID={`onboarding-card-${index}`}>
                   <Feather color={palette.textSecondary} name="arrow-right" size={16} />
-                  <Text style={styles.progressText}>Swipe to continue</Text>
+                  <Text style={styles.progressText}>
+                    {t('carouselSwipeContinue')}
+                  </Text>
                 </Pressable>
               )}
             </>
@@ -194,7 +198,7 @@ export function OnboardingCarousel({
             styles.skipButtonFloating,
             { top: insets.top + 12 },
           ]}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{t('skip')}</Text>
         </Pressable>
       ) : null}
 

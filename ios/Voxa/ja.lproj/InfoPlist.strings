@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "Voxaは書き出した動画を写真ライブラリに直接保存します。";
+"NSPhotoLibraryUsageDescription" = "Voxaが端末上で字幕を作成するために、動画へのアクセスが必要です。";
+"NSSpeechRecognitionUsageDescription" = "Voxaはメディアをアップロードせず、端末上の音声認識を使ってオフラインで字幕を生成します。";

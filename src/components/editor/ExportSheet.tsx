@@ -120,10 +120,8 @@ export function ExportSheet({
       await onExport();
       haptics.heavy();
       setStatusMessage(t('exportSaved'));
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t('exportFailed');
-      setStatusMessage(message);
+    } catch {
+      setStatusMessage(t('exportFailed'));
     } finally {
       setWorking(false);
       holdProgress.value = withTiming(0, { duration: 220 });

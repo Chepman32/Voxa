@@ -432,9 +432,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       }),
   );
   const hasRenderableSubtitleBlocks = countRenderableSubtitles(subtitles) > 0;
-  const normalizedImportError = project.importError?.replace(/[.\s]+$/, '');
   const recognitionBannerText = project.importError
-    ? `${normalizedImportError}. ${t('manualEditingAvailable')}`
+    ? `${t('noSubtitlesGenerated')} ${t('manualEditingAvailable')}`
     : hasRenderableSubtitleBlocks
     ? t('subtitlesCreatedNeedsReview')
     : t('noSubtitlesGenerated');
@@ -447,13 +446,8 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     : t('chooseLanguageToRetry');
 
   const showRetryError = useCallback(
-    (error: unknown) => {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : t('subtitleRetryFailedBody');
-
-      Alert.alert(t('subtitleRetryFailedTitle'), message);
+    (_error: unknown) => {
+      Alert.alert(t('subtitleRetryFailedTitle'), t('subtitleRetryFailedBody'));
     },
     [t],
   );
@@ -541,7 +535,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
 
       Alert.alert(
         t('noSubtitlesCreatedTitle'),
-        updatedProject.importError ?? t('noSubtitlesSelectedLanguage'),
+        t('noSubtitlesSelectedLanguage'),
       );
     } catch (error) {
       showRetryError(error);
@@ -2175,7 +2169,7 @@ function StyleSelectorsPanel({
           label={t('fonts')}
           options={subtitleFontOptions.map(option => ({
             id: option.id,
-            label: option.label,
+            label: t(option.labelKey),
             active: currentStyle.fontPresetId === option.id,
             onPress: () =>
               onChangeStyle({
@@ -2206,7 +2200,7 @@ function StyleSelectorsPanel({
           label={t('textColor')}
           options={subtitleTextColorOptions.map(option => ({
             id: option.id,
-            label: option.label,
+            label: t(option.labelKey),
             active: currentStyle.textColor === option.textColor,
             swatch: option.textColor,
             onPress: () =>
@@ -2221,7 +2215,7 @@ function StyleSelectorsPanel({
           label={t('highlight')}
           options={subtitleHighlightColorOptions.map(option => ({
             id: option.id,
-            label: option.label,
+            label: t(option.labelKey),
             active: currentStyle.accentColor === option.accentColor,
             swatch: option.accentColor,
             onPress: () =>
@@ -2236,7 +2230,7 @@ function StyleSelectorsPanel({
           label={t('background')}
           options={subtitleBackgroundColorOptions.map(option => ({
             id: option.id,
-            label: option.label,
+            label: t(option.labelKey),
             active: currentStyle.backgroundColor === option.backgroundColor,
             swatch:
               option.backgroundColor === 'transparent'
@@ -2254,7 +2248,7 @@ function StyleSelectorsPanel({
           label={t('positions')}
           options={subtitlePositionOptions.map(option => ({
             id: option.value,
-            label: option.label,
+            label: t(option.labelKey),
             active: currentStyle.position === option.value,
             onPress: () => onUpdatePositionPreset(option.value),
           }))}

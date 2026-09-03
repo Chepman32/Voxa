@@ -1,13 +1,22 @@
 import React from 'react';
 import {
+  LayoutAnimation,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  UIManager,
   View,
 } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
@@ -17,6 +26,57 @@ import { exportResolutions, palette } from '../../theme/tokens';
 import type { ExportResolution, SupportedLocale } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { useIosScreenTransition } from '../common/useIosScreenTransition';
+
+const LANGUAGE_ACCORDION_OPEN_SPRING = {
+  damping: 22,
+  mass: 0.82,
+  stiffness: 235,
+  velocity: 1.45,
+};
+
+const LANGUAGE_ACCORDION_CLOSE_SPRING = {
+  damping: 25,
+  mass: 0.76,
+  stiffness: 275,
+  velocity: -1.25,
+};
+
+const LANGUAGE_ACCORDION_OPEN_LAYOUT = {
+  duration: 360,
+  create: {
+    duration: 280,
+    initialVelocity: 0.7,
+    property: LayoutAnimation.Properties.opacity,
+    springDamping: 0.84,
+    type: LayoutAnimation.Types.spring,
+  },
+  update: {
+    initialVelocity: 0.7,
+    springDamping: 0.84,
+    type: LayoutAnimation.Types.spring,
+  },
+};
+
+const LANGUAGE_ACCORDION_CLOSE_LAYOUT = {
+  duration: 280,
+  delete: {
+    duration: 170,
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.easeInEaseOut,
+  },
+  update: {
+    initialVelocity: -0.55,
+    springDamping: 0.9,
+    type: LayoutAnimation.Types.spring,
+  },
+};
+
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface SettingsScreenProps {
   preferredExportResolution: ExportResolution;
@@ -53,8 +113,48 @@ export function SettingsScreen({
 }: SettingsScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const [languageAccordionExpanded, setLanguageAccordionExpanded] =
+    React.useState(false);
+  const reduceMotion = useReducedMotion();
+  const languageChevronProgress = useSharedValue(0);
   const { closeWithTransition, screenTransitionStyle } =
     useIosScreenTransition(onClose);
+
+  const setLanguageAccordionOpen = React.useCallback(
+    (expanded: boolean) => {
+      if (reduceMotion) {
+        languageChevronProgress.value = expanded ? 1 : 0;
+      } else {
+        LayoutAnimation.configureNext(
+          expanded
+            ? LANGUAGE_ACCORDION_OPEN_LAYOUT
+            : LANGUAGE_ACCORDION_CLOSE_LAYOUT,
+        );
+        languageChevronProgress.value = withSpring(
+          expanded ? 1 : 0,
+          expanded
+            ? LANGUAGE_ACCORDION_OPEN_SPRING
+            : LANGUAGE_ACCORDION_CLOSE_SPRING,
+        );
+      }
+
+      setLanguageAccordionExpanded(expanded);
+    },
+    [languageChevronProgress, reduceMotion],
+  );
+
+  const languageChevronStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${languageChevronProgress.value * 180}deg` },
+      {
+        scale: interpolate(
+          languageChevronProgress.value,
+          [0, 0.58, 1],
+          [1, 1.12, 1],
+        ),
+      },
+    ],
+  }));
 
   return (
     <Animated.View
@@ -89,16 +189,51 @@ export function SettingsScreen({
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{t('settingsAppLanguage')}</Text>
           <View style={styles.optionStack}>
-            {supportedLocales.map(locale => (
-              <SettingsOption
-                key={locale}
-                active={uiLocale === locale}
-                description={t(`languageNative_${locale}`)}
-                icon="globe"
-                onPress={() => onUiLocaleChange(locale)}
-                title={t(`languageName_${locale}`)}
-              />
-            ))}
+            <SettingsOption
+              accessibilityLabel={t('settingsAppLanguage')}
+              active
+              description={t(`languageNative_${uiLocale}`)}
+              endAccessory={
+                <Animated.View
+                  style={languageChevronStyle}
+                  testID="language-accordion-chevron"
+                >
+                  <Feather
+                    color={palette.cyan}
+                    name="chevron-down"
+                    size={16}
+                  />
+                </Animated.View>
+              }
+              expanded={languageAccordionExpanded}
+              icon="globe"
+              onPress={() =>
+                setLanguageAccordionOpen(!languageAccordionExpanded)
+              }
+              title={t(`languageName_${uiLocale}`)}
+            />
+            {languageAccordionExpanded ? (
+              <Animated.View
+                style={styles.languageOptions}
+                testID="language-accordion-panel"
+              >
+                {supportedLocales
+                  .filter(locale => locale !== uiLocale)
+                  .map(locale => (
+                    <SettingsOption
+                      key={locale}
+                      active={false}
+                      description={t(`languageNative_${locale}`)}
+                      icon="globe"
+                      onPress={() => {
+                        onUiLocaleChange(locale);
+                        setLanguageAccordionOpen(false);
+                      }}
+                      title={t(`languageName_${locale}`)}
+                    />
+                  ))}
+              </Animated.View>
+            ) : null}
           </View>
         </View>
 
@@ -248,20 +383,31 @@ export function SettingsScreen({
 }
 
 function SettingsOption({
+  accessibilityLabel,
   active,
   description,
+  endAccessory,
+  expanded,
   icon,
   onPress,
   title,
 }: {
+  accessibilityLabel?: string;
   active: boolean;
   description: string;
+  endAccessory?: React.ReactNode;
+  expanded?: boolean;
   icon: string;
   onPress?: () => void;
   title: string;
 }) {
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityState={
+        expanded === undefined ? undefined : { expanded }
+      }
       disabled={!onPress}
       onPress={onPress}
       style={[styles.optionCard, active ? styles.optionCardActive : undefined]}
@@ -284,7 +430,11 @@ function SettingsOption({
         </Text>
         <Text style={styles.optionDescription}>{description}</Text>
       </View>
-      {active ? <Feather color={palette.cyan} name="check" size={16} /> : null}
+      {endAccessory ? (
+        endAccessory
+      ) : active ? (
+        <Feather color={palette.cyan} name="check" size={16} />
+      ) : null}
     </Pressable>
   );
 }
@@ -365,7 +515,11 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
   },
   optionStack: {
+    gap: 0,
+  },
+  languageOptions: {
     gap: 10,
+    marginTop: 10,
   },
   optionCard: {
     flexDirection: 'row',

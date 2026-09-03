@@ -11,6 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { palette } from '../../theme/tokens';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
@@ -29,6 +30,7 @@ const SPLASH_PARTICLES = Array.from({ length: 18 }, (_, index) => ({
 }));
 
 export function SplashSequence({ onComplete }: SplashSequenceProps) {
+  const { t } = useTranslation();
   const distortion = useSharedValue(1);
   const logoOpacity = useSharedValue(0);
   const particleProgress = useSharedValue(0);
@@ -97,7 +99,7 @@ export function SplashSequence({ onComplete }: SplashSequenceProps) {
         <Text style={styles.logo}>VOXA</Text>
         <View style={styles.logoGlow} />
       </Animated.View>
-      <Text style={styles.caption}>Offline cinematic subtitle creation</Text>
+      <Text style={styles.caption}>{t('splashCaption')}</Text>
     </Animated.View>
   );
 }

@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "Voxa salva i video esportati direttamente nella tua libreria foto.";
+"NSPhotoLibraryUsageDescription" = "Voxa deve accedere ai tuoi video per creare sottotitoli localmente sul dispositivo.";
+"NSSpeechRecognitionUsageDescription" = "Voxa usa il riconoscimento vocale sul dispositivo per generare sottotitoli offline senza caricare i tuoi contenuti.";

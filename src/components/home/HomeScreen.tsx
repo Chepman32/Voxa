@@ -167,7 +167,10 @@ export function HomeScreen({
     const folderSections = folders.map(folder => ({
       folder,
       id: folder.id,
-      title: folder.title,
+      title:
+        folder.title === 'Untitled Folder'
+          ? t('untitledFolder')
+          : folder.title,
       type: 'folder' as const,
       projects: activeProjects.filter(
         project => project.folderId === folder.id,
@@ -286,7 +289,9 @@ export function HomeScreen({
     promptForText(
       t('folderRename'),
       t('folderRenameMessage'),
-      folder.title,
+      folder.title === 'Untitled Folder'
+        ? t('untitledFolder')
+        : folder.title,
       title => onRenameFolder(folder.id, title),
     );
   };
@@ -324,7 +329,10 @@ export function HomeScreen({
       folder =>
         ({
           id: `${MOVE_TO_FOLDER_PREFIX}${folder.id}`,
-          title: folder.title,
+          title:
+            folder.title === 'Untitled Folder'
+              ? t('untitledFolder')
+              : folder.title,
           image: icon('folder', 'ic_menu_upload'),
           state: project.folderId === folder.id ? 'on' : 'off',
         } satisfies MenuAction),

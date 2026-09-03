@@ -160,7 +160,7 @@ export function AppRoot() {
           ? t('photoLibraryOpenFailed')
           : rawMessage === 'The selected video could not be read.'
           ? t('selectedVideoUnreadable')
-          : rawMessage ?? t('speechAccessFailedBody');
+          : t('speechAccessFailedBody');
 
       Alert.alert(t('speechAccessFailedTitle'), message);
     },
@@ -168,13 +168,8 @@ export function AppRoot() {
   );
 
   const showLanguageListError = useCallback(
-    (error: unknown) => {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : t('languageListFailedBody');
-
-      Alert.alert(t('languageListFailedTitle'), message);
+    (_error: unknown) => {
+      Alert.alert(t('languageListFailedTitle'), t('languageListFailedBody'));
     },
     [t],
   );

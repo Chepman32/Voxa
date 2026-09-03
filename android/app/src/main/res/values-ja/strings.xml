@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">控えめなリマインダー</string>
+    <string name="notification_channel_reminders_description">Voxaをしばらく開いていないときに届くリマインダーです。</string>
+</resources>

@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">温和提醒</string>
+    <string name="notification_channel_reminders_description">当你一段时间没有打开 Voxa 时偶尔发送提醒。</string>
+</resources>

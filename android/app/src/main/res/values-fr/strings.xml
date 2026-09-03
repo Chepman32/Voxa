@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">Rappels discrets</string>
+    <string name="notification_channel_reminders_description">Rappels occasionnels lorsque vous n’avez pas ouvert Voxa depuis un moment.</string>
+</resources>

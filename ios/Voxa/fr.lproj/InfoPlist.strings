@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "Voxa enregistre les vidéos exportées directement dans votre photothèque.";
+"NSPhotoLibraryUsageDescription" = "Voxa doit accéder à vos vidéos pour créer des sous-titres localement sur votre appareil.";
+"NSSpeechRecognitionUsageDescription" = "Voxa utilise la reconnaissance vocale de l’appareil pour générer des sous-titres hors ligne sans envoyer vos médias.";

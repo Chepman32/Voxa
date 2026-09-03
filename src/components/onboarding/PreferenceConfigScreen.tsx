@@ -31,14 +31,14 @@ interface PreferenceConfigScreenProps {
 
 const FONTS = subtitleFontOptions.slice(0, 4).map(f => ({
   id: f.id,
-  label: f.label,
+  labelKey: f.labelKey,
   fontFamily: f.fontFamily,
   fontWeight: f.fontWeight,
 }));
 
 const COLORS = subtitleHighlightColorOptions.map(c => ({
   id: c.id,
-  label: c.label,
+  labelKey: c.labelKey,
   color: c.accentColor,
 }));
 
@@ -164,7 +164,7 @@ export function PreferenceConfigScreen({
                     { fontFamily: font.fontFamily, fontWeight: font.fontWeight as any },
                     isSelected && styles.gridItemTextSelected,
                   ]}>
-                  {font.label}
+                  {t(font.labelKey)}
                 </Text>
               </Pressable>
             );
@@ -177,6 +177,7 @@ export function PreferenceConfigScreen({
             const isSelected = selectedColor === color.id;
             return (
               <Pressable
+                accessibilityLabel={t(color.labelKey)}
                 key={color.id}
                 onPress={() => {
                   haptics.light();

@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">Ненавязчивые напоминания</string>
+    <string name="notification_channel_reminders_description">Редкие напоминания, если вы давно не открывали Voxa.</string>
+</resources>

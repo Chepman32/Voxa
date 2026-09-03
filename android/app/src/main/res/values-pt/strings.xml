@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">Lembretes sutis</string>
+    <string name="notification_channel_reminders_description">Lembretes ocasionais quando você não abre o Voxa por algum tempo.</string>
+</resources>

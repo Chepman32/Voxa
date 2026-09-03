@@ -1,0 +1,4 @@
+<resources>
+    <string name="notification_channel_reminders">Promemoria discreti</string>
+    <string name="notification_channel_reminders_description">Promemoria occasionali quando non apri Voxa da un po’ di tempo.</string>
+</resources>

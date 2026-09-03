@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "Voxa сохраняет экспортированные видео прямо в вашу медиатеку.";
+"NSPhotoLibraryUsageDescription" = "Voxa нужен доступ к вашим видео, чтобы создавать субтитры локально на устройстве.";
+"NSSpeechRecognitionUsageDescription" = "Voxa использует распознавание речи на устройстве, чтобы создавать субтитры офлайн без загрузки ваших материалов.";

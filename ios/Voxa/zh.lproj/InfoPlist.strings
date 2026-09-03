@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "Voxa 会将导出的视频直接保存到你的照片图库。";
+"NSPhotoLibraryUsageDescription" = "Voxa 需要访问你的视频，才能在设备本地创建字幕。";
+"NSSpeechRecognitionUsageDescription" = "Voxa 使用设备端语音识别离线生成字幕，不会上传你的媒体。";
