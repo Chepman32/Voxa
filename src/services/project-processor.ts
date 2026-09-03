@@ -15,8 +15,8 @@ import {
   persistProjectVideo,
   prepareProject,
   resolveProjectMedia,
-} from './native-voxa';
-import type { SpeechModelDownloadEvent } from './native-voxa';
+} from './native-localsub';
+import type { SpeechModelDownloadEvent } from './native-localsub';
 import type { Project, RecognitionStatus } from '../types/models';
 
 function wait(duration: number) {

@@ -4,7 +4,7 @@ jest.mock('react-native', () => ({
     currentState: 'active',
   },
   NativeModules: {
-    VoxaOfflineModule: {
+    LocalSubOfflineModule: {
       cancelInactivityReminders: jest.fn(),
       getNotificationAuthorizationStatus: jest.fn(),
       requestNotificationAuthorization: jest.fn(),
@@ -24,7 +24,7 @@ import {
   startInactivityReminderLifecycle,
 } from '../src/services/notifications';
 
-const nativeModule = NativeModules.VoxaOfflineModule as {
+const nativeModule = NativeModules.LocalSubOfflineModule as {
   cancelInactivityReminders: jest.Mock;
   getNotificationAuthorizationStatus: jest.Mock;
   requestNotificationAuthorization: jest.Mock;
@@ -43,19 +43,19 @@ describe('notification reminders', () => {
       expect.objectContaining({
         body: 'notificationReminder1Body',
         delaySeconds: 4 * 24 * 60 * 60,
-        id: 'voxa-inactivity-1',
+        id: 'localsub-inactivity-1',
         title: 'notificationReminder1Title',
       }),
       expect.objectContaining({
         body: 'notificationReminder2Body',
         delaySeconds: 10 * 24 * 60 * 60,
-        id: 'voxa-inactivity-2',
+        id: 'localsub-inactivity-2',
         title: 'notificationReminder2Title',
       }),
       expect.objectContaining({
         body: 'notificationReminder3Body',
         delaySeconds: 21 * 24 * 60 * 60,
-        id: 'voxa-inactivity-3',
+        id: 'localsub-inactivity-3',
         title: 'notificationReminder3Title',
       }),
     ]);

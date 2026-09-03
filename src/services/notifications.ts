@@ -16,7 +16,7 @@ export interface InactivityReminder {
   title: string;
 }
 
-interface VoxaNotificationNativeModule {
+interface LocalSubNotificationNativeModule {
   cancelInactivityReminders(): Promise<void>;
   getNotificationAuthorizationStatus(): Promise<NotificationAuthorizationStatus>;
   requestNotificationAuthorization(): Promise<NotificationAuthorizationStatus>;
@@ -48,13 +48,13 @@ interface InactivityReminderLifecycle {
 type Translate = (key: string) => string;
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
-const nativeModule = NativeModules.VoxaOfflineModule as
-  | VoxaNotificationNativeModule
+const nativeModule = NativeModules.LocalSubOfflineModule as
+  | LocalSubNotificationNativeModule
   | undefined;
 
 function requireNotificationNativeModule() {
   if (!nativeModule) {
-    throw new Error('Voxa notification services are unavailable.');
+    throw new Error('LocalSub notification services are unavailable.');
   }
 
   return nativeModule;
@@ -67,19 +67,19 @@ export function buildInactivityReminders(
     {
       body: t('notificationReminder1Body'),
       delaySeconds: 4 * SECONDS_PER_DAY,
-      id: 'voxa-inactivity-1',
+      id: 'localsub-inactivity-1',
       title: t('notificationReminder1Title'),
     },
     {
       body: t('notificationReminder2Body'),
       delaySeconds: 10 * SECONDS_PER_DAY,
-      id: 'voxa-inactivity-2',
+      id: 'localsub-inactivity-2',
       title: t('notificationReminder2Title'),
     },
     {
       body: t('notificationReminder3Body'),
       delaySeconds: 21 * SECONDS_PER_DAY,
-      id: 'voxa-inactivity-3',
+      id: 'localsub-inactivity-3',
       title: t('notificationReminder3Title'),
     },
   ];

@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "LocalSubは書き出した動画を写真ライブラリに直接保存します。";
+"NSPhotoLibraryUsageDescription" = "LocalSubが端末上で字幕を作成するために、動画へのアクセスが必要です。";
+"NSSpeechRecognitionUsageDescription" = "LocalSubはメディアをアップロードせず、端末上の音声認識を使ってオフラインで字幕を生成します。";

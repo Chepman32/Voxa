@@ -96,7 +96,7 @@ export function SplashSequence({ onComplete }: SplashSequenceProps) {
       ))}
 
       <Animated.View style={[styles.logoWrap, logoStyle]}>
-        <Text style={styles.logo}>VOXA</Text>
+        <Text style={styles.logo}>LOCALSUB</Text>
         <View style={styles.logoGlow} />
       </Animated.View>
       <Text style={styles.caption}>{t('splashCaption')}</Text>

@@ -25,7 +25,7 @@ import {
   getDeviceLocale,
   getSpeechAuthorizationStatus,
   requestSpeechAuthorization,
-} from './services/native-voxa';
+} from './services/native-localsub';
 import { pickVideoAsset } from './services/media-picker';
 import { haptics } from './services/haptics';
 import {

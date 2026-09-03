@@ -488,7 +488,7 @@ export const useAppStore = create<AppState>()(
         })),
     }),
     {
-      name: 'voxa-app-state',
+      name: 'localsub-app-state',
       storage: createJSONStorage(() => zustandStorage),
       partialize: state => ({
         hasCompletedOnboarding: state.hasCompletedOnboarding,

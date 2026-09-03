@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "LocalSub guarda los videos exportados directamente en tu fototeca.";
+"NSPhotoLibraryUsageDescription" = "LocalSub necesita acceder a tus videos para crear subtítulos localmente en tu dispositivo.";
+"NSSpeechRecognitionUsageDescription" = "LocalSub usa el reconocimiento de voz del dispositivo para generar subtítulos sin conexión y sin subir tu contenido.";

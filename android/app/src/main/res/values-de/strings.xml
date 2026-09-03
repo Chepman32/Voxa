@@ -1,4 +1,4 @@
 <resources>
     <string name="notification_channel_reminders">Sanfte Erinnerungen</string>
-    <string name="notification_channel_reminders_description">Gelegentliche Erinnerungen, wenn du Voxa eine Weile nicht geöffnet hast.</string>
+    <string name="notification_channel_reminders_description">Gelegentliche Erinnerungen, wenn du LocalSub eine Weile nicht geöffnet hast.</string>
 </resources>

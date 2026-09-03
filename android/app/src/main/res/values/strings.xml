@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Voxa</string>
+    <string name="app_name">LocalSub</string>
     <string name="notification_channel_reminders">Gentle reminders</string>
-    <string name="notification_channel_reminders_description">Occasional reminders after you have not opened Voxa for a while.</string>
+    <string name="notification_channel_reminders_description">Occasional reminders after you have not opened LocalSub for a while.</string>
 </resources>

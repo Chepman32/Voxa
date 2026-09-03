@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "LocalSub speichert exportierte Videos direkt in deiner Fotomediathek.";
+"NSPhotoLibraryUsageDescription" = "LocalSub benötigt Zugriff auf deine Videos, um Untertitel lokal auf deinem Gerät zu erstellen.";
+"NSSpeechRecognitionUsageDescription" = "LocalSub nutzt die Spracherkennung auf dem Gerät, um offline Untertitel zu erstellen, ohne deine Medien hochzuladen.";

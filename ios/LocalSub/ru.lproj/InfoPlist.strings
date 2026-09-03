@@ -1,0 +1,3 @@
+"NSPhotoLibraryAddUsageDescription" = "LocalSub сохраняет экспортированные видео прямо в вашу медиатеку.";
+"NSPhotoLibraryUsageDescription" = "LocalSub нужен доступ к вашим видео, чтобы создавать субтитры локально на устройстве.";
+"NSSpeechRecognitionUsageDescription" = "LocalSub использует распознавание речи на устройстве, чтобы создавать субтитры офлайн без загрузки ваших материалов.";

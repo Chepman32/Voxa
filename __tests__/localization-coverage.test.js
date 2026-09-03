@@ -46,7 +46,7 @@ describe('localization coverage', () => {
 
   it('does not render hardcoded copy from JSX', () => {
     const violations = [];
-    const allowedCopy = new Set(['VOXA']);
+    const allowedCopy = new Set(['LOCALSUB']);
     const literalProps = new Set(['accessibilityLabel', 'placeholder']);
 
     for (const filePath of walkFiles(componentRoot).filter(file =>
@@ -123,7 +123,7 @@ describe('localization coverage', () => {
   it('provides localized native permission and notification copy', () => {
     for (const locale of nativeLocales) {
       const infoPlistStrings = fs.readFileSync(
-        path.join(projectRoot, 'ios', 'Voxa', `${locale}.lproj`, 'InfoPlist.strings'),
+        path.join(projectRoot, 'ios', 'LocalSub', `${locale}.lproj`, 'InfoPlist.strings'),
         'utf8',
       );
       expect(infoPlistStrings).toContain('NSPhotoLibraryUsageDescription');

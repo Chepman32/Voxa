@@ -1,3 +1,0 @@
-"NSPhotoLibraryAddUsageDescription" = "Voxa는 내보낸 동영상을 사진 보관함에 바로 저장합니다.";
-"NSPhotoLibraryUsageDescription" = "Voxa가 기기에서 자막을 만들려면 동영상 접근 권한이 필요합니다.";
-"NSSpeechRecognitionUsageDescription" = "Voxa는 미디어를 업로드하지 않고 기기 내 음성 인식을 사용해 오프라인으로 자막을 생성합니다.";

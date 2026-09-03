@@ -1,4 +1,4 @@
 <resources>
     <string name="notification_channel_reminders">تذكيرات هادئة</string>
-    <string name="notification_channel_reminders_description">تذكيرات متباعدة عندما لا تفتح Voxa منذ فترة.</string>
+    <string name="notification_channel_reminders_description">تذكيرات متباعدة عندما لا تفتح LocalSub منذ فترة.</string>
 </resources>

@@ -145,7 +145,7 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-jest.mock('../src/services/native-voxa', () => ({
+jest.mock('../src/services/native-localsub', () => ({
   exportProject: jest.fn(),
   getAvailableSpeechLocales: jest.fn().mockResolvedValue([
     { label: 'English (United States)', value: 'en-US' },
@@ -209,7 +209,7 @@ import { defaultSubtitleStyle } from '../src/theme/tokens';
 import type { Project } from '../src/types/models';
 
 const mockGetAvailableSpeechLocales = jest.mocked(
-  require('../src/services/native-voxa').getAvailableSpeechLocales,
+  require('../src/services/native-localsub').getAvailableSpeechLocales,
 );
 const mockRetryProjectSubtitles = jest.mocked(
   require('../src/services/project-processor').retryProjectSubtitles,

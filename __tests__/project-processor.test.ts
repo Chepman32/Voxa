@@ -1,6 +1,6 @@
 import type { Asset } from 'react-native-image-picker';
 
-jest.mock('../src/services/native-voxa', () => ({
+jest.mock('../src/services/native-localsub', () => ({
   prepareProject: jest.fn(),
   persistProjectVideo: jest.fn(),
   resolveProjectMedia: jest.fn(),
@@ -14,16 +14,16 @@ import {
 } from '../src/services/project-processor';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
 import type { Project } from '../src/types/models';
-import type { SpeechModelDownloadEvent } from '../src/services/native-voxa';
+import type { SpeechModelDownloadEvent } from '../src/services/native-localsub';
 
 const mockPrepareProject = jest.mocked(
-  require('../src/services/native-voxa').prepareProject,
+  require('../src/services/native-localsub').prepareProject,
 );
 const mockPersistProjectVideo = jest.mocked(
-  require('../src/services/native-voxa').persistProjectVideo,
+  require('../src/services/native-localsub').persistProjectVideo,
 );
 const mockResolveProjectMedia = jest.mocked(
-  require('../src/services/native-voxa').resolveProjectMedia,
+  require('../src/services/native-localsub').resolveProjectMedia,
 );
 
 describe('project processor', () => {

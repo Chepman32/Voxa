@@ -56,7 +56,7 @@ import {
   exportProject,
   saveVideoToPhotos,
   type NativeSubtitleSegment,
-} from '../../services/native-voxa';
+} from '../../services/native-localsub';
 import { haptics } from '../../services/haptics';
 import { useTranslation } from '../../i18n/useTranslation';
 import { retryProjectSubtitles } from '../../services/project-processor';

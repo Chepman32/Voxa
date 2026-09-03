@@ -161,7 +161,7 @@ const en: Translations = {
 
   goalHeadline: 'What are you trying to achieve?',
   goalSubheadline:
-    'Pick the one thing that matters most right now. Voxa will shape your defaults around it.',
+    'Pick the one thing that matters most right now. LocalSub will shape your defaults around it.',
   goalViral: 'Keep viewers watching longer',
   goalAccessible: 'Make content easier to follow',
   goalBrand: 'Build a consistent visual style',
@@ -172,7 +172,7 @@ const en: Translations = {
 
   painHeadline: 'What slows you down most?',
   painSubheadline:
-    'Select everything that gets in your way. Voxa will tune the first setup around it.',
+    'Select everything that gets in your way. LocalSub will tune the first setup around it.',
   painTyping: 'Typing captions takes forever',
   painTools: 'Online tools feel slow or risky',
   painCost: 'Subscription fees add up',
@@ -194,11 +194,11 @@ const en: Translations = {
   socialTestimonial2Name: 'Jordan T.',
   socialTestimonial2Tag: 'YouTuber',
   socialTestimonial2Text:
-    'I wanted captions without sending raw footage to another service. Voxa keeps everything on my phone and the results look clean.',
+    'I wanted captions without sending raw footage to another service. LocalSub keeps everything on my phone and the results look clean.',
   socialTestimonial3Name: 'Sofia R.',
   socialTestimonial3Tag: 'Brand manager',
   socialTestimonial3Text:
-    'We batch Reels for three brands. Voxa makes the subtitle pass much faster, and the editing gestures feel natural.',
+    'We batch Reels for three brands. LocalSub makes the subtitle pass much faster, and the editing gestures feel natural.',
 
   tinderHeadline: 'Which ones sound familiar?',
   tinderSubheadline: 'Swipe right if it fits. Swipe left to skip.',
@@ -208,9 +208,9 @@ const en: Translations = {
   tinderRemainingOne: 'card left',
   tinderSkipRemaining: 'Skip remaining',
 
-  solutionHeadline: 'Here is how Voxa helps',
+  solutionHeadline: 'Here is how LocalSub helps',
   solutionSubheadline:
-    'Based on what you picked, these are the parts Voxa will handle for you.',
+    'Based on what you picked, these are the parts LocalSub will handle for you.',
   solutionSpeedPain: 'Captioning takes too long',
   solutionSpeedSolution: 'Generate subtitles in under 60 seconds',
   solutionSpeedStat: 'On-device speech recognition, with no uploads',
@@ -235,7 +235,7 @@ const en: Translations = {
 
   permHeadline: 'One last setup step',
   permSubheadline:
-    'Voxa needs access to your videos and on-device speech recognition. Your clips stay offline.',
+    'LocalSub needs access to your videos and on-device speech recognition. Your clips stay offline.',
   permPhotoTitle: 'Photo Library',
   permPhotoBody:
     'Import videos and save finished clips back to your camera roll.',
@@ -273,7 +273,7 @@ const en: Translations = {
   effectCinema: 'Cinema',
 
   valueTitle: 'You are all set',
-  valueBody: 'Voxa is ready to help you',
+  valueBody: 'LocalSub is ready to help you',
   valueItemsTitle: "What's ready:",
   valueGoalFallback: 'Create better subtitles',
   valueItem1Label: 'Fast subtitle generation',
@@ -307,7 +307,7 @@ const en: Translations = {
   homeEmptyProjectFileName: 'Empty',
   homeEmptyTitle: 'Tap + to create.',
   homeEmptyText:
-    'Import a local video and Voxa will build the subtitle timeline offline. You can still pull down for a quick create gesture.',
+    'Import a local video and LocalSub will build the subtitle timeline offline. You can still pull down for a quick create gesture.',
   greetingMorning: 'Good Morning',
   greetingAfternoon: 'Good Afternoon',
   greetingEvening: 'Good Evening',
@@ -341,7 +341,7 @@ const en: Translations = {
 
   transcribingLanguageTitle: 'Transcribing Language',
   transcribingLanguageBody:
-    'Choose the spoken language for this video before Voxa creates subtitles.',
+    'Choose the spoken language for this video before LocalSub creates subtitles.',
   appLanguageLabel: 'App language',
   appLanguageFallback: 'app',
   loadingOnDeviceLanguages: 'Loading on-device languages...',
@@ -353,7 +353,7 @@ const en: Translations = {
   settingsTitle: 'Settings',
   settingsAppLanguage: 'App Language',
   settingsAppLanguageDescription:
-    'Choose the interface language. This overrides the phone language for Voxa.',
+    'Choose the interface language. This overrides the phone language for LocalSub.',
   settingsDefaultExport: 'Default Export',
   settingsUseAppLanguage: 'Use app language',
   settingsUseAppLanguageDescription:
@@ -372,10 +372,10 @@ const en: Translations = {
   settingsNotifications: 'Notifications',
   settingsEnableNotifications: 'Enable gentle reminders',
   settingsNotificationsDescription:
-    "We'll only send a few quiet nudges after you haven't opened Voxa for a while.",
+    "We'll only send a few quiet nudges after you haven't opened LocalSub for a while.",
   settingsPrivacy: 'Privacy',
   settingsPrivacyBody:
-    'Voxa keeps extraction, speech recognition, subtitle editing, and export entirely on-device. Remote media is only used for visual placeholders.',
+    'LocalSub keeps extraction, speech recognition, subtitle editing, and export entirely on-device. Remote media is only used for visual placeholders.',
   settingsReplayOnboarding: 'Replay onboarding',
 
   notificationReminder1Title: 'Ready when you are',
@@ -383,7 +383,7 @@ const en: Translations = {
     "Haven't seen you in a while. Want to transcribe something important?",
   notificationReminder2Title: 'Time to make a little magic?',
   notificationReminder2Body:
-    'Pick a video and let Voxa bring the words to life.',
+    'Pick a video and let LocalSub bring the words to life.',
   notificationReminder3Title: 'Your next edit can be easy',
   notificationReminder3Body:
     "Drop in a video when inspiration strikes. We'll handle the transcription.",
@@ -400,15 +400,15 @@ const en: Translations = {
   enableSpeechAccess: 'Enable Speech Access',
   grantSpeechAccess: 'Grant Speech Access',
   speechAccessSettingsBody:
-    'Speech Recognition is turned off for Voxa. Open Settings to enable it, then return to continue generating subtitles for this video.',
+    'Speech Recognition is turned off for LocalSub. Open Settings to enable it, then return to continue generating subtitles for this video.',
   speechAccessGrantBody:
-    'Voxa needs Speech Recognition permission to generate subtitles directly on your device after you import a video.',
+    'LocalSub needs Speech Recognition permission to generate subtitles directly on your device after you import a video.',
   openSettings: 'Open Settings',
   checkingAccess: 'Checking Access...',
   continueManually: 'Continue Manually',
 
   processingOfflineAi: 'Offline AI',
-  processingBody: 'Voxa is processing your video locally on-device.',
+  processingBody: 'LocalSub is processing your video locally on-device.',
   processingExtractingAudio: 'Extracting audio...',
   processingDetectingLanguage: 'Detecting spoken language...',
   processingSelectedLanguage: 'Transcribing with the selected language...',
@@ -428,7 +428,7 @@ const en: Translations = {
   retrySubtitles: 'Retry Subtitles',
   retrying: 'Retrying...',
   retrySubtitlesBody:
-    'Choose the spoken language for this video, then Voxa will regenerate subtitles on-device.',
+    'Choose the spoken language for this video, then LocalSub will regenerate subtitles on-device.',
   subtitlesCreatedNeedsReview:
     'Subtitles were created, but this project is still marked as requiring review.',
   noSubtitlesGenerated:
@@ -509,7 +509,7 @@ const es: Translations = {
 
   goalHeadline: '¿Qué quieres conseguir?',
   goalSubheadline:
-    'Elige lo que más te importa ahora. Voxa ajustará tus valores iniciales a eso.',
+    'Elige lo que más te importa ahora. LocalSub ajustará tus valores iniciales a eso.',
   goalViral: 'Mantener a la gente viendo más tiempo',
   goalAccessible: 'Hacer el contenido más fácil de seguir',
   goalBrand: 'Crear un estilo visual consistente',
@@ -520,7 +520,7 @@ const es: Translations = {
 
   painHeadline: '¿Qué te frena más?',
   painSubheadline:
-    'Marca todo lo que te complica el proceso. Voxa lo tendrá en cuenta para el primer ajuste.',
+    'Marca todo lo que te complica el proceso. LocalSub lo tendrá en cuenta para el primer ajuste.',
   painTyping: 'Escribir subtítulos toma demasiado tiempo',
   painTools: 'Las herramientas online son lentas o dan poca confianza',
   painCost: 'Las suscripciones se acumulan',
@@ -542,11 +542,11 @@ const es: Translations = {
   socialTestimonial2Name: 'Jordi M.',
   socialTestimonial2Tag: 'YouTuber',
   socialTestimonial2Text:
-    'Quería subtítulos sin mandar el video original a otra web. Con Voxa todo se queda en el teléfono y el resultado se ve limpio.',
+    'Quería subtítulos sin mandar el video original a otra web. Con LocalSub todo se queda en el teléfono y el resultado se ve limpio.',
   socialTestimonial3Name: 'Sofía R.',
   socialTestimonial3Tag: 'Responsable de marca',
   socialTestimonial3Text:
-    'Preparamos Reels para tres marcas. Voxa nos acelera mucho la parte de subtítulos y editar con gestos se siente muy natural.',
+    'Preparamos Reels para tres marcas. LocalSub nos acelera mucho la parte de subtítulos y editar con gestos se siente muy natural.',
 
   tinderHeadline: '¿Cuáles te suenan familiares?',
   tinderSubheadline:
@@ -557,9 +557,9 @@ const es: Translations = {
   tinderRemainingOne: 'tarjeta restante',
   tinderSkipRemaining: 'Pasar las restantes',
 
-  solutionHeadline: 'Así te ayuda Voxa',
+  solutionHeadline: 'Así te ayuda LocalSub',
   solutionSubheadline:
-    'Según lo que elegiste, estas son las partes que Voxa puede resolver por ti.',
+    'Según lo que elegiste, estas son las partes que LocalSub puede resolver por ti.',
   solutionSpeedPain: 'Subtitular toma demasiado tiempo',
   solutionSpeedSolution: 'Genera subtítulos en menos de 60 segundos',
   solutionSpeedStat:
@@ -586,7 +586,7 @@ const es: Translations = {
 
   permHeadline: 'Un último paso de configuración',
   permSubheadline:
-    'Voxa necesita acceso a tus videos y al reconocimiento de voz del dispositivo. Tus clips se quedan offline.',
+    'LocalSub necesita acceso a tus videos y al reconocimiento de voz del dispositivo. Tus clips se quedan offline.',
   permPhotoTitle: 'Fotos',
   permPhotoBody: 'Importa videos y guarda los clips terminados en tu carrete.',
   permSpeechTitle: 'Reconocimiento de voz',
@@ -624,7 +624,7 @@ const es: Translations = {
   effectCinema: 'Cine',
 
   valueTitle: 'Todo listo',
-  valueBody: 'Voxa está listo para ayudarte a',
+  valueBody: 'LocalSub está listo para ayudarte a',
   valueItemsTitle: 'Ya tienes preparado:',
   valueGoalFallback: 'Crear mejores subtítulos',
   valueItem1Label: 'Subtítulos rápidos',
@@ -654,7 +654,7 @@ const es: Translations = {
   homeEmptyProjectFileName: 'Vacío',
   homeEmptyTitle: 'Toca + para crear.',
   homeEmptyText:
-    'Importa un video local y Voxa creará la línea de tiempo de subtítulos sin conexión. También puedes tirar hacia abajo para crear rápido.',
+    'Importa un video local y LocalSub creará la línea de tiempo de subtítulos sin conexión. También puedes tirar hacia abajo para crear rápido.',
   greetingMorning: 'Buenos días',
   greetingAfternoon: 'Buenas tardes',
   greetingEvening: 'Buenas noches',
@@ -664,7 +664,7 @@ const es: Translations = {
 
   transcribingLanguageTitle: 'Idioma de transcripción',
   transcribingLanguageBody:
-    'Elige el idioma hablado en este video antes de que Voxa cree los subtítulos.',
+    'Elige el idioma hablado en este video antes de que LocalSub cree los subtítulos.',
   appLanguageLabel: 'Idioma de la app',
   appLanguageFallback: 'app',
   loadingOnDeviceLanguages: 'Cargando idiomas del dispositivo...',
@@ -676,7 +676,7 @@ const es: Translations = {
   settingsTitle: 'Ajustes',
   settingsAppLanguage: 'Idioma de la app',
   settingsAppLanguageDescription:
-    'Elige el idioma de la interfaz. Esto reemplaza el idioma del teléfono para Voxa.',
+    'Elige el idioma de la interfaz. Esto reemplaza el idioma del teléfono para LocalSub.',
   settingsDefaultExport: 'Exportación predeterminada',
   settingsUseAppLanguage: 'Usar idioma de la app',
   settingsUseAppLanguageDescription:
@@ -694,7 +694,7 @@ const es: Translations = {
     'Aproximar el timing de palabras después de editar subtítulos manualmente.',
   settingsPrivacy: 'Privacidad',
   settingsPrivacyBody:
-    'Voxa mantiene la extracción, el reconocimiento de voz, la edición de subtítulos y la exportación completamente en el dispositivo. Los medios remotos solo se usan como marcadores visuales.',
+    'LocalSub mantiene la extracción, el reconocimiento de voz, la edición de subtítulos y la exportación completamente en el dispositivo. Los medios remotos solo se usan como marcadores visuales.',
   settingsReplayOnboarding: 'Repetir onboarding',
 
   speechAccessFailedTitle: 'Error de acceso a voz',
@@ -709,15 +709,15 @@ const es: Translations = {
   enableSpeechAccess: 'Activar acceso a voz',
   grantSpeechAccess: 'Permitir acceso a voz',
   speechAccessSettingsBody:
-    'El reconocimiento de voz está desactivado para Voxa. Abre Ajustes para activarlo y vuelve para seguir generando subtítulos para este video.',
+    'El reconocimiento de voz está desactivado para LocalSub. Abre Ajustes para activarlo y vuelve para seguir generando subtítulos para este video.',
   speechAccessGrantBody:
-    'Voxa necesita permiso de reconocimiento de voz para generar subtítulos directamente en tu dispositivo después de importar un video.',
+    'LocalSub necesita permiso de reconocimiento de voz para generar subtítulos directamente en tu dispositivo después de importar un video.',
   openSettings: 'Abrir ajustes',
   checkingAccess: 'Comprobando acceso...',
   continueManually: 'Continuar manualmente',
 
   processingOfflineAi: 'IA sin conexión',
-  processingBody: 'Voxa está procesando tu video localmente en el dispositivo.',
+  processingBody: 'LocalSub está procesando tu video localmente en el dispositivo.',
   processingExtractingAudio: 'Extrayendo audio...',
   processingDetectingLanguage: 'Detectando idioma hablado...',
   processingSelectedLanguage: 'Transcribiendo con el idioma seleccionado...',
@@ -738,7 +738,7 @@ const es: Translations = {
   retrySubtitles: 'Reintentar subtítulos',
   retrying: 'Reintentando...',
   retrySubtitlesBody:
-    'Elige el idioma hablado de este video y Voxa regenerará los subtítulos en el dispositivo.',
+    'Elige el idioma hablado de este video y LocalSub regenerará los subtítulos en el dispositivo.',
   subtitlesCreatedNeedsReview:
     'Se crearon subtítulos, pero este proyecto sigue marcado como pendiente de revisión.',
   noSubtitlesGenerated:
@@ -820,7 +820,7 @@ const pt: Translations = {
 
   goalHeadline: 'O que você quer alcançar?',
   goalSubheadline:
-    'Escolha o que mais importa agora. O Voxa vai ajustar os padrões iniciais com base nisso.',
+    'Escolha o que mais importa agora. O LocalSub vai ajustar os padrões iniciais com base nisso.',
   goalViral: 'Manter as pessoas assistindo por mais tempo',
   goalAccessible: 'Deixar o conteúdo mais fácil de acompanhar',
   goalBrand: 'Criar um visual consistente',
@@ -831,7 +831,7 @@ const pt: Translations = {
 
   painHeadline: 'O que mais te atrasa?',
   painSubheadline:
-    'Marque tudo que atrapalha seu fluxo. O Voxa vai levar isso em conta na primeira configuração.',
+    'Marque tudo que atrapalha seu fluxo. O LocalSub vai levar isso em conta na primeira configuração.',
   painTyping: 'Digitar legendas demora demais',
   painTools: 'Ferramentas online são lentas ou pouco confiáveis',
   painCost: 'Assinaturas acabam pesando',
@@ -853,11 +853,11 @@ const pt: Translations = {
   socialTestimonial2Name: 'João T.',
   socialTestimonial2Tag: 'YouTuber',
   socialTestimonial2Text:
-    'Eu queria legendar sem mandar o vídeo bruto para outro serviço. No Voxa fica tudo no celular e o resultado sai bem limpo.',
+    'Eu queria legendar sem mandar o vídeo bruto para outro serviço. No LocalSub fica tudo no celular e o resultado sai bem limpo.',
   socialTestimonial3Name: 'Sofia R.',
   socialTestimonial3Tag: 'Gerente de marca',
   socialTestimonial3Text:
-    'Produzimos Reels em lote para três marcas. O Voxa agilizou muito a etapa das legendas, e editar por gestos é bem natural.',
+    'Produzimos Reels em lote para três marcas. O LocalSub agilizou muito a etapa das legendas, e editar por gestos é bem natural.',
 
   tinderHeadline: 'Quais dessas situações parecem familiares?',
   tinderSubheadline:
@@ -868,9 +868,9 @@ const pt: Translations = {
   tinderRemainingOne: 'cartão restante',
   tinderSkipRemaining: 'Pular restantes',
 
-  solutionHeadline: 'Como o Voxa ajuda',
+  solutionHeadline: 'Como o LocalSub ajuda',
   solutionSubheadline:
-    'Com base no que você escolheu, estas são as partes que o Voxa resolve para você.',
+    'Com base no que você escolheu, estas são as partes que o LocalSub resolve para você.',
   solutionSpeedPain: 'Legendar demora demais',
   solutionSpeedSolution: 'Gere legendas em menos de 60 segundos',
   solutionSpeedStat: 'Reconhecimento de voz no aparelho, sem uploads',
@@ -895,7 +895,7 @@ const pt: Translations = {
 
   permHeadline: 'Um último passo',
   permSubheadline:
-    'O Voxa precisa acessar seus vídeos e o reconhecimento de voz do aparelho. Seus clipes continuam offline.',
+    'O LocalSub precisa acessar seus vídeos e o reconhecimento de voz do aparelho. Seus clipes continuam offline.',
   permPhotoTitle: 'Fotos',
   permPhotoBody:
     'Importe vídeos e salve os clipes finalizados no rolo da câmera.',
@@ -933,7 +933,7 @@ const pt: Translations = {
   effectCinema: 'Cinema',
 
   valueTitle: 'Tudo pronto',
-  valueBody: 'O Voxa está pronto para ajudar você a',
+  valueBody: 'O LocalSub está pronto para ajudar você a',
   valueItemsTitle: 'Já está preparado:',
   valueGoalFallback: 'Criar legendas melhores',
   valueItem1Label: 'Legendas rápidas',
@@ -963,7 +963,7 @@ const pt: Translations = {
   homeEmptyProjectFileName: 'Vazio',
   homeEmptyTitle: 'Toque em + para criar.',
   homeEmptyText:
-    'Importe um vídeo local e o Voxa vai criar a linha do tempo de legendas offline. Você também pode puxar para baixo para criar rapidamente.',
+    'Importe um vídeo local e o LocalSub vai criar a linha do tempo de legendas offline. Você também pode puxar para baixo para criar rapidamente.',
   greetingMorning: 'Bom dia',
   greetingAfternoon: 'Boa tarde',
   greetingEvening: 'Boa noite',
@@ -973,7 +973,7 @@ const pt: Translations = {
 
   transcribingLanguageTitle: 'Idioma da transcrição',
   transcribingLanguageBody:
-    'Escolha o idioma falado neste vídeo antes de o Voxa criar legendas.',
+    'Escolha o idioma falado neste vídeo antes de o LocalSub criar legendas.',
   appLanguageLabel: 'Idioma do app',
   appLanguageFallback: 'app',
   loadingOnDeviceLanguages: 'Carregando idiomas no aparelho...',
@@ -985,7 +985,7 @@ const pt: Translations = {
   settingsTitle: 'Configurações',
   settingsAppLanguage: 'Idioma do app',
   settingsAppLanguageDescription:
-    'Escolha o idioma da interface. Isso substitui o idioma do celular no Voxa.',
+    'Escolha o idioma da interface. Isso substitui o idioma do celular no LocalSub.',
   settingsDefaultExport: 'Exportação padrão',
   settingsUseAppLanguage: 'Usar idioma do app',
   settingsUseAppLanguageDescription:
@@ -1003,7 +1003,7 @@ const pt: Translations = {
     'Aproximar o tempo das palavras após edições manuais nas legendas.',
   settingsPrivacy: 'Privacidade',
   settingsPrivacyBody:
-    'O Voxa mantém extração, reconhecimento de voz, edição de legendas e exportação totalmente no aparelho. Mídia remota é usada apenas como placeholder visual.',
+    'O LocalSub mantém extração, reconhecimento de voz, edição de legendas e exportação totalmente no aparelho. Mídia remota é usada apenas como placeholder visual.',
   settingsReplayOnboarding: 'Repetir onboarding',
 
   speechAccessFailedTitle: 'Falha no acesso à voz',
@@ -1018,15 +1018,15 @@ const pt: Translations = {
   enableSpeechAccess: 'Ativar acesso à voz',
   grantSpeechAccess: 'Permitir acesso à voz',
   speechAccessSettingsBody:
-    'O reconhecimento de voz está desativado para o Voxa. Abra Configurações para ativar e volte para continuar gerando legendas para este vídeo.',
+    'O reconhecimento de voz está desativado para o LocalSub. Abra Configurações para ativar e volte para continuar gerando legendas para este vídeo.',
   speechAccessGrantBody:
-    'O Voxa precisa da permissão de reconhecimento de voz para gerar legendas diretamente no aparelho depois que você importar um vídeo.',
+    'O LocalSub precisa da permissão de reconhecimento de voz para gerar legendas diretamente no aparelho depois que você importar um vídeo.',
   openSettings: 'Abrir configurações',
   checkingAccess: 'Verificando acesso...',
   continueManually: 'Continuar manualmente',
 
   processingOfflineAi: 'IA offline',
-  processingBody: 'O Voxa está processando seu vídeo localmente no aparelho.',
+  processingBody: 'O LocalSub está processando seu vídeo localmente no aparelho.',
   processingExtractingAudio: 'Extraindo áudio...',
   processingDetectingLanguage: 'Detectando idioma falado...',
   processingSelectedLanguage: 'Transcrevendo com o idioma selecionado...',
@@ -1046,7 +1046,7 @@ const pt: Translations = {
   retrySubtitles: 'Tentar legendas de novo',
   retrying: 'Tentando...',
   retrySubtitlesBody:
-    'Escolha o idioma falado neste vídeo, e o Voxa vai gerar as legendas de novo no aparelho.',
+    'Escolha o idioma falado neste vídeo, e o LocalSub vai gerar as legendas de novo no aparelho.',
   subtitlesCreatedNeedsReview:
     'As legendas foram criadas, mas este projeto ainda está marcado para revisão.',
   noSubtitlesGenerated:
@@ -1128,7 +1128,7 @@ const fr: Translations = {
 
   goalHeadline: 'Qu’est-ce que tu veux améliorer ?',
   goalSubheadline:
-    'Choisis ce qui compte le plus maintenant. Voxa adaptera tes réglages de départ.',
+    'Choisis ce qui compte le plus maintenant. LocalSub adaptera tes réglages de départ.',
   goalViral: 'Garder les spectateurs plus longtemps',
   goalAccessible: 'Rendre le contenu plus facile à suivre',
   goalBrand: 'Créer un style visuel cohérent',
@@ -1139,7 +1139,7 @@ const fr: Translations = {
 
   painHeadline: 'Qu’est-ce qui te ralentit le plus ?',
   painSubheadline:
-    'Coche tout ce qui bloque ton workflow. Voxa en tiendra compte pour la première configuration.',
+    'Coche tout ce qui bloque ton workflow. LocalSub en tiendra compte pour la première configuration.',
   painTyping: 'Taper les sous-titres prend trop de temps',
   painTools: 'Les outils en ligne sont lents ou peu rassurants',
   painCost: 'Les abonnements finissent par coûter cher',
@@ -1161,11 +1161,11 @@ const fr: Translations = {
   socialTestimonial2Name: 'Jordan T.',
   socialTestimonial2Tag: 'YouTubeur',
   socialTestimonial2Text:
-    'Je voulais des sous-titres sans envoyer mes rushs à un service en ligne. Avec Voxa, tout reste sur mon téléphone et le rendu est propre.',
+    'Je voulais des sous-titres sans envoyer mes rushs à un service en ligne. Avec LocalSub, tout reste sur mon téléphone et le rendu est propre.',
   socialTestimonial3Name: 'Sofia R.',
   socialTestimonial3Tag: 'Responsable de marque',
   socialTestimonial3Text:
-    'On prépare des Reels en série pour trois marques. Voxa accélère vraiment la partie sous-titres, et les gestes d’édition sont naturels.',
+    'On prépare des Reels en série pour trois marques. LocalSub accélère vraiment la partie sous-titres, et les gestes d’édition sont naturels.',
 
   tinderHeadline: 'Qu’est-ce qui te parle ?',
   tinderSubheadline:
@@ -1176,9 +1176,9 @@ const fr: Translations = {
   tinderRemainingOne: 'carte restante',
   tinderSkipRemaining: 'Passer le reste',
 
-  solutionHeadline: 'Comment Voxa t’aide',
+  solutionHeadline: 'Comment LocalSub t’aide',
   solutionSubheadline:
-    'D’après tes choix, voici ce que Voxa peut prendre en charge pour toi.',
+    'D’après tes choix, voici ce que LocalSub peut prendre en charge pour toi.',
   solutionSpeedPain: 'Sous-titrer prend trop de temps',
   solutionSpeedSolution: 'Génère des sous-titres en moins de 60 secondes',
   solutionSpeedStat: 'Reconnaissance vocale sur l’appareil, sans envoi',
@@ -1204,7 +1204,7 @@ const fr: Translations = {
 
   permHeadline: 'Dernière étape de configuration',
   permSubheadline:
-    'Voxa a besoin d’accéder à tes vidéos et à la reconnaissance vocale de l’appareil. Tes clips restent hors ligne.',
+    'LocalSub a besoin d’accéder à tes vidéos et à la reconnaissance vocale de l’appareil. Tes clips restent hors ligne.',
   permPhotoTitle: 'Photos',
   permPhotoBody:
     'Importer des vidéos et enregistrer les clips terminés dans ta pellicule.',
@@ -1243,7 +1243,7 @@ const fr: Translations = {
   effectCinema: 'Cinéma',
 
   valueTitle: 'Tout est prêt',
-  valueBody: 'Voxa est prêt à t’aider à',
+  valueBody: 'LocalSub est prêt à t’aider à',
   valueItemsTitle: 'Déjà configuré :',
   valueGoalFallback: 'Créer de meilleurs sous-titres',
   valueItem1Label: 'Sous-titres rapides',
@@ -1274,7 +1274,7 @@ const fr: Translations = {
   homeEmptyProjectFileName: 'Vide',
   homeEmptyTitle: 'Touche + pour créer.',
   homeEmptyText:
-    'Importe une vidéo locale et Voxa créera la timeline de sous-titres hors ligne. Tu peux aussi tirer vers le bas pour créer rapidement.',
+    'Importe une vidéo locale et LocalSub créera la timeline de sous-titres hors ligne. Tu peux aussi tirer vers le bas pour créer rapidement.',
   greetingMorning: 'Bonjour',
   greetingAfternoon: 'Bon après-midi',
   greetingEvening: 'Bonsoir',
@@ -1284,7 +1284,7 @@ const fr: Translations = {
 
   transcribingLanguageTitle: 'Langue de transcription',
   transcribingLanguageBody:
-    'Choisis la langue parlée dans cette vidéo avant que Voxa crée les sous-titres.',
+    'Choisis la langue parlée dans cette vidéo avant que LocalSub crée les sous-titres.',
   appLanguageLabel: 'Langue de l’app',
   appLanguageFallback: 'app',
   loadingOnDeviceLanguages: 'Chargement des langues sur l’appareil...',
@@ -1297,7 +1297,7 @@ const fr: Translations = {
   settingsTitle: 'Réglages',
   settingsAppLanguage: 'Langue de l’app',
   settingsAppLanguageDescription:
-    'Choisis la langue de l’interface. Cela remplace la langue du téléphone pour Voxa.',
+    'Choisis la langue de l’interface. Cela remplace la langue du téléphone pour LocalSub.',
   settingsDefaultExport: 'Export par défaut',
   settingsUseAppLanguage: 'Utiliser la langue de l’app',
   settingsUseAppLanguageDescription:
@@ -1315,7 +1315,7 @@ const fr: Translations = {
     'Approximer le timing des mots après des modifications manuelles.',
   settingsPrivacy: 'Confidentialité',
   settingsPrivacyBody:
-    'Voxa garde l’extraction, la reconnaissance vocale, l’édition des sous-titres et l’export entièrement sur l’appareil. Les médias distants servent seulement de visuels temporaires.',
+    'LocalSub garde l’extraction, la reconnaissance vocale, l’édition des sous-titres et l’export entièrement sur l’appareil. Les médias distants servent seulement de visuels temporaires.',
   settingsReplayOnboarding: 'Relancer l’onboarding',
 
   speechAccessFailedTitle: 'Échec de l’accès vocal',
@@ -1330,15 +1330,15 @@ const fr: Translations = {
   enableSpeechAccess: 'Activer l’accès vocal',
   grantSpeechAccess: 'Autoriser l’accès vocal',
   speechAccessSettingsBody:
-    'La reconnaissance vocale est désactivée pour Voxa. Ouvre Réglages pour l’activer, puis reviens pour continuer à générer les sous-titres de cette vidéo.',
+    'La reconnaissance vocale est désactivée pour LocalSub. Ouvre Réglages pour l’activer, puis reviens pour continuer à générer les sous-titres de cette vidéo.',
   speechAccessGrantBody:
-    'Voxa a besoin de l’autorisation de reconnaissance vocale pour générer les sous-titres directement sur ton appareil après l’import d’une vidéo.',
+    'LocalSub a besoin de l’autorisation de reconnaissance vocale pour générer les sous-titres directement sur ton appareil après l’import d’une vidéo.',
   openSettings: 'Ouvrir les réglages',
   checkingAccess: 'Vérification de l’accès...',
   continueManually: 'Continuer manuellement',
 
   processingOfflineAi: 'IA hors ligne',
-  processingBody: 'Voxa traite ta vidéo localement sur l’appareil.',
+  processingBody: 'LocalSub traite ta vidéo localement sur l’appareil.',
   processingExtractingAudio: 'Extraction de l’audio...',
   processingDetectingLanguage: 'Détection de la langue parlée...',
   processingSelectedLanguage: 'Transcription avec la langue sélectionnée...',
@@ -1359,7 +1359,7 @@ const fr: Translations = {
   retrySubtitles: 'Réessayer les sous-titres',
   retrying: 'Nouvelle tentative...',
   retrySubtitlesBody:
-    'Choisis la langue parlée dans cette vidéo, puis Voxa régénérera les sous-titres sur l’appareil.',
+    'Choisis la langue parlée dans cette vidéo, puis LocalSub régénérera les sous-titres sur l’appareil.',
   subtitlesCreatedNeedsReview:
     'Les sous-titres ont été créés, mais ce projet reste marqué comme à vérifier.',
   noSubtitlesGenerated:
@@ -1442,7 +1442,7 @@ const de: Translations = {
 
   goalHeadline: 'Was möchtest du erreichen?',
   goalSubheadline:
-    'Wähle aus, was dir gerade am wichtigsten ist. Voxa richtet die Startwerte danach aus.',
+    'Wähle aus, was dir gerade am wichtigsten ist. LocalSub richtet die Startwerte danach aus.',
   goalViral: 'Zuschauer länger dranhalten',
   goalAccessible: 'Inhalte leichter verständlich machen',
   goalBrand: 'Einen einheitlichen Look aufbauen',
@@ -1453,7 +1453,7 @@ const de: Translations = {
 
   painHeadline: 'Was bremst dich am meisten?',
   painSubheadline:
-    'Markiere alles, was deinen Ablauf stört. Voxa berücksichtigt das bei der ersten Einrichtung.',
+    'Markiere alles, was deinen Ablauf stört. LocalSub berücksichtigt das bei der ersten Einrichtung.',
   painTyping: 'Untertitel abzutippen dauert zu lange',
   painTools: 'Online-Tools sind langsam oder wirken riskant',
   painCost: 'Abos summieren sich',
@@ -1475,11 +1475,11 @@ const de: Translations = {
   socialTestimonial2Name: 'Jonas T.',
   socialTestimonial2Tag: 'YouTuber',
   socialTestimonial2Text:
-    'Ich wollte Untertitel, ohne mein Rohmaterial irgendwo hochzuladen. Mit Voxa bleibt alles auf dem Smartphone und sieht trotzdem sauber aus.',
+    'Ich wollte Untertitel, ohne mein Rohmaterial irgendwo hochzuladen. Mit LocalSub bleibt alles auf dem Smartphone und sieht trotzdem sauber aus.',
   socialTestimonial3Name: 'Sofia R.',
   socialTestimonial3Tag: 'Brand-Managerin',
   socialTestimonial3Text:
-    'Wir erstellen Reels für drei Marken im Batch. Voxa macht den Untertitel-Teil deutlich schneller, und die Gesten fühlen sich direkt richtig an.',
+    'Wir erstellen Reels für drei Marken im Batch. LocalSub macht den Untertitel-Teil deutlich schneller, und die Gesten fühlen sich direkt richtig an.',
 
   tinderHeadline: 'Was kommt dir bekannt vor?',
   tinderSubheadline:
@@ -1490,9 +1490,9 @@ const de: Translations = {
   tinderRemainingOne: 'Karte übrig',
   tinderSkipRemaining: 'Rest überspringen',
 
-  solutionHeadline: 'So hilft Voxa',
+  solutionHeadline: 'So hilft LocalSub',
   solutionSubheadline:
-    'Aus deinen Antworten ergeben sich die Aufgaben, die Voxa für dich übernimmt.',
+    'Aus deinen Antworten ergeben sich die Aufgaben, die LocalSub für dich übernimmt.',
   solutionSpeedPain: 'Untertitel dauern zu lange',
   solutionSpeedSolution: 'Erzeuge Untertitel in unter 60 Sekunden',
   solutionSpeedStat: 'Spracherkennung auf dem Gerät, ohne Uploads',
@@ -1518,7 +1518,7 @@ const de: Translations = {
 
   permHeadline: 'Ein letzter Einrichtungsschritt',
   permSubheadline:
-    'Voxa braucht Zugriff auf deine Videos und die Spracherkennung des Geräts. Deine Clips bleiben offline.',
+    'LocalSub braucht Zugriff auf deine Videos und die Spracherkennung des Geräts. Deine Clips bleiben offline.',
   permPhotoTitle: 'Fotos',
   permPhotoBody:
     'Videos importieren und fertige Clips wieder in deiner Mediathek speichern.',
@@ -1556,7 +1556,7 @@ const de: Translations = {
   effectCinema: 'Kino',
 
   valueTitle: 'Alles ist bereit',
-  valueBody: 'Voxa ist bereit, dir zu helfen',
+  valueBody: 'LocalSub ist bereit, dir zu helfen',
   valueItemsTitle: 'Bereits eingerichtet:',
   valueGoalFallback: 'Bessere Untertitel erstellen',
   valueItem1Label: 'Schnelle Untertitel',
@@ -1586,7 +1586,7 @@ const de: Translations = {
   homeEmptyProjectFileName: 'Leer',
   homeEmptyTitle: 'Tippe auf + zum Erstellen.',
   homeEmptyText:
-    'Importiere ein lokales Video und Voxa erstellt die Untertitel-Timeline offline. Du kannst auch nach unten ziehen, um schnell zu erstellen.',
+    'Importiere ein lokales Video und LocalSub erstellt die Untertitel-Timeline offline. Du kannst auch nach unten ziehen, um schnell zu erstellen.',
   greetingMorning: 'Guten Morgen',
   greetingAfternoon: 'Guten Tag',
   greetingEvening: 'Guten Abend',
@@ -1596,7 +1596,7 @@ const de: Translations = {
 
   transcribingLanguageTitle: 'Transkriptionssprache',
   transcribingLanguageBody:
-    'Wähle die gesprochene Sprache dieses Videos, bevor Voxa Untertitel erstellt.',
+    'Wähle die gesprochene Sprache dieses Videos, bevor LocalSub Untertitel erstellt.',
   appLanguageLabel: 'App-Sprache',
   appLanguageFallback: 'App',
   loadingOnDeviceLanguages: 'Gerätesprachen werden geladen...',
@@ -1608,7 +1608,7 @@ const de: Translations = {
   settingsTitle: 'Einstellungen',
   settingsAppLanguage: 'App-Sprache',
   settingsAppLanguageDescription:
-    'Wähle die Sprache der Oberfläche. Dies überschreibt die Telefonsprache für Voxa.',
+    'Wähle die Sprache der Oberfläche. Dies überschreibt die Telefonsprache für LocalSub.',
   settingsDefaultExport: 'Standardexport',
   settingsUseAppLanguage: 'App-Sprache verwenden',
   settingsUseAppLanguageDescription:
@@ -1626,7 +1626,7 @@ const de: Translations = {
     'Wort-Timing nach manuellen Untertiteländerungen annähern.',
   settingsPrivacy: 'Datenschutz',
   settingsPrivacyBody:
-    'Voxa hält Extraktion, Spracherkennung, Untertitelbearbeitung und Export vollständig auf dem Gerät. Remote-Medien werden nur als visuelle Platzhalter verwendet.',
+    'LocalSub hält Extraktion, Spracherkennung, Untertitelbearbeitung und Export vollständig auf dem Gerät. Remote-Medien werden nur als visuelle Platzhalter verwendet.',
   settingsReplayOnboarding: 'Onboarding erneut starten',
 
   speechAccessFailedTitle: 'Sprachzugriff fehlgeschlagen',
@@ -1641,15 +1641,15 @@ const de: Translations = {
   enableSpeechAccess: 'Sprachzugriff aktivieren',
   grantSpeechAccess: 'Sprachzugriff erlauben',
   speechAccessSettingsBody:
-    'Die Spracherkennung ist für Voxa deaktiviert. Öffne die Einstellungen, aktiviere sie und kehre zurück, um Untertitel für dieses Video zu erstellen.',
+    'Die Spracherkennung ist für LocalSub deaktiviert. Öffne die Einstellungen, aktiviere sie und kehre zurück, um Untertitel für dieses Video zu erstellen.',
   speechAccessGrantBody:
-    'Voxa benötigt die Berechtigung zur Spracherkennung, um nach dem Import eines Videos Untertitel direkt auf deinem Gerät zu erstellen.',
+    'LocalSub benötigt die Berechtigung zur Spracherkennung, um nach dem Import eines Videos Untertitel direkt auf deinem Gerät zu erstellen.',
   openSettings: 'Einstellungen öffnen',
   checkingAccess: 'Zugriff wird geprüft...',
   continueManually: 'Manuell fortfahren',
 
   processingOfflineAi: 'Offline-KI',
-  processingBody: 'Voxa verarbeitet dein Video lokal auf dem Gerät.',
+  processingBody: 'LocalSub verarbeitet dein Video lokal auf dem Gerät.',
   processingExtractingAudio: 'Audio wird extrahiert...',
   processingDetectingLanguage: 'Gesprochene Sprache wird erkannt...',
   processingSelectedLanguage: 'Transkription mit der ausgewählten Sprache...',
@@ -1669,7 +1669,7 @@ const de: Translations = {
   retrySubtitles: 'Untertitel erneut versuchen',
   retrying: 'Wird erneut versucht...',
   retrySubtitlesBody:
-    'Wähle die gesprochene Sprache für dieses Video, dann erstellt Voxa die Untertitel auf dem Gerät neu.',
+    'Wähle die gesprochene Sprache für dieses Video, dann erstellt LocalSub die Untertitel auf dem Gerät neu.',
   subtitlesCreatedNeedsReview:
     'Untertitel wurden erstellt, aber dieses Projekt ist noch als prüfbedürftig markiert.',
   noSubtitlesGenerated:
@@ -1752,7 +1752,7 @@ const it: Translations = {
 
   goalHeadline: 'Che risultato vuoi ottenere?',
   goalSubheadline:
-    'Scegli ciò che conta di più adesso. Voxa imposterà i valori iniziali di conseguenza.',
+    'Scegli ciò che conta di più adesso. LocalSub imposterà i valori iniziali di conseguenza.',
   goalViral: 'Tenere gli spettatori più a lungo',
   goalAccessible: 'Rendere i contenuti più facili da seguire',
   goalBrand: 'Creare uno stile visivo coerente',
@@ -1763,7 +1763,7 @@ const it: Translations = {
 
   painHeadline: 'Cosa ti rallenta di più?',
   painSubheadline:
-    'Seleziona tutto ciò che ti blocca. Voxa lo userà per configurare il primo setup.',
+    'Seleziona tutto ciò che ti blocca. LocalSub lo userà per configurare il primo setup.',
   painTyping: 'Scrivere i sottotitoli richiede troppo tempo',
   painTools: 'Gli strumenti online sono lenti o poco affidabili',
   painCost: 'Gli abbonamenti si accumulano',
@@ -1785,11 +1785,11 @@ const it: Translations = {
   socialTestimonial2Name: 'Giordano T.',
   socialTestimonial2Tag: 'YouTuber',
   socialTestimonial2Text:
-    'Volevo sottotitoli senza caricare i girati su un altro servizio. Con Voxa resta tutto sul telefono e il risultato è pulito.',
+    'Volevo sottotitoli senza caricare i girati su un altro servizio. Con LocalSub resta tutto sul telefono e il risultato è pulito.',
   socialTestimonial3Name: 'Sofia R.',
   socialTestimonial3Tag: 'Brand manager',
   socialTestimonial3Text:
-    'Prepariamo Reels in batch per tre brand. Voxa ci fa risparmiare molto tempo sui sottotitoli, e modificare con i gesti è naturale.',
+    'Prepariamo Reels in batch per tre brand. LocalSub ci fa risparmiare molto tempo sui sottotitoli, e modificare con i gesti è naturale.',
 
   tinderHeadline: 'Quali situazioni ti suonano familiari?',
   tinderSubheadline: 'Scorri a destra se ti riguarda. A sinistra per saltare.',
@@ -1799,9 +1799,9 @@ const it: Translations = {
   tinderRemainingOne: 'scheda rimasta',
   tinderSkipRemaining: 'Salta le restanti',
 
-  solutionHeadline: 'Come ti aiuta Voxa',
+  solutionHeadline: 'Come ti aiuta LocalSub',
   solutionSubheadline:
-    'In base alle tue scelte, queste sono le parti che Voxa gestisce per te.',
+    'In base alle tue scelte, queste sono le parti che LocalSub gestisce per te.',
   solutionSpeedPain: 'Sottotitolare richiede troppo tempo',
   solutionSpeedSolution: 'Genera sottotitoli in meno di 60 secondi',
   solutionSpeedStat: 'Riconoscimento vocale sul dispositivo, senza upload',
@@ -1826,7 +1826,7 @@ const it: Translations = {
 
   permHeadline: 'Ultimo passaggio di configurazione',
   permSubheadline:
-    'Voxa deve accedere ai tuoi video e al riconoscimento vocale del dispositivo. I tuoi clip restano offline.',
+    'LocalSub deve accedere ai tuoi video e al riconoscimento vocale del dispositivo. I tuoi clip restano offline.',
   permPhotoTitle: 'Foto',
   permPhotoBody: 'Importa video e salva i clip finiti nel rullino.',
   permSpeechTitle: 'Riconoscimento vocale',
@@ -1864,7 +1864,7 @@ const it: Translations = {
   effectCinema: 'Cinema',
 
   valueTitle: 'Tutto pronto',
-  valueBody: 'Voxa è pronto ad aiutarti a',
+  valueBody: 'LocalSub è pronto ad aiutarti a',
   valueItemsTitle: 'Già configurato:',
   valueGoalFallback: 'Creare sottotitoli migliori',
   valueItem1Label: 'Sottotitoli rapidi',
@@ -1894,7 +1894,7 @@ const it: Translations = {
   homeEmptyProjectFileName: 'Vuoto',
   homeEmptyTitle: 'Tocca + per creare.',
   homeEmptyText:
-    'Importa un video locale e Voxa creerà offline la timeline dei sottotitoli. Puoi anche trascinare verso il basso per creare rapidamente.',
+    'Importa un video locale e LocalSub creerà offline la timeline dei sottotitoli. Puoi anche trascinare verso il basso per creare rapidamente.',
   greetingMorning: 'Buongiorno',
   greetingAfternoon: 'Buon pomeriggio',
   greetingEvening: 'Buonasera',
@@ -1904,7 +1904,7 @@ const it: Translations = {
 
   transcribingLanguageTitle: 'Lingua di trascrizione',
   transcribingLanguageBody:
-    'Scegli la lingua parlata in questo video prima che Voxa crei i sottotitoli.',
+    'Scegli la lingua parlata in questo video prima che LocalSub crei i sottotitoli.',
   appLanguageLabel: 'Lingua dell’app',
   appLanguageFallback: 'app',
   loadingOnDeviceLanguages: 'Caricamento lingue sul dispositivo...',
@@ -1916,7 +1916,7 @@ const it: Translations = {
   settingsTitle: 'Impostazioni',
   settingsAppLanguage: 'Lingua dell’app',
   settingsAppLanguageDescription:
-    'Scegli la lingua dell’interfaccia. Questa impostazione sostituisce la lingua del telefono per Voxa.',
+    'Scegli la lingua dell’interfaccia. Questa impostazione sostituisce la lingua del telefono per LocalSub.',
   settingsDefaultExport: 'Esportazione predefinita',
   settingsUseAppLanguage: 'Usa lingua dell’app',
   settingsUseAppLanguageDescription:
@@ -1934,7 +1934,7 @@ const it: Translations = {
     'Stima il timing delle parole dopo modifiche manuali ai sottotitoli.',
   settingsPrivacy: 'Privacy',
   settingsPrivacyBody:
-    'Voxa mantiene estrazione, riconoscimento vocale, modifica dei sottotitoli ed esportazione completamente sul dispositivo. I media remoti sono usati solo come segnaposto visivi.',
+    'LocalSub mantiene estrazione, riconoscimento vocale, modifica dei sottotitoli ed esportazione completamente sul dispositivo. I media remoti sono usati solo come segnaposto visivi.',
   settingsReplayOnboarding: 'Ripeti onboarding',
 
   speechAccessFailedTitle: 'Accesso voce non riuscito',
@@ -1949,16 +1949,16 @@ const it: Translations = {
   enableSpeechAccess: 'Attiva accesso voce',
   grantSpeechAccess: 'Consenti accesso voce',
   speechAccessSettingsBody:
-    'Il riconoscimento vocale è disattivato per Voxa. Apri Impostazioni per attivarlo, poi torna per continuare a generare sottotitoli per questo video.',
+    'Il riconoscimento vocale è disattivato per LocalSub. Apri Impostazioni per attivarlo, poi torna per continuare a generare sottotitoli per questo video.',
   speechAccessGrantBody:
-    'Voxa ha bisogno del permesso di riconoscimento vocale per generare sottotitoli direttamente sul dispositivo dopo l’importazione di un video.',
+    'LocalSub ha bisogno del permesso di riconoscimento vocale per generare sottotitoli direttamente sul dispositivo dopo l’importazione di un video.',
   openSettings: 'Apri impostazioni',
   checkingAccess: 'Controllo accesso...',
   continueManually: 'Continua manualmente',
 
   processingOfflineAi: 'IA offline',
   processingBody:
-    'Voxa sta elaborando il tuo video localmente sul dispositivo.',
+    'LocalSub sta elaborando il tuo video localmente sul dispositivo.',
   processingExtractingAudio: 'Estrazione audio...',
   processingDetectingLanguage: 'Rilevamento lingua parlata...',
   processingSelectedLanguage: 'Trascrizione con la lingua selezionata...',
@@ -1979,7 +1979,7 @@ const it: Translations = {
   retrySubtitles: 'Riprova sottotitoli',
   retrying: 'Nuovo tentativo...',
   retrySubtitlesBody:
-    'Scegli la lingua parlata in questo video e Voxa rigenererà i sottotitoli sul dispositivo.',
+    'Scegli la lingua parlata in questo video e LocalSub rigenererà i sottotitoli sul dispositivo.',
   subtitlesCreatedNeedsReview:
     'I sottotitoli sono stati creati, ma questo progetto è ancora contrassegnato per revisione.',
   noSubtitlesGenerated:
@@ -2062,7 +2062,7 @@ const ru: Translations = {
 
   goalHeadline: 'Чего ты хочешь добиться?',
   goalSubheadline:
-    'Выбери, что сейчас важнее всего. Voxa подстроит стартовые настройки под это.',
+    'Выбери, что сейчас важнее всего. LocalSub подстроит стартовые настройки под это.',
   goalViral: 'Удерживать зрителей дольше',
   goalAccessible: 'Сделать контент понятнее',
   goalBrand: 'Собрать единый визуальный стиль',
@@ -2073,7 +2073,7 @@ const ru: Translations = {
 
   painHeadline: 'Что больше всего тормозит?',
   painSubheadline:
-    'Отметь всё, что мешает процессу. Voxa учтёт это при первой настройке.',
+    'Отметь всё, что мешает процессу. LocalSub учтёт это при первой настройке.',
   painTyping: 'Печатать субтитры слишком долго',
   painTools: 'Онлайн-инструменты медленные или не вызывают доверия',
   painCost: 'Подписки быстро набегают',
@@ -2095,11 +2095,11 @@ const ru: Translations = {
   socialTestimonial2Name: 'Илья Т.',
   socialTestimonial2Tag: 'YouTube-автор',
   socialTestimonial2Text:
-    'Мне нужны были субтитры без загрузки исходников на сторонние сервисы. В Voxa всё остаётся на телефоне, а результат выглядит аккуратно.',
+    'Мне нужны были субтитры без загрузки исходников на сторонние сервисы. В LocalSub всё остаётся на телефоне, а результат выглядит аккуратно.',
   socialTestimonial3Name: 'София Р.',
   socialTestimonial3Tag: 'Бренд-менеджер',
   socialTestimonial3Text:
-    'Мы пачками готовим Reels для трёх брендов. Voxa заметно ускоряет работу с субтитрами, а жесты для правки ощущаются естественно.',
+    'Мы пачками готовим Reels для трёх брендов. LocalSub заметно ускоряет работу с субтитрами, а жесты для правки ощущаются естественно.',
 
   tinderHeadline: 'Что из этого знакомо?',
   tinderSubheadline: 'Свайп вправо, если подходит. Влево — пропустить.',
@@ -2109,9 +2109,9 @@ const ru: Translations = {
   tinderRemainingOne: 'карточка осталась',
   tinderSkipRemaining: 'Пропустить остальные',
 
-  solutionHeadline: 'Как Voxa помогает',
+  solutionHeadline: 'Как LocalSub помогает',
   solutionSubheadline:
-    'По твоим ответам Voxa возьмёт на себя вот эти части работы.',
+    'По твоим ответам LocalSub возьмёт на себя вот эти части работы.',
   solutionSpeedPain: 'Субтитры занимают слишком много времени',
   solutionSpeedSolution: 'Генерируй субтитры меньше чем за 60 секунд',
   solutionSpeedStat: 'Распознавание речи на устройстве, без загрузок',
@@ -2138,7 +2138,7 @@ const ru: Translations = {
 
   permHeadline: 'Последний шаг настройки',
   permSubheadline:
-    'Voxa нужен доступ к видео и распознаванию речи на устройстве. Твои клипы остаются офлайн.',
+    'LocalSub нужен доступ к видео и распознаванию речи на устройстве. Твои клипы остаются офлайн.',
   permPhotoTitle: 'Фото',
   permPhotoBody:
     'Импортировать видео и сохранять готовые клипы обратно в медиатеку.',
@@ -2176,7 +2176,7 @@ const ru: Translations = {
   effectCinema: 'Кино',
 
   valueTitle: 'Всё готово',
-  valueBody: 'Voxa готова помочь тебе',
+  valueBody: 'LocalSub готова помочь тебе',
   valueItemsTitle: 'Уже настроено:',
   valueGoalFallback: 'Создавать лучшие субтитры',
   valueItem1Label: 'Быстрые субтитры',
@@ -2206,7 +2206,7 @@ const ru: Translations = {
   homeEmptyProjectFileName: 'Пусто',
   homeEmptyTitle: 'Нажми +, чтобы создать.',
   homeEmptyText:
-    'Импортируй локальное видео, и Voxa соберёт таймлайн субтитров офлайн. Можно также потянуть вниз для быстрого создания.',
+    'Импортируй локальное видео, и LocalSub соберёт таймлайн субтитров офлайн. Можно также потянуть вниз для быстрого создания.',
   greetingMorning: 'Доброе утро',
   greetingAfternoon: 'Добрый день',
   greetingEvening: 'Добрый вечер',
@@ -2216,7 +2216,7 @@ const ru: Translations = {
 
   transcribingLanguageTitle: 'Язык транскрибации',
   transcribingLanguageBody:
-    'Выбери язык речи в этом видео, прежде чем Voxa создаст субтитры.',
+    'Выбери язык речи в этом видео, прежде чем LocalSub создаст субтитры.',
   appLanguageLabel: 'Язык приложения',
   appLanguageFallback: 'приложение',
   loadingOnDeviceLanguages: 'Загружаем языки на устройстве...',
@@ -2228,7 +2228,7 @@ const ru: Translations = {
   settingsTitle: 'Настройки',
   settingsAppLanguage: 'Язык приложения',
   settingsAppLanguageDescription:
-    'Выбери язык интерфейса. Эта настройка переопределяет язык телефона для Voxa.',
+    'Выбери язык интерфейса. Эта настройка переопределяет язык телефона для LocalSub.',
   settingsDefaultExport: 'Экспорт по умолчанию',
   settingsUseAppLanguage: 'Использовать язык приложения',
   settingsUseAppLanguageDescription:
@@ -2246,7 +2246,7 @@ const ru: Translations = {
     'Приблизительный тайминг слов после ручной правки субтитров.',
   settingsPrivacy: 'Приватность',
   settingsPrivacyBody:
-    'Voxa выполняет извлечение, распознавание речи, редактирование субтитров и экспорт полностью на устройстве. Удалённые медиа используются только как визуальные заглушки.',
+    'LocalSub выполняет извлечение, распознавание речи, редактирование субтитров и экспорт полностью на устройстве. Удалённые медиа используются только как визуальные заглушки.',
   settingsReplayOnboarding: 'Повторить онбординг',
 
   speechAccessFailedTitle: 'Ошибка доступа к речи',
@@ -2261,15 +2261,15 @@ const ru: Translations = {
   enableSpeechAccess: 'Включи доступ к речи',
   grantSpeechAccess: 'Разреши доступ к речи',
   speechAccessSettingsBody:
-    'Распознавание речи выключено для Voxa. Открой настройки, включи доступ и вернись, чтобы продолжить создание субтитров для этого видео.',
+    'Распознавание речи выключено для LocalSub. Открой настройки, включи доступ и вернись, чтобы продолжить создание субтитров для этого видео.',
   speechAccessGrantBody:
-    'Voxa нужен доступ к распознаванию речи, чтобы создавать субтитры прямо на устройстве после импорта видео.',
+    'LocalSub нужен доступ к распознаванию речи, чтобы создавать субтитры прямо на устройстве после импорта видео.',
   openSettings: 'Открыть настройки',
   checkingAccess: 'Проверяем доступ...',
   continueManually: 'Продолжить вручную',
 
   processingOfflineAi: 'Офлайн AI',
-  processingBody: 'Voxa обрабатывает видео локально на устройстве.',
+  processingBody: 'LocalSub обрабатывает видео локально на устройстве.',
   processingExtractingAudio: 'Извлекаем аудио...',
   processingDetectingLanguage: 'Определяем язык речи...',
   processingSelectedLanguage: 'Транскрибируем на выбранном языке...',
@@ -2289,7 +2289,7 @@ const ru: Translations = {
   retrySubtitles: 'Повторить субтитры',
   retrying: 'Повторяем...',
   retrySubtitlesBody:
-    'Выбери язык речи в этом видео, и Voxa заново создаст субтитры на устройстве.',
+    'Выбери язык речи в этом видео, и LocalSub заново создаст субтитры на устройстве.',
   subtitlesCreatedNeedsReview:
     'Субтитры созданы, но проект всё ещё помечен как требующий проверки.',
   noSubtitlesGenerated:
@@ -2369,7 +2369,7 @@ const ja: Translations = {
 
   goalHeadline: '何を良くしたいですか？',
   goalSubheadline:
-    '今いちばん大事な目的を選んでください。Voxa が初期設定をそれに合わせます。',
+    '今いちばん大事な目的を選んでください。LocalSub が初期設定をそれに合わせます。',
   goalViral: '視聴維持率を上げたい',
   goalAccessible: '内容をもっと伝わりやすくしたい',
   goalBrand: '統一感のある見た目にしたい',
@@ -2401,11 +2401,11 @@ const ja: Translations = {
   socialTestimonial2Name: 'ジョーダン T.',
   socialTestimonial2Tag: 'YouTuber',
   socialTestimonial2Text:
-    '素材をどこかにアップロードせずに字幕を付けたかったんです。Voxaなら全部スマホ内で完結して、仕上がりもきれいです。',
+    '素材をどこかにアップロードせずに字幕を付けたかったんです。LocalSubなら全部スマホ内で完結して、仕上がりもきれいです。',
   socialTestimonial3Name: 'ソフィア R.',
   socialTestimonial3Tag: 'ブランド担当',
   socialTestimonial3Text:
-    '3つのブランド向けにReelsをまとめて作っています。Voxaで字幕作業がかなり速くなり、ジェスチャー編集も自然に使えます。',
+    '3つのブランド向けにReelsをまとめて作っています。LocalSubで字幕作業がかなり速くなり、ジェスチャー編集も自然に使えます。',
 
   tinderHeadline: '当てはまるものはありますか？',
   tinderSubheadline: '当てはまれば右へ。スキップするなら左へ。',
@@ -2415,9 +2415,9 @@ const ja: Translations = {
   tinderRemainingOne: '枚残り',
   tinderSkipRemaining: '残りをスキップ',
 
-  solutionHeadline: 'Voxa ができること',
+  solutionHeadline: 'LocalSub ができること',
   solutionSubheadline:
-    'あなたの回答に合わせて、Voxa が次の作業をサポートします。',
+    'あなたの回答に合わせて、LocalSub が次の作業をサポートします。',
   solutionSpeedPain: '字幕作成に時間がかかる',
   solutionSpeedSolution: '60秒以内に字幕を生成',
   solutionSpeedStat: '端末上の音声認識。アップロードは不要です',
@@ -2442,7 +2442,7 @@ const ja: Translations = {
 
   permHeadline: '最後の設定です',
   permSubheadline:
-    'Voxa は動画と端末の音声認識へのアクセスが必要です。クリップはオフラインのままです。',
+    'LocalSub は動画と端末の音声認識へのアクセスが必要です。クリップはオフラインのままです。',
   permPhotoTitle: '写真',
   permPhotoBody: '動画を読み込み、完成したクリップをカメラロールに保存します。',
   permSpeechTitle: '音声認識',
@@ -2479,7 +2479,7 @@ const ja: Translations = {
   effectCinema: 'シネマ',
 
   valueTitle: '準備できました',
-  valueBody: 'Voxa は次の作業をサポートします',
+  valueBody: 'LocalSub は次の作業をサポートします',
   valueItemsTitle: '設定済みの内容:',
   valueGoalFallback: 'より良い字幕を作る',
   valueItem1Label: 'すばやい字幕生成',
@@ -2509,7 +2509,7 @@ const ja: Translations = {
   homeEmptyProjectFileName: '空',
   homeEmptyTitle: '+ をタップして作成。',
   homeEmptyText:
-    'ローカル動画を読み込むと、Voxa がオフラインで字幕タイムラインを作成します。下に引いてすばやく作成することもできます。',
+    'ローカル動画を読み込むと、LocalSub がオフラインで字幕タイムラインを作成します。下に引いてすばやく作成することもできます。',
   greetingMorning: 'おはようございます',
   greetingAfternoon: 'こんにちは',
   greetingEvening: 'こんばんは',
@@ -2519,7 +2519,7 @@ const ja: Translations = {
 
   transcribingLanguageTitle: '文字起こし言語',
   transcribingLanguageBody:
-    'Voxa が字幕を作成する前に、この動画で話されている言語を選択してください。',
+    'LocalSub が字幕を作成する前に、この動画で話されている言語を選択してください。',
   appLanguageLabel: 'アプリの言語',
   appLanguageFallback: 'アプリ',
   loadingOnDeviceLanguages: 'デバイス上の言語を読み込み中...',
@@ -2531,7 +2531,7 @@ const ja: Translations = {
   settingsTitle: '設定',
   settingsAppLanguage: 'アプリの言語',
   settingsAppLanguageDescription:
-    'インターフェイスの言語を選択します。Voxa では端末の言語より優先されます。',
+    'インターフェイスの言語を選択します。LocalSub では端末の言語より優先されます。',
   settingsDefaultExport: 'デフォルトの書き出し',
   settingsUseAppLanguage: 'アプリの言語を使用',
   settingsUseAppLanguageDescription:
@@ -2549,7 +2549,7 @@ const ja: Translations = {
     '手動編集後の字幕で単語タイミングを近似します。',
   settingsPrivacy: 'プライバシー',
   settingsPrivacyBody:
-    'Voxa は抽出、音声認識、字幕編集、書き出しをすべてデバイス上で行います。リモートメディアは視覚的なプレースホルダーにのみ使用されます。',
+    'LocalSub は抽出、音声認識、字幕編集、書き出しをすべてデバイス上で行います。リモートメディアは視覚的なプレースホルダーにのみ使用されます。',
   settingsReplayOnboarding: 'オンボーディングをもう一度見る',
 
   speechAccessFailedTitle: '音声アクセスに失敗しました',
@@ -2562,15 +2562,15 @@ const ja: Translations = {
   enableSpeechAccess: '音声アクセスを有効化',
   grantSpeechAccess: '音声アクセスを許可',
   speechAccessSettingsBody:
-    'Voxa の音声認識がオフになっています。設定で有効にしてから戻ると、この動画の字幕生成を続行できます。',
+    'LocalSub の音声認識がオフになっています。設定で有効にしてから戻ると、この動画の字幕生成を続行できます。',
   speechAccessGrantBody:
-    'Voxa が動画を読み込んだ後にデバイス上で字幕を生成するには、音声認識の許可が必要です。',
+    'LocalSub が動画を読み込んだ後にデバイス上で字幕を生成するには、音声認識の許可が必要です。',
   openSettings: '設定を開く',
   checkingAccess: 'アクセスを確認中...',
   continueManually: '手動で続行',
 
   processingOfflineAi: 'オフライン AI',
-  processingBody: 'Voxa は動画をデバイス上でローカル処理しています。',
+  processingBody: 'LocalSub は動画をデバイス上でローカル処理しています。',
   processingExtractingAudio: '音声を抽出中...',
   processingDetectingLanguage: '話されている言語を検出中...',
   processingSelectedLanguage: '選択した言語で文字起こし中...',
@@ -2590,7 +2590,7 @@ const ja: Translations = {
   retrySubtitles: '字幕を再試行',
   retrying: '再試行中...',
   retrySubtitlesBody:
-    'この動画で話されている言語を選ぶと、Voxa がデバイス上で字幕を再生成します。',
+    'この動画で話されている言語を選ぶと、LocalSub がデバイス上で字幕を再生成します。',
   subtitlesCreatedNeedsReview:
     '字幕は作成されましたが、このプロジェクトはまだ確認が必要としてマークされています。',
   noSubtitlesGenerated:
@@ -2671,7 +2671,7 @@ const ko: Translations = {
 
   goalHeadline: '무엇을 개선하고 싶나요?',
   goalSubheadline:
-    '지금 가장 중요한 목표를 골라주세요. Voxa가 첫 설정을 그에 맞춰 준비합니다.',
+    '지금 가장 중요한 목표를 골라주세요. LocalSub가 첫 설정을 그에 맞춰 준비합니다.',
   goalViral: '시청자가 더 오래 보게 만들기',
   goalAccessible: '내용을 더 쉽게 따라오게 하기',
   goalBrand: '일관된 비주얼 스타일 만들기',
@@ -2703,11 +2703,11 @@ const ko: Translations = {
   socialTestimonial2Name: '조던 T.',
   socialTestimonial2Tag: '유튜버',
   socialTestimonial2Text:
-    '원본 영상을 다른 서비스에 올리지 않고 자막을 만들고 싶었어요. Voxa는 전부 폰 안에서 처리되고 결과도 깔끔해요.',
+    '원본 영상을 다른 서비스에 올리지 않고 자막을 만들고 싶었어요. LocalSub는 전부 폰 안에서 처리되고 결과도 깔끔해요.',
   socialTestimonial3Name: '소피아 R.',
   socialTestimonial3Tag: '브랜드 매니저',
   socialTestimonial3Text:
-    '세 브랜드의 Reels를 한꺼번에 만들고 있어요. Voxa 덕분에 자막 작업이 훨씬 빨라졌고, 제스처 편집도 자연스러워요.',
+    '세 브랜드의 Reels를 한꺼번에 만들고 있어요. LocalSub 덕분에 자막 작업이 훨씬 빨라졌고, 제스처 편집도 자연스러워요.',
 
   tinderHeadline: '어떤 말이 익숙한가요?',
   tinderSubheadline: '해당되면 오른쪽으로, 넘기려면 왼쪽으로 밀어주세요.',
@@ -2717,9 +2717,9 @@ const ko: Translations = {
   tinderRemainingOne: '장 남음',
   tinderSkipRemaining: '남은 카드 넘기기',
 
-  solutionHeadline: 'Voxa가 이렇게 도와드려요',
+  solutionHeadline: 'LocalSub가 이렇게 도와드려요',
   solutionSubheadline:
-    '선택한 답변을 바탕으로 Voxa가 아래 작업을 대신 덜어줍니다.',
+    '선택한 답변을 바탕으로 LocalSub가 아래 작업을 대신 덜어줍니다.',
   solutionSpeedPain: '자막 작업에 시간이 너무 오래 걸림',
   solutionSpeedSolution: '60초 안에 자막 생성',
   solutionSpeedStat: '업로드 없이 기기에서 음성 인식',
@@ -2744,7 +2744,7 @@ const ko: Translations = {
 
   permHeadline: '마지막 설정 단계입니다',
   permSubheadline:
-    'Voxa는 영상 접근 권한과 기기 음성 인식 권한이 필요합니다. 클립은 오프라인에 남아 있어요.',
+    'LocalSub는 영상 접근 권한과 기기 음성 인식 권한이 필요합니다. 클립은 오프라인에 남아 있어요.',
   permPhotoTitle: '사진',
   permPhotoBody: '영상을 가져오고 완성된 클립을 카메라 롤에 저장합니다.',
   permSpeechTitle: '음성 인식',
@@ -2781,7 +2781,7 @@ const ko: Translations = {
   effectCinema: '시네마',
 
   valueTitle: '준비가 끝났어요',
-  valueBody: 'Voxa가 도와드릴 준비가 됐습니다',
+  valueBody: 'LocalSub가 도와드릴 준비가 됐습니다',
   valueItemsTitle: '준비된 항목:',
   valueGoalFallback: '더 좋은 자막 만들기',
   valueItem1Label: '빠른 자막 생성',
@@ -2810,7 +2810,7 @@ const ko: Translations = {
   homeEmptyProjectFileName: '비어 있음',
   homeEmptyTitle: '+를 탭해 만드세요.',
   homeEmptyText:
-    '로컬 비디오를 가져오면 Voxa가 오프라인으로 자막 타임라인을 만듭니다. 아래로 당겨 빠르게 만들 수도 있습니다.',
+    '로컬 비디오를 가져오면 LocalSub가 오프라인으로 자막 타임라인을 만듭니다. 아래로 당겨 빠르게 만들 수도 있습니다.',
   greetingMorning: '좋은 아침입니다',
   greetingAfternoon: '좋은 오후입니다',
   greetingEvening: '좋은 저녁입니다',
@@ -2820,7 +2820,7 @@ const ko: Translations = {
 
   transcribingLanguageTitle: '전사 언어',
   transcribingLanguageBody:
-    'Voxa가 자막을 만들기 전에 이 비디오에서 말하는 언어를 선택하세요.',
+    'LocalSub가 자막을 만들기 전에 이 비디오에서 말하는 언어를 선택하세요.',
   appLanguageLabel: '앱 언어',
   appLanguageFallback: '앱',
   loadingOnDeviceLanguages: '기기 내 언어를 불러오는 중...',
@@ -2832,7 +2832,7 @@ const ko: Translations = {
   settingsTitle: '설정',
   settingsAppLanguage: '앱 언어',
   settingsAppLanguageDescription:
-    '인터페이스 언어를 선택하세요. Voxa에서는 휴대폰 언어보다 우선 적용됩니다.',
+    '인터페이스 언어를 선택하세요. LocalSub에서는 휴대폰 언어보다 우선 적용됩니다.',
   settingsDefaultExport: '기본 내보내기',
   settingsUseAppLanguage: '앱 언어 사용',
   settingsUseAppLanguageDescription:
@@ -2850,7 +2850,7 @@ const ko: Translations = {
     '수동 자막 편집 후 단어 타이밍을 근사합니다.',
   settingsPrivacy: '개인정보',
   settingsPrivacyBody:
-    'Voxa는 추출, 음성 인식, 자막 편집, 내보내기를 모두 기기에서 처리합니다. 원격 미디어는 시각적 자리표시자로만 사용됩니다.',
+    'LocalSub는 추출, 음성 인식, 자막 편집, 내보내기를 모두 기기에서 처리합니다. 원격 미디어는 시각적 자리표시자로만 사용됩니다.',
   settingsReplayOnboarding: '온보딩 다시 보기',
 
   speechAccessFailedTitle: '음성 접근 실패',
@@ -2863,15 +2863,15 @@ const ko: Translations = {
   enableSpeechAccess: '음성 접근 활성화',
   grantSpeechAccess: '음성 접근 허용',
   speechAccessSettingsBody:
-    'Voxa의 음성 인식이 꺼져 있습니다. 설정에서 활성화한 뒤 돌아와 이 비디오의 자막 생성을 계속하세요.',
+    'LocalSub의 음성 인식이 꺼져 있습니다. 설정에서 활성화한 뒤 돌아와 이 비디오의 자막 생성을 계속하세요.',
   speechAccessGrantBody:
-    'Voxa가 비디오를 가져온 뒤 기기에서 직접 자막을 생성하려면 음성 인식 권한이 필요합니다.',
+    'LocalSub가 비디오를 가져온 뒤 기기에서 직접 자막을 생성하려면 음성 인식 권한이 필요합니다.',
   openSettings: '설정 열기',
   checkingAccess: '접근 확인 중...',
   continueManually: '수동으로 계속',
 
   processingOfflineAi: '오프라인 AI',
-  processingBody: 'Voxa가 비디오를 기기에서 로컬로 처리하고 있습니다.',
+  processingBody: 'LocalSub가 비디오를 기기에서 로컬로 처리하고 있습니다.',
   processingExtractingAudio: '오디오 추출 중...',
   processingDetectingLanguage: '말한 언어 감지 중...',
   processingSelectedLanguage: '선택한 언어로 전사 중...',
@@ -2891,7 +2891,7 @@ const ko: Translations = {
   retrySubtitles: '자막 다시 시도',
   retrying: '다시 시도 중...',
   retrySubtitlesBody:
-    '이 동영상에서 말하는 언어를 선택하면 Voxa가 기기에서 자막을 다시 생성합니다.',
+    '이 동영상에서 말하는 언어를 선택하면 LocalSub가 기기에서 자막을 다시 생성합니다.',
   subtitlesCreatedNeedsReview:
     '자막은 생성되었지만 이 프로젝트는 아직 검토 필요로 표시되어 있습니다.',
   noSubtitlesGenerated:
@@ -2970,7 +2970,7 @@ const zh: Translations = {
   welcomeCta: '开始',
 
   goalHeadline: '你想先解决什么？',
-  goalSubheadline: '选择现在最重要的一项。Voxa 会根据它设置你的初始偏好。',
+  goalSubheadline: '选择现在最重要的一项。LocalSub 会根据它设置你的初始偏好。',
   goalViral: '让观众看得更久',
   goalAccessible: '让内容更容易看懂',
   goalBrand: '建立统一的视觉风格',
@@ -2980,7 +2980,7 @@ const zh: Translations = {
   goalCta: '继续',
 
   painHeadline: '最拖慢你的是什么？',
-  painSubheadline: '选出所有影响你流程的内容。Voxa 会在首次设置里考虑这些。',
+  painSubheadline: '选出所有影响你流程的内容。LocalSub 会在首次设置里考虑这些。',
   painTyping: '手打字幕太耗时间',
   painTools: '在线工具慢，或让人不放心',
   painCost: '订阅费用越攒越多',
@@ -3001,11 +3001,11 @@ const zh: Translations = {
   socialTestimonial2Name: 'Jordan T.',
   socialTestimonial2Tag: 'YouTuber',
   socialTestimonial2Text:
-    '我想做字幕，但不想把原片传到别的服务。Voxa 全部在手机上处理，效果也很干净。',
+    '我想做字幕，但不想把原片传到别的服务。LocalSub 全部在手机上处理，效果也很干净。',
   socialTestimonial3Name: 'Sofia R.',
   socialTestimonial3Tag: '品牌经理',
   socialTestimonial3Text:
-    '我们会批量给三个品牌做 Reels。Voxa 让字幕流程快了很多，手势编辑也很顺手。',
+    '我们会批量给三个品牌做 Reels。LocalSub 让字幕流程快了很多，手势编辑也很顺手。',
 
   tinderHeadline: '哪些情况你也遇到过？',
   tinderSubheadline: '符合就向右滑。想跳过就向左滑。',
@@ -3015,8 +3015,8 @@ const zh: Translations = {
   tinderRemainingOne: '张剩余',
   tinderSkipRemaining: '跳过剩余',
 
-  solutionHeadline: 'Voxa 可以这样帮你',
-  solutionSubheadline: '根据你的选择，Voxa 会帮你处理这些部分。',
+  solutionHeadline: 'LocalSub 可以这样帮你',
+  solutionSubheadline: '根据你的选择，LocalSub 会帮你处理这些部分。',
   solutionSpeedPain: '字幕制作太花时间',
   solutionSpeedSolution: '60 秒内生成字幕',
   solutionSpeedStat: '设备端语音识别，无需上传',
@@ -3039,7 +3039,7 @@ const zh: Translations = {
   prefCta: '继续',
 
   permHeadline: '最后一步设置',
-  permSubheadline: 'Voxa 需要访问你的视频和设备语音识别。你的片段会保持离线。',
+  permSubheadline: 'LocalSub 需要访问你的视频和设备语音识别。你的片段会保持离线。',
   permPhotoTitle: '照片',
   permPhotoBody: '导入视频，并把完成的片段保存回相册。',
   permSpeechTitle: '语音识别',
@@ -3075,7 +3075,7 @@ const zh: Translations = {
   effectCinema: '电影感',
 
   valueTitle: '已准备好',
-  valueBody: 'Voxa 已准备好帮你',
+  valueBody: 'LocalSub 已准备好帮你',
   valueItemsTitle: '已完成设置:',
   valueGoalFallback: '制作更好的字幕',
   valueItem1Label: '快速生成字幕',
@@ -3104,7 +3104,7 @@ const zh: Translations = {
   homeEmptyProjectFileName: '空',
   homeEmptyTitle: '点按 + 创建。',
   homeEmptyText:
-    '导入本地视频，Voxa 会离线生成字幕时间线。你也可以下拉快速创建。',
+    '导入本地视频，LocalSub 会离线生成字幕时间线。你也可以下拉快速创建。',
   greetingMorning: '早上好',
   greetingAfternoon: '下午好',
   greetingEvening: '晚上好',
@@ -3113,7 +3113,7 @@ const zh: Translations = {
   projectSubtitleBlock: '个字幕块',
 
   transcribingLanguageTitle: '转写语言',
-  transcribingLanguageBody: '在 Voxa 创建字幕前，选择此视频中的口语语言。',
+  transcribingLanguageBody: '在 LocalSub 创建字幕前，选择此视频中的口语语言。',
   appLanguageLabel: '应用语言',
   appLanguageFallback: '应用',
   loadingOnDeviceLanguages: '正在加载设备端语言...',
@@ -3125,7 +3125,7 @@ const zh: Translations = {
   settingsTitle: '设置',
   settingsAppLanguage: '应用语言',
   settingsAppLanguageDescription:
-    '选择界面语言。此设置会覆盖 Voxa 中的手机语言。',
+    '选择界面语言。此设置会覆盖 LocalSub 中的手机语言。',
   settingsDefaultExport: '默认导出',
   settingsUseAppLanguage: '使用应用语言',
   settingsUseAppLanguageDescription:
@@ -3140,7 +3140,7 @@ const zh: Translations = {
   settingsHighlightEditedWordsDescription: '手动编辑字幕后近似生成词级时间。',
   settingsPrivacy: '隐私',
   settingsPrivacyBody:
-    'Voxa 将提取、语音识别、字幕编辑和导出全部保留在设备端。远程媒体仅用于视觉占位。',
+    'LocalSub 将提取、语音识别、字幕编辑和导出全部保留在设备端。远程媒体仅用于视觉占位。',
   settingsReplayOnboarding: '重新播放引导',
 
   speechAccessFailedTitle: '语音访问失败',
@@ -3153,15 +3153,15 @@ const zh: Translations = {
   enableSpeechAccess: '启用语音访问',
   grantSpeechAccess: '允许语音访问',
   speechAccessSettingsBody:
-    'Voxa 的语音识别已关闭。打开设置启用后返回，即可继续为此视频生成字幕。',
+    'LocalSub 的语音识别已关闭。打开设置启用后返回，即可继续为此视频生成字幕。',
   speechAccessGrantBody:
-    'Voxa 需要语音识别权限，才能在导入视频后直接在你的设备上生成字幕。',
+    'LocalSub 需要语音识别权限，才能在导入视频后直接在你的设备上生成字幕。',
   openSettings: '打开设置',
   checkingAccess: '正在检查访问权限...',
   continueManually: '手动继续',
 
   processingOfflineAi: '离线 AI',
-  processingBody: 'Voxa 正在设备本地处理你的视频。',
+  processingBody: 'LocalSub 正在设备本地处理你的视频。',
   processingExtractingAudio: '正在提取音频...',
   processingDetectingLanguage: '正在检测口语语言...',
   processingSelectedLanguage: '正在使用所选语言转写...',
@@ -3180,7 +3180,7 @@ const zh: Translations = {
   retry: '重试',
   retrySubtitles: '重试字幕',
   retrying: '正在重试...',
-  retrySubtitlesBody: '选择此视频的口语语言，Voxa 会在设备端重新生成字幕。',
+  retrySubtitlesBody: '选择此视频的口语语言，LocalSub 会在设备端重新生成字幕。',
   subtitlesCreatedNeedsReview: '字幕已创建，但此项目仍标记为需要检查。',
   noSubtitlesGenerated: '没有为此片段生成字幕。请手动选择语言并重试。',
   manualEditingAvailable: '仍可手动编辑字幕。',
@@ -3258,7 +3258,7 @@ const ar: Translations = {
 
   goalHeadline: 'ما الذي تريد تحسينه؟',
   goalSubheadline:
-    'اختر الشيء الأهم الآن. سيضبط Voxa الإعدادات الأولى بناءً عليه.',
+    'اختر الشيء الأهم الآن. سيضبط LocalSub الإعدادات الأولى بناءً عليه.',
   goalViral: 'إبقاء المشاهدين مدة أطول',
   goalAccessible: 'جعل المحتوى أسهل في المتابعة',
   goalBrand: 'بناء أسلوب بصري ثابت',
@@ -3269,7 +3269,7 @@ const ar: Translations = {
 
   painHeadline: 'ما أكثر شيء يبطئك؟',
   painSubheadline:
-    'اختر كل ما يعطل سير عملك. سيأخذ Voxa ذلك في الحسبان عند الإعداد الأول.',
+    'اختر كل ما يعطل سير عملك. سيأخذ LocalSub ذلك في الحسبان عند الإعداد الأول.',
   painTyping: 'كتابة الترجمة يدويًا تأخذ وقتًا طويلًا',
   painTools: 'الأدوات أونلاين بطيئة أو غير مريحة',
   painCost: 'الاشتراكات تتراكم',
@@ -3290,11 +3290,11 @@ const ar: Translations = {
   socialTestimonial2Name: 'جوردان ت.',
   socialTestimonial2Tag: 'يوتيوبر',
   socialTestimonial2Text:
-    'كنت أريد ترجمة بدون رفع الفيديو الخام إلى خدمة أخرى. مع Voxa يبقى كل شيء على الهاتف والنتيجة مرتبة.',
+    'كنت أريد ترجمة بدون رفع الفيديو الخام إلى خدمة أخرى. مع LocalSub يبقى كل شيء على الهاتف والنتيجة مرتبة.',
   socialTestimonial3Name: 'صوفيا ر.',
   socialTestimonial3Tag: 'مديرة علامة تجارية',
   socialTestimonial3Text:
-    'نجهز Reels لثلاث علامات تجارية دفعة واحدة. Voxa سرّع مرحلة الترجمة كثيرًا، والتحرير بالإيماءات يبدو طبيعيًا.',
+    'نجهز Reels لثلاث علامات تجارية دفعة واحدة. LocalSub سرّع مرحلة الترجمة كثيرًا، والتحرير بالإيماءات يبدو طبيعيًا.',
 
   tinderHeadline: 'أي العبارات تشبه تجربتك؟',
   tinderSubheadline: 'اسحب يمينًا إذا كانت مناسبة. ويسارًا للتخطي.',
@@ -3304,9 +3304,9 @@ const ar: Translations = {
   tinderRemainingOne: 'بطاقة متبقية',
   tinderSkipRemaining: 'تخطي الباقي',
 
-  solutionHeadline: 'كيف يساعدك Voxa',
+  solutionHeadline: 'كيف يساعدك LocalSub',
   solutionSubheadline:
-    'بناءً على اختياراتك، هذه هي الأجزاء التي يمكن أن يتولاها Voxa عنك.',
+    'بناءً على اختياراتك، هذه هي الأجزاء التي يمكن أن يتولاها LocalSub عنك.',
   solutionSpeedPain: 'إضافة الترجمة تستغرق وقتًا طويلًا',
   solutionSpeedSolution: 'أنشئ ترجمات في أقل من 60 ثانية',
   solutionSpeedStat: 'تعرف صوتي على الجهاز، بدون رفع',
@@ -3332,7 +3332,7 @@ const ar: Translations = {
 
   permHeadline: 'خطوة إعداد أخيرة',
   permSubheadline:
-    'يحتاج Voxa إلى الوصول إلى الفيديوهات والتعرف الصوتي على الجهاز. مقاطعك تبقى أوفلاين.',
+    'يحتاج LocalSub إلى الوصول إلى الفيديوهات والتعرف الصوتي على الجهاز. مقاطعك تبقى أوفلاين.',
   permPhotoTitle: 'الصور',
   permPhotoBody: 'استيراد الفيديوهات وحفظ المقاطع النهائية في ألبوم الكاميرا.',
   permSpeechTitle: 'التعرف على الكلام',
@@ -3368,7 +3368,7 @@ const ar: Translations = {
   effectCinema: 'سينمائي',
 
   valueTitle: 'كل شيء جاهز',
-  valueBody: 'Voxa جاهز لمساعدتك على',
+  valueBody: 'LocalSub جاهز لمساعدتك على',
   valueItemsTitle: 'تم تجهيز:',
   valueGoalFallback: 'إنشاء ترجمات أفضل',
   valueItem1Label: 'ترجمة سريعة',
@@ -3397,7 +3397,7 @@ const ar: Translations = {
   homeEmptyProjectFileName: 'فارغ',
   homeEmptyTitle: 'اضغط + للإنشاء.',
   homeEmptyText:
-    'استورد فيديو محليًا وسيبني Voxa خط الترجمة الزمني بدون اتصال. يمكنك أيضًا السحب للأسفل للإنشاء السريع.',
+    'استورد فيديو محليًا وسيبني LocalSub خط الترجمة الزمني بدون اتصال. يمكنك أيضًا السحب للأسفل للإنشاء السريع.',
   greetingMorning: 'صباح الخير',
   greetingAfternoon: 'مساء الخير',
   greetingEvening: 'مساء الخير',
@@ -3407,7 +3407,7 @@ const ar: Translations = {
 
   transcribingLanguageTitle: 'لغة التفريغ',
   transcribingLanguageBody:
-    'اختر اللغة المنطوقة في هذا الفيديو قبل أن ينشئ Voxa الترجمة.',
+    'اختر اللغة المنطوقة في هذا الفيديو قبل أن ينشئ LocalSub الترجمة.',
   appLanguageLabel: 'لغة التطبيق',
   appLanguageFallback: 'التطبيق',
   loadingOnDeviceLanguages: 'جارٍ تحميل اللغات على الجهاز...',
@@ -3419,7 +3419,7 @@ const ar: Translations = {
   settingsTitle: 'الإعدادات',
   settingsAppLanguage: 'لغة التطبيق',
   settingsAppLanguageDescription:
-    'اختر لغة الواجهة. يتجاوز هذا لغة الهاتف داخل Voxa.',
+    'اختر لغة الواجهة. يتجاوز هذا لغة الهاتف داخل LocalSub.',
   settingsDefaultExport: 'التصدير الافتراضي',
   settingsUseAppLanguage: 'استخدام لغة التطبيق',
   settingsUseAppLanguageDescription:
@@ -3437,7 +3437,7 @@ const ar: Translations = {
     'تقدير توقيت الكلمات بعد تعديلات الترجمة اليدوية.',
   settingsPrivacy: 'الخصوصية',
   settingsPrivacyBody:
-    'يبقي Voxa الاستخراج والتعرف على الكلام وتحرير الترجمة والتصدير بالكامل على الجهاز. تُستخدم الوسائط البعيدة فقط كعناصر مرئية مؤقتة.',
+    'يبقي LocalSub الاستخراج والتعرف على الكلام وتحرير الترجمة والتصدير بالكامل على الجهاز. تُستخدم الوسائط البعيدة فقط كعناصر مرئية مؤقتة.',
   settingsReplayOnboarding: 'إعادة عرض التعريف',
 
   speechAccessFailedTitle: 'فشل الوصول إلى الكلام',
@@ -3450,15 +3450,15 @@ const ar: Translations = {
   enableSpeechAccess: 'تفعيل الوصول إلى الكلام',
   grantSpeechAccess: 'السماح بالوصول إلى الكلام',
   speechAccessSettingsBody:
-    'التعرف على الكلام متوقف لـ Voxa. افتح الإعدادات لتفعيله، ثم ارجع لمتابعة إنشاء الترجمة لهذا الفيديو.',
+    'التعرف على الكلام متوقف لـ LocalSub. افتح الإعدادات لتفعيله، ثم ارجع لمتابعة إنشاء الترجمة لهذا الفيديو.',
   speechAccessGrantBody:
-    'يحتاج Voxa إلى إذن التعرف على الكلام لإنشاء الترجمة مباشرة على جهازك بعد استيراد فيديو.',
+    'يحتاج LocalSub إلى إذن التعرف على الكلام لإنشاء الترجمة مباشرة على جهازك بعد استيراد فيديو.',
   openSettings: 'فتح الإعدادات',
   checkingAccess: 'جارٍ التحقق من الوصول...',
   continueManually: 'المتابعة يدويًا',
 
   processingOfflineAi: 'ذكاء اصطناعي دون اتصال',
-  processingBody: 'يعالج Voxa الفيديو محليًا على الجهاز.',
+  processingBody: 'يعالج LocalSub الفيديو محليًا على الجهاز.',
   processingExtractingAudio: 'جارٍ استخراج الصوت...',
   processingDetectingLanguage: 'جارٍ اكتشاف اللغة المنطوقة...',
   processingSelectedLanguage: 'جارٍ التفريغ باللغة المحددة...',
@@ -3478,7 +3478,7 @@ const ar: Translations = {
   retrySubtitles: 'إعادة محاولة الترجمة',
   retrying: 'جارٍ إعادة المحاولة...',
   retrySubtitlesBody:
-    'اختر اللغة المنطوقة في هذا الفيديو، وسيعيد Voxa إنشاء الترجمة على الجهاز.',
+    'اختر اللغة المنطوقة في هذا الفيديو، وسيعيد LocalSub إنشاء الترجمة على الجهاز.',
   subtitlesCreatedNeedsReview:
     'تم إنشاء الترجمة، لكن هذا المشروع ما زال محددًا للمراجعة.',
   noSubtitlesGenerated:
@@ -3564,7 +3564,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'Scrub, pinch, trim, and snap subtitles with your hands.',
     carouselGestureDescription:
-      'Voxa keeps controls out of the way. Pull to create, drag blocks to retime, and swipe through edits without breaking focus.',
+      'LocalSub keeps controls out of the way. Pull to create, drag blocks to retime, and swipe through edits without breaking focus.',
     carouselReadyEyebrow: 'Ready to Process',
     carouselReadyTitle:
       'Grant library and speech access to unlock local subtitle generation.',
@@ -3634,13 +3634,13 @@ const translationSupplements: Record<
     settingsNotifications: 'Notificaciones',
     settingsEnableNotifications: 'Activar recordatorios suaves',
     settingsNotificationsDescription:
-      'Solo enviaremos algunos recordatorios discretos cuando lleves un tiempo sin abrir Voxa.',
+      'Solo enviaremos algunos recordatorios discretos cuando lleves un tiempo sin abrir LocalSub.',
     notificationReminder1Title: 'Aquí estamos cuando quieras',
     notificationReminder1Body:
       'Hace tiempo que no te vemos. ¿Quieres transcribir algo importante?',
     notificationReminder2Title: '¿Es hora de hacer un poco de magia?',
     notificationReminder2Body:
-      'Elige un video y deja que Voxa dé vida a las palabras.',
+      'Elige un video y deja que LocalSub dé vida a las palabras.',
     notificationReminder3Title: 'Tu próxima edición puede ser sencilla',
     notificationReminder3Body:
       'Añade un video cuando llegue la inspiración. Nosotros nos encargamos de la transcripción.',
@@ -3653,7 +3653,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'Desplaza, pellizca, recorta y ajusta subtítulos con las manos.',
     carouselGestureDescription:
-      'Voxa mantiene los controles fuera del camino. Tira para crear, arrastra bloques para ajustar el tiempo y desliza entre ediciones sin perder la concentración.',
+      'LocalSub mantiene los controles fuera del camino. Tira para crear, arrastra bloques para ajustar el tiempo y desliza entre ediciones sin perder la concentración.',
     carouselReadyEyebrow: 'Listo para procesar',
     carouselReadyTitle:
       'Permite el acceso a la biblioteca y al reconocimiento de voz para generar subtítulos localmente.',
@@ -3723,13 +3723,13 @@ const translationSupplements: Record<
     settingsNotifications: 'Notificações',
     settingsEnableNotifications: 'Ativar lembretes sutis',
     settingsNotificationsDescription:
-      'Enviaremos apenas alguns lembretes discretos quando você não abrir o Voxa por algum tempo.',
+      'Enviaremos apenas alguns lembretes discretos quando você não abrir o LocalSub por algum tempo.',
     notificationReminder1Title: 'Quando você quiser',
     notificationReminder1Body:
       'Faz um tempo que não vemos você. Quer transcrever algo importante?',
     notificationReminder2Title: 'Hora de fazer um pouco de mágica?',
     notificationReminder2Body:
-      'Escolha um vídeo e deixe o Voxa dar vida às palavras.',
+      'Escolha um vídeo e deixe o LocalSub dar vida às palavras.',
     notificationReminder3Title: 'Sua próxima edição pode ser fácil',
     notificationReminder3Body:
       'Adicione um vídeo quando a inspiração chegar. Nós cuidamos da transcrição.',
@@ -3742,7 +3742,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'Deslize, aproxime, corte e ajuste legendas com as mãos.',
     carouselGestureDescription:
-      'O Voxa mantém os controles fora do caminho. Puxe para criar, arraste blocos para ajustar o tempo e deslize pelas edições sem perder o foco.',
+      'O LocalSub mantém os controles fora do caminho. Puxe para criar, arraste blocos para ajustar o tempo e deslize pelas edições sem perder o foco.',
     carouselReadyEyebrow: 'Pronto para processar',
     carouselReadyTitle:
       'Permita acesso à biblioteca e ao reconhecimento de fala para gerar legendas localmente.',
@@ -3812,13 +3812,13 @@ const translationSupplements: Record<
     settingsNotifications: 'Notifications',
     settingsEnableNotifications: 'Activer les rappels discrets',
     settingsNotificationsDescription:
-      'Nous enverrons seulement quelques rappels discrets si vous n’avez pas ouvert Voxa depuis un moment.',
+      'Nous enverrons seulement quelques rappels discrets si vous n’avez pas ouvert LocalSub depuis un moment.',
     notificationReminder1Title: 'Quand vous voulez',
     notificationReminder1Body:
       'Cela fait un moment. Vous voulez transcrire quelque chose d’important ?',
     notificationReminder2Title: 'Un peu de magie ?',
     notificationReminder2Body:
-      'Choisissez une vidéo et laissez Voxa donner vie aux mots.',
+      'Choisissez une vidéo et laissez LocalSub donner vie aux mots.',
     notificationReminder3Title: 'Votre prochain montage peut être simple',
     notificationReminder3Body:
       'Ajoutez une vidéo lorsque l’inspiration vient. Nous nous occupons de la transcription.',
@@ -3831,7 +3831,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'Parcourez, pincez, coupez et ajustez les sous-titres du bout des doigts.',
     carouselGestureDescription:
-      'Voxa garde les commandes à l’écart. Tirez pour créer, faites glisser les blocs pour ajuster le minutage et parcourez les modifications sans perdre le fil.',
+      'LocalSub garde les commandes à l’écart. Tirez pour créer, faites glisser les blocs pour ajuster le minutage et parcourez les modifications sans perdre le fil.',
     carouselReadyEyebrow: 'Prêt à traiter',
     carouselReadyTitle:
       'Autorisez l’accès à la photothèque et à la reconnaissance vocale pour générer les sous-titres localement.',
@@ -3901,13 +3901,13 @@ const translationSupplements: Record<
     settingsNotifications: 'Mitteilungen',
     settingsEnableNotifications: 'Sanfte Erinnerungen aktivieren',
     settingsNotificationsDescription:
-      'Wir senden nur einige ruhige Erinnerungen, wenn du Voxa eine Weile nicht geöffnet hast.',
+      'Wir senden nur einige ruhige Erinnerungen, wenn du LocalSub eine Weile nicht geöffnet hast.',
     notificationReminder1Title: 'Wenn du bereit bist',
     notificationReminder1Body:
       'Wir haben dich eine Weile nicht gesehen. Möchtest du etwas Wichtiges transkribieren?',
     notificationReminder2Title: 'Zeit für ein wenig Magie?',
     notificationReminder2Body:
-      'Wähle ein Video und lass Voxa die Wörter zum Leben erwecken.',
+      'Wähle ein Video und lass LocalSub die Wörter zum Leben erwecken.',
     notificationReminder3Title: 'Dein nächster Schnitt kann einfach sein',
     notificationReminder3Body:
       'Füge ein Video hinzu, wenn dich die Inspiration packt. Wir kümmern uns um die Transkription.',
@@ -3920,7 +3920,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'Spule, zoome, kürze und richte Untertitel mit deinen Händen aus.',
     carouselGestureDescription:
-      'Voxa hält die Bedienelemente aus dem Weg. Ziehe zum Erstellen, verschiebe Blöcke für das Timing und wische durch Änderungen, ohne den Fokus zu verlieren.',
+      'LocalSub hält die Bedienelemente aus dem Weg. Ziehe zum Erstellen, verschiebe Blöcke für das Timing und wische durch Änderungen, ohne den Fokus zu verlieren.',
     carouselReadyEyebrow: 'Bereit zur Verarbeitung',
     carouselReadyTitle:
       'Erlaube den Zugriff auf Mediathek und Spracherkennung, um Untertitel lokal zu erzeugen.',
@@ -3990,13 +3990,13 @@ const translationSupplements: Record<
     settingsNotifications: 'Notifiche',
     settingsEnableNotifications: 'Attiva promemoria discreti',
     settingsNotificationsDescription:
-      'Invieremo solo pochi promemoria discreti se non apri Voxa da un po’ di tempo.',
+      'Invieremo solo pochi promemoria discreti se non apri LocalSub da un po’ di tempo.',
     notificationReminder1Title: 'Quando vuoi tu',
     notificationReminder1Body:
       'Non ci vediamo da un po’. Vuoi trascrivere qualcosa di importante?',
     notificationReminder2Title: 'È il momento di un po’ di magia?',
     notificationReminder2Body:
-      'Scegli un video e lascia che Voxa dia vita alle parole.',
+      'Scegli un video e lascia che LocalSub dia vita alle parole.',
     notificationReminder3Title: 'La tua prossima modifica può essere facile',
     notificationReminder3Body:
       'Aggiungi un video quando arriva l’ispirazione. Alla trascrizione pensiamo noi.',
@@ -4009,7 +4009,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'Scorri, pizzica, taglia e allinea i sottotitoli con le mani.',
     carouselGestureDescription:
-      'Voxa mantiene i controlli fuori dai piedi. Trascina per creare, sposta i blocchi per regolare i tempi e scorri tra le modifiche senza perdere la concentrazione.',
+      'LocalSub mantiene i controlli fuori dai piedi. Trascina per creare, sposta i blocchi per regolare i tempi e scorri tra le modifiche senza perdere la concentrazione.',
     carouselReadyEyebrow: 'Pronto per elaborare',
     carouselReadyTitle:
       'Consenti l’accesso alla libreria e al riconoscimento vocale per generare sottotitoli in locale.',
@@ -4079,13 +4079,13 @@ const translationSupplements: Record<
     settingsNotifications: 'Уведомления',
     settingsEnableNotifications: 'Включить ненавязчивые напоминания',
     settingsNotificationsDescription:
-      'Мы отправим лишь несколько тихих напоминаний, если вы давно не открывали Voxa.',
+      'Мы отправим лишь несколько тихих напоминаний, если вы давно не открывали LocalSub.',
     notificationReminder1Title: 'Когда будете готовы',
     notificationReminder1Body:
       'Давно вас не видели. Хотите расшифровать что-нибудь важное?',
     notificationReminder2Title: 'Время для небольшого волшебства?',
     notificationReminder2Body:
-      'Выберите видео, и Voxa поможет словам ожить.',
+      'Выберите видео, и LocalSub поможет словам ожить.',
     notificationReminder3Title: 'Следующий монтаж может быть простым',
     notificationReminder3Body:
       'Добавьте видео, когда придёт вдохновение. Мы займёмся расшифровкой.',
@@ -4098,7 +4098,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'Прокручивайте, масштабируйте, обрезайте и выравнивайте субтитры руками.',
     carouselGestureDescription:
-      'Voxa не мешает работе лишними элементами. Потяните, чтобы создать, перетаскивайте блоки для настройки времени и листайте правки, не теряя концентрации.',
+      'LocalSub не мешает работе лишними элементами. Потяните, чтобы создать, перетаскивайте блоки для настройки времени и листайте правки, не теряя концентрации.',
     carouselReadyEyebrow: 'Готово к обработке',
     carouselReadyTitle:
       'Разрешите доступ к медиатеке и распознаванию речи, чтобы создавать субтитры локально.',
@@ -4168,12 +4168,12 @@ const translationSupplements: Record<
     settingsNotifications: '通知',
     settingsEnableNotifications: '控えめなリマインダーを有効にする',
     settingsNotificationsDescription:
-      'Voxaをしばらく開いていないときだけ、控えめなリマインダーを数回送ります。',
+      'LocalSubをしばらく開いていないときだけ、控えめなリマインダーを数回送ります。',
     notificationReminder1Title: '準備ができたらいつでも',
     notificationReminder1Body:
       'しばらくお会いしていません。大切な内容を文字起こししませんか？',
     notificationReminder2Title: '少し魔法をかけてみませんか？',
-    notificationReminder2Body: '動画を選んで、Voxaで言葉に命を吹き込みましょう。',
+    notificationReminder2Body: '動画を選んで、LocalSubで言葉に命を吹き込みましょう。',
     notificationReminder3Title: '次の編集はもっと簡単に',
     notificationReminder3Body:
       'ひらめいたら動画を追加してください。文字起こしはお任せください。',
@@ -4186,7 +4186,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'スクラブ、ピンチ、トリミング、字幕の位置合わせを指先で行えます。',
     carouselGestureDescription:
-      'Voxaは操作の邪魔をしません。引いて作成し、ブロックをドラッグしてタイミングを調整し、集中を切らさず編集を進められます。',
+      'LocalSubは操作の邪魔をしません。引いて作成し、ブロックをドラッグしてタイミングを調整し、集中を切らさず編集を進められます。',
     carouselReadyEyebrow: '処理の準備完了',
     carouselReadyTitle:
       'ライブラリと音声認識へのアクセスを許可して、端末上で字幕を生成しましょう。',
@@ -4256,12 +4256,12 @@ const translationSupplements: Record<
     settingsNotifications: '알림',
     settingsEnableNotifications: '조용한 알림 켜기',
     settingsNotificationsDescription:
-      'Voxa를 한동안 열지 않았을 때만 몇 번의 조용한 알림을 보내드립니다.',
+      'LocalSub를 한동안 열지 않았을 때만 몇 번의 조용한 알림을 보내드립니다.',
     notificationReminder1Title: '준비되면 언제든지',
     notificationReminder1Body:
       '오랜만이에요. 중요한 내용을 텍스트로 옮겨 볼까요?',
     notificationReminder2Title: '작은 마법을 시작할까요?',
-    notificationReminder2Body: '동영상을 선택하고 Voxa가 말에 생명을 불어넣게 하세요.',
+    notificationReminder2Body: '동영상을 선택하고 LocalSub가 말에 생명을 불어넣게 하세요.',
     notificationReminder3Title: '다음 편집은 더 쉬울 수 있어요',
     notificationReminder3Body:
       '영감이 떠오르면 동영상을 추가하세요. 텍스트 변환은 저희가 맡겠습니다.',
@@ -4274,7 +4274,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       '손으로 탐색하고 확대하고 자르고 자막을 맞추세요.',
     carouselGestureDescription:
-      'Voxa는 컨트롤이 방해되지 않도록 합니다. 당겨서 만들고, 블록을 끌어 시간을 조정하고, 집중을 잃지 않고 편집을 넘겨보세요.',
+      'LocalSub는 컨트롤이 방해되지 않도록 합니다. 당겨서 만들고, 블록을 끌어 시간을 조정하고, 집중을 잃지 않고 편집을 넘겨보세요.',
     carouselReadyEyebrow: '처리 준비 완료',
     carouselReadyTitle:
       '라이브러리와 음성 인식 접근을 허용해 기기에서 자막을 생성하세요.',
@@ -4341,11 +4341,11 @@ const translationSupplements: Record<
     settingsNotifications: '通知',
     settingsEnableNotifications: '启用温和提醒',
     settingsNotificationsDescription:
-      '只有当你一段时间没有打开 Voxa 时，我们才会发送少量安静的提醒。',
+      '只有当你一段时间没有打开 LocalSub 时，我们才会发送少量安静的提醒。',
     notificationReminder1Title: '随时等你回来',
     notificationReminder1Body: '好久不见。要转写一些重要内容吗？',
     notificationReminder2Title: '来一点小魔法？',
-    notificationReminder2Body: '选择一个视频，让 Voxa 赋予文字生命。',
+    notificationReminder2Body: '选择一个视频，让 LocalSub 赋予文字生命。',
     notificationReminder3Title: '下一次编辑可以很轻松',
     notificationReminder3Body: '灵感来临时放入视频，转写交给我们。',
     splashCaption: '离线制作电影感字幕',
@@ -4356,7 +4356,7 @@ const translationSupplements: Record<
     carouselGestureEyebrow: '手势优先编辑',
     carouselGestureTitle: '用手指浏览、缩放、修剪并对齐字幕。',
     carouselGestureDescription:
-      'Voxa 让控件保持简洁。下拉即可创建，拖动字幕块调整时间，并可顺畅滑动完成编辑。',
+      'LocalSub 让控件保持简洁。下拉即可创建，拖动字幕块调整时间，并可顺畅滑动完成编辑。',
     carouselReadyEyebrow: '准备处理',
     carouselReadyTitle: '允许访问媒体库和语音识别，即可在本地生成字幕。',
     carouselReadyDescription:
@@ -4425,13 +4425,13 @@ const translationSupplements: Record<
     settingsNotifications: 'الإشعارات',
     settingsEnableNotifications: 'تفعيل التذكيرات الهادئة',
     settingsNotificationsDescription:
-      'سنرسل بضعة تذكيرات هادئة فقط إذا لم تفتح Voxa منذ فترة.',
+      'سنرسل بضعة تذكيرات هادئة فقط إذا لم تفتح LocalSub منذ فترة.',
     notificationReminder1Title: 'عندما تكون مستعدًا',
     notificationReminder1Body:
       'لم نرك منذ فترة. هل تريد نسخ شيء مهم؟',
     notificationReminder2Title: 'هل حان وقت بعض السحر؟',
     notificationReminder2Body:
-      'اختر فيديو ودع Voxa يبعث الحياة في الكلمات.',
+      'اختر فيديو ودع LocalSub يبعث الحياة في الكلمات.',
     notificationReminder3Title: 'يمكن أن يكون تعديلك التالي سهلًا',
     notificationReminder3Body:
       'أضف فيديو عندما يأتيك الإلهام. سنتولى نحن عملية النسخ.',
@@ -4444,7 +4444,7 @@ const translationSupplements: Record<
     carouselGestureTitle:
       'تنقّل وقرّب واقصص واضبط الترجمة بيديك.',
     carouselGestureDescription:
-      'يبقي Voxa عناصر التحكم بعيدًا عن طريقك. اسحب للإنشاء، وحرّك الكتل لضبط التوقيت، وتنقّل بين التعديلات دون فقدان التركيز.',
+      'يبقي LocalSub عناصر التحكم بعيدًا عن طريقك. اسحب للإنشاء، وحرّك الكتل لضبط التوقيت، وتنقّل بين التعديلات دون فقدان التركيز.',
     carouselReadyEyebrow: 'جاهز للمعالجة',
     carouselReadyTitle:
       'اسمح بالوصول إلى المكتبة والتعرف على الكلام لإنشاء الترجمة محليًا.',

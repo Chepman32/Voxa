@@ -1,3 +1,0 @@
-"NSPhotoLibraryAddUsageDescription" = "O Voxa salva os vídeos exportados diretamente na sua fototeca.";
-"NSPhotoLibraryUsageDescription" = "O Voxa precisa acessar seus vídeos para criar legendas localmente no seu dispositivo.";
-"NSSpeechRecognitionUsageDescription" = "O Voxa usa o reconhecimento de fala do dispositivo para gerar legendas offline sem enviar sua mídia.";

@@ -1,5 +1,5 @@
 # Software Design Document (SDD)
-**Project Name:** Voxa
+**Project Name:** LocalSub
 **Platform:** iOS (React Native)
 **Core Functionality:** Offline AI-powered Subtitle Creator (Video File Input Only)
 
@@ -8,10 +8,10 @@
 ## 1. Introduction
 
 ### 1.1 Purpose
-This document provides a comprehensive architectural and design specification for **Voxa**, a production-ready iOS application built with React Native. Voxa allows users to import local video files, automatically generate subtitles using native on-device iOS speech recognition, and export the subtitled videos. The app is strictly offline, ensuring absolute privacy and zero server-side processing dependencies.
+This document provides a comprehensive architectural and design specification for **LocalSub**, a production-ready iOS application built with React Native. LocalSub allows users to import local video files, automatically generate subtitles using native on-device iOS speech recognition, and export the subtitled videos. The app is strictly offline, ensuring absolute privacy and zero server-side processing dependencies.
 
 ### 1.2 Design Philosophy
-Voxa is engineered with a strict "Gesture-First" UI/UX paradigm. Inspired by fluid interfaces like Tinkoff Bank and Facebook's mobile gestures, the app minimizes static buttons in favor of intuitive swipes, pinches, and long-presses. Visually, Voxa utilizes a dark, glassmorphic aesthetic powered by `react-native-reanimated` and `@shopify/react-native-skia` for cinematic, 60fps/120fps physics-based animations. 
+LocalSub is engineered with a strict "Gesture-First" UI/UX paradigm. Inspired by fluid interfaces like Tinkoff Bank and Facebook's mobile gestures, the app minimizes static buttons in favor of intuitive swipes, pinches, and long-presses. Visually, LocalSub utilizes a dark, glassmorphic aesthetic powered by `react-native-reanimated` and `@shopify/react-native-skia` for cinematic, 60fps/120fps physics-based animations. 
 
 *Constraint Checklist:* No emojis are used in the UI or codebase. All iconography utilizes vector icons (e.g., Feather, Ionicons). Placeholder/thematic imagery is sourced dynamically from high-quality remote repositories (e.g., Pexels, Unsplash).
 
@@ -31,7 +31,7 @@ Voxa is engineered with a strict "Gesture-First" UI/UX paradigm. Inspired by flu
 *   **Vector Icons:** `react-native-vector-icons` (Feather/Ionicons).
 
 ### 2.2 Native iOS Integration (The "Brain")
-Since Voxa operates 100% offline and processes only pre-recorded video files, the native iOS bridge is paramount.
+Since LocalSub operates 100% offline and processes only pre-recorded video files, the native iOS bridge is paramount.
 *   **Audio Extraction Module:** A custom Swift module utilizing `AVAssetExportSession` to extract an audio track (`.m4a` or `.caf`) from the selected video file locally.
 *   **Speech Recognition Module:** A custom Swift module utilizing `SFSpeechRecognizer` with `requiresOnDeviceRecognition = true`. 
     *   It processes the extracted audio file via `SFSpeechURLRecognitionRequest`.
@@ -62,9 +62,9 @@ Since Voxa operates 100% offline and processes only pre-recorded video files, th
 
 ### 4.1 Splash Screen (The "Skia Shatter" Entry)
 **Visuals & Animations:**
-Upon launching Voxa, the user sees a pitch-black screen. 
-1.  **The Twist:** The word "VOXA" appears in the center. Using `@shopify/react-native-skia` text paths and `reanimated`, the text is initially distorted---a tangled, rapidly twisting ribbon of Cyan and Violet gradients.
-2.  **The Snap:** Over 800ms, the ribbons violently untangle and snap into a perfectly crisp, solid white "VOXA" logo. A heavy haptic thud triggers.
+Upon launching LocalSub, the user sees a pitch-black screen. 
+1.  **The Twist:** The word "LOCALSUB" appears in the center. Using `@shopify/react-native-skia` text paths and `reanimated`, the text is initially distorted---a tangled, rapidly twisting ribbon of Cyan and Violet gradients.
+2.  **The Snap:** Over 800ms, the ribbons violently untangle and snap into a perfectly crisp, solid white "LOCALSUB" logo. A heavy haptic thud triggers.
 3.  **The Physics Breakdown:** After a brief pause, gravity inverts. The solid text shatters into hundreds of tiny Skia polygonal particles. Using a customized physics worklet (calculating velocity and friction on the UI thread), the particles fall toward the bottom of the screen, bouncing off an invisible floor and fading out.
 4.  **Transition:** As the particles fade, the Home Screen scales up from 0.9 to 1.0 with a smooth opacity fade-in.
 
@@ -133,7 +133,7 @@ Upon launching Voxa, the user sees a pitch-black screen.
 
 ## 5. Animation & Interaction Dictionary
 
-To achieve the "gorgeous" requirement, Voxa relies heavily on specific animation curves and techniques:
+To achieve the "gorgeous" requirement, LocalSub relies heavily on specific animation curves and techniques:
 
 1.  **Spring Physics over Timing:** Almost zero `withTiming` animations are used for layout changes. Everything utilizes `withSpring`. Default configuration: `mass: 1, damping: 15, stiffness: 120`. This gives the UI a heavy, physical, snapping feel similar to Tinkoff.
 2.  **Skia Shaders:** The active subtitle block in the timeline uses a custom Skia fragment shader to render a subtle, moving gradient border, making it look "alive" compared to inactive blocks.

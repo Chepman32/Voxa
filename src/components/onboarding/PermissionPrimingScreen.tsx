@@ -9,7 +9,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
-import { requestAuthorizations } from '../../services/native-voxa';
+import { requestAuthorizations } from '../../services/native-localsub';
 import { palette } from '../../theme/tokens';
 import { GlassPanel } from '../common/GlassPanel';
 import { OnboardingHeader } from './OnboardingHeader';

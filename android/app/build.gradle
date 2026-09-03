@@ -83,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.voxa"
+    namespace "com.localsub"
     defaultConfig {
-        applicationId "com.voxa"
+        applicationId "com.localsub"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -117,6 +117,9 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation("androidx.work:work-runtime:2.11.2")
+    implementation("androidx.media3:media3-common:1.8.0")
+    implementation("androidx.media3:media3-effect:1.8.0")
+    implementation("androidx.media3:media3-transformer:1.8.0")
 
     testImplementation("junit:junit:4.13.2")
 
