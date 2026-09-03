@@ -21,12 +21,15 @@ import { useIosScreenTransition } from '../common/useIosScreenTransition';
 interface SettingsScreenProps {
   preferredExportResolution: ExportResolution;
   highlightEditedWords: boolean;
+  notificationsAuthorized: boolean;
+  notificationPermissionPending: boolean;
   rememberLastTranscriptionLanguage: boolean;
   lastTranscriptionLanguageLabel?: string;
   uiLocale: SupportedLocale;
   onClose: () => void;
   onResolutionChange: (resolution: ExportResolution) => void;
   onHighlightEditedWordsChange: (value: boolean) => void;
+  onRequestNotificationPermission: () => void;
   onRememberLastTranscriptionLanguageChange: (value: boolean) => void;
   onUiLocaleChange: (locale: SupportedLocale) => void;
   onResetOnboarding: () => void;
@@ -35,12 +38,15 @@ interface SettingsScreenProps {
 export function SettingsScreen({
   preferredExportResolution,
   highlightEditedWords,
+  notificationsAuthorized,
+  notificationPermissionPending,
   rememberLastTranscriptionLanguage,
   lastTranscriptionLanguageLabel,
   uiLocale,
   onClose,
   onResolutionChange,
   onHighlightEditedWordsChange,
+  onRequestNotificationPermission,
   onRememberLastTranscriptionLanguageChange,
   onUiLocaleChange,
   onResetOnboarding,
@@ -189,6 +195,40 @@ export function SettingsScreen({
             />
           </View>
         </View>
+
+        {!notificationsAuthorized ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>
+              {t('settingsNotifications')}
+            </Text>
+            <View style={styles.toggleCard}>
+              <View style={styles.toggleCopy}>
+                <Text style={styles.toggleLabel}>
+                  {t('settingsEnableNotifications')}
+                </Text>
+                <Text style={styles.toggleHint}>
+                  {t('settingsNotificationsDescription')}
+                </Text>
+              </View>
+              <Switch
+                accessibilityLabel={t('settingsEnableNotifications')}
+                disabled={notificationPermissionPending}
+                ios_backgroundColor="rgba(255, 255, 255, 0.12)"
+                onValueChange={value => {
+                  if (value) {
+                    onRequestNotificationPermission();
+                  }
+                }}
+                thumbColor={palette.textPrimary}
+                trackColor={{
+                  false: 'rgba(255, 255, 255, 0.16)',
+                  true: 'rgba(0, 240, 255, 0.42)',
+                }}
+                value={notificationPermissionPending}
+              />
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{t('settingsPrivacy')}</Text>

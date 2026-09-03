@@ -1,5 +1,4 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
 jest.mock('@react-native-menu/menu', () => ({
@@ -31,6 +30,11 @@ jest.mock('../src/components/common/AtmosphereCanvas', () => ({
 jest.mock('../src/components/home/ProjectCard', () => ({
   ProjectCard: (props: Record<string, unknown>) =>
     require('react').createElement('ProjectCardMock', props),
+}));
+
+jest.mock('../src/components/common/TextPromptModal', () => ({
+  TextPromptModal: (props: Record<string, unknown>) =>
+    require('react').createElement('TextPromptModalMock', props),
 }));
 
 jest.mock('../src/i18n/useTranslation', () => ({
@@ -68,7 +72,10 @@ const folder: ProjectFolder = {
   updatedAt: 1,
 };
 
-function renderHome(folders: ProjectFolder[]) {
+function renderHome(
+  folders: ProjectFolder[],
+  onCreateFolder = jest.fn(),
+) {
   let renderer: ReactTestRenderer.ReactTestRenderer;
 
   ReactTestRenderer.act(() => {
@@ -76,7 +83,7 @@ function renderHome(folders: ProjectFolder[]) {
       <HomeScreen
         folders={folders}
         onCleanTrash={jest.fn()}
-        onCreateFolder={jest.fn()}
+        onCreateFolder={onCreateFolder}
         onCreateProject={jest.fn()}
         onDeleteProject={jest.fn()}
         onDeleteProjectPermanently={jest.fn()}
@@ -106,35 +113,49 @@ describe('HomeScreen project folder actions', () => {
     jest.restoreAllMocks();
   });
 
-  it('shows an enabled create-folder action when no folders exist', () => {
+  it('nests an enabled create-folder action under move-to-folder when no folders exist', () => {
     const card = findProjectCard(renderHome([]));
 
     expect(card.props.contextMenuActions).toContainEqual(
       expect.objectContaining({
-        id: 'create-folder',
-        title: 'folderCreate',
+        id: 'move-to-folder',
+        title: 'projectMoveToFolder',
+        subactions: [
+          expect.objectContaining({
+            id: 'create-folder',
+            title: 'folderCreate',
+          }),
+        ],
       }),
-    );
-    expect(card.props.contextMenuActions).not.toContainEqual(
-      expect.objectContaining({ id: 'move-to-folder' }),
     );
   });
 
-  it('opens the existing create-folder prompt from the project menu', () => {
-    const prompt = jest.spyOn(Alert, 'prompt').mockImplementation(jest.fn());
-    const card = findProjectCard(renderHome([]));
+  it('opens the friendly create-folder modal from the project menu', () => {
+    const onCreateFolder = jest.fn();
+    const renderer = renderHome([], onCreateFolder);
+    const card = findProjectCard(renderer);
 
     ReactTestRenderer.act(() => {
       card.props.onContextMenuAction('create-folder', project.id);
     });
 
-    expect(prompt).toHaveBeenCalledWith(
-      'folderCreate',
-      'folderCreateMessage',
-      expect.any(Array),
-      'plain-text',
-      '',
-    );
+    const modal = renderer.root.findByType('TextPromptModalMock' as never);
+
+    expect(modal.props).toMatchObject({
+      cancelLabel: 'cancel',
+      confirmLabel: 'folderCreateAction',
+      icon: 'folder-plus',
+      message: 'folderCreateMessage',
+      placeholder: 'folderNamePlaceholder',
+      title: 'folderCreate',
+      visible: true,
+    });
+
+    ReactTestRenderer.act(() => {
+      modal.props.onSubmit('Social clips');
+    });
+
+    expect(onCreateFolder).toHaveBeenCalledWith('Social clips');
   });
 
   it('keeps the move-to-folder submenu when a folder exists', () => {
@@ -144,6 +165,10 @@ describe('HomeScreen project folder actions', () => {
       expect.objectContaining({
         id: 'move-to-folder',
         subactions: [
+          expect.objectContaining({
+            id: 'create-folder',
+            title: 'folderCreate',
+          }),
           expect.objectContaining({
             id: 'move-to-folder:folder-1',
             title: 'Social',

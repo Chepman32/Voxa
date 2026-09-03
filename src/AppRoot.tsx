@@ -28,6 +28,11 @@ import {
 } from './services/native-voxa';
 import { pickVideoAsset } from './services/media-picker';
 import { haptics } from './services/haptics';
+import {
+  requestNotificationAuthorization,
+  startInactivityReminderLifecycle,
+  type NotificationAuthorizationStatus,
+} from './services/notifications';
 import { resolveLocale } from './i18n/translations';
 import { useTranslation } from './i18n/useTranslation';
 import {
@@ -94,6 +99,10 @@ export function AppRoot() {
   const replaceProject = useAppStore(state => state.replaceProject);
 
   const [showSplash, setShowSplash] = useState(true);
+  const [notificationPermissionStatus, setNotificationPermissionStatus] =
+    useState<NotificationAuthorizationStatus>('not_determined');
+  const [notificationPermissionPending, setNotificationPermissionPending] =
+    useState(false);
 
   useEffect(() => {
     if (!hydrated) {
@@ -113,6 +122,18 @@ export function AppRoot() {
         setUiLocale('en');
       });
   }, [hydrated, uiLocale, setUiLocale]);
+
+  useEffect(() => {
+    if (!hydrated || !hasCompletedOnboarding) {
+      return;
+    }
+
+    const lifecycle = startInactivityReminderLifecycle(
+      t,
+      setNotificationPermissionStatus,
+    );
+    return () => lifecycle.remove();
+  }, [hasCompletedOnboarding, hydrated, t]);
   const repairedProjectIdsRef = useRef(new Set<string>());
   const [pendingSpeechAsset, setPendingSpeechAsset] = useState<Asset | null>(
     null,
@@ -420,6 +441,21 @@ export function AppRoot() {
     await Linking.openSettings();
   }, []);
 
+  const handleRequestNotificationPermission = useCallback(async () => {
+    setNotificationPermissionPending(true);
+    try {
+      if (notificationPermissionStatus === 'denied') {
+        await Linking.openSettings();
+        return;
+      }
+
+      const status = await requestNotificationAuthorization();
+      setNotificationPermissionStatus(status);
+    } finally {
+      setNotificationPermissionPending(false);
+    }
+  }, [notificationPermissionStatus]);
+
   if (!hydrated || uiLocale === null) {
     return <View style={styles.root} />;
   }
@@ -461,11 +497,18 @@ export function AppRoot() {
 
           {route === 'settings' ? (
             <SettingsScreen
+              notificationPermissionPending={notificationPermissionPending}
+              notificationsAuthorized={
+                notificationPermissionStatus === 'authorized'
+              }
               onClose={closeSettings}
               onHighlightEditedWordsChange={setHighlightEditedWords}
               onRememberLastTranscriptionLanguageChange={
                 setRememberLastTranscriptionLanguage
               }
+              onRequestNotificationPermission={() => {
+                handleRequestNotificationPermission().catch(() => {});
+              }}
               onResetOnboarding={() => {
                 closeSettings();
                 resetOnboarding();

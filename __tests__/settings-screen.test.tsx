@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Switch, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => ({
@@ -31,16 +31,20 @@ jest.mock('../src/i18n/useTranslation', () => ({
 import { SettingsScreen } from '../src/components/home/SettingsScreen';
 
 describe('SettingsScreen', () => {
-  it('does not show the app-language explanatory text', () => {
+  function renderSettings(notificationsAuthorized: boolean) {
+    const onRequestNotificationPermission = jest.fn();
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
     ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
         <SettingsScreen
           highlightEditedWords={false}
+          notificationsAuthorized={notificationsAuthorized}
+          notificationPermissionPending={false}
           onClose={jest.fn()}
           onHighlightEditedWordsChange={jest.fn()}
           onRememberLastTranscriptionLanguageChange={jest.fn()}
+          onRequestNotificationPermission={onRequestNotificationPermission}
           onResetOnboarding={jest.fn()}
           onResolutionChange={jest.fn()}
           onUiLocaleChange={jest.fn()}
@@ -51,12 +55,42 @@ describe('SettingsScreen', () => {
       );
     });
 
-    const explanation = renderer!.root.findAll(
+    return { onRequestNotificationPermission, renderer: renderer! };
+  }
+
+  it('does not show the app-language explanatory text', () => {
+    const { renderer } = renderSettings(false);
+
+    const explanation = renderer.root.findAll(
       node =>
         node.type === Text &&
         node.props.children === 'settingsAppLanguageDescription',
     );
 
     expect(explanation).toHaveLength(0);
+  });
+
+  it('shows a switch that requests access when notifications are not authorized', () => {
+    const { onRequestNotificationPermission, renderer } =
+      renderSettings(false);
+    const notificationSwitch = renderer.root.findAllByType(Switch).find(
+      node => node.props.accessibilityLabel === 'settingsEnableNotifications',
+    );
+
+    expect(notificationSwitch).toBeDefined();
+    ReactTestRenderer.act(() => {
+      notificationSwitch!.props.onValueChange(true);
+    });
+    expect(onRequestNotificationPermission).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the notification permission switch once access is granted', () => {
+    const { renderer } = renderSettings(true);
+
+    expect(
+      renderer.root.findAllByType(Switch).filter(
+        node => node.props.accessibilityLabel === 'settingsEnableNotifications',
+      ),
+    ).toHaveLength(0);
   });
 });

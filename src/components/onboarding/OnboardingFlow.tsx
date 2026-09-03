@@ -5,6 +5,7 @@ import Animated, {
   SlideOutLeft,
 } from 'react-native-reanimated';
 
+import { requestNotificationAuthorization } from '../../services/notifications';
 import { useAppStore } from '../../store/app-store';
 import { palette } from '../../theme/tokens';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
@@ -25,13 +26,23 @@ export function OnboardingFlow() {
   const completeOnboarding = useAppStore(state => state.completeOnboarding);
   const setAnswers = useAppStore(state => state.setOnboardingAnswers);
 
+  const finishOnboarding = useCallback(async () => {
+    try {
+      await requestNotificationAuthorization();
+    } catch {
+      // Notification access is optional and should never block onboarding.
+    } finally {
+      completeOnboarding();
+    }
+  }, [completeOnboarding]);
+
   const goNext = useCallback(() => {
     if (step < TOTAL_STEPS - 1) {
       setStep(step + 1);
     } else {
-      completeOnboarding();
+      finishOnboarding().catch(() => {});
     }
-  }, [step, setStep, completeOnboarding]);
+  }, [step, setStep, finishOnboarding]);
 
   const goBack = useCallback(() => {
     if (step > 0) {
@@ -119,7 +130,7 @@ export function OnboardingFlow() {
       case 7:
         return (
           <ValueDeliveryScreen
-            onComplete={completeOnboarding}
+            onComplete={finishOnboarding}
             onBack={goBack}
             progress={1}
           />

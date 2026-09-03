@@ -3,6 +3,7 @@ import Photos
 import React
 import Speech
 import UIKit
+import UserNotifications
 
 private struct ExportSubtitleWord {
   let text: String
@@ -110,6 +111,114 @@ final class VoxaOfflineModule: NSObject {
     SFSpeechRecognizer.requestAuthorization { status in
       resolve(self.string(from: status))
     }
+  }
+
+  @objc(getNotificationAuthorizationStatus:rejecter:)
+  func getNotificationAuthorizationStatus(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    UNUserNotificationCenter.current().getNotificationSettings { settings in
+      resolve(self.string(from: settings.authorizationStatus))
+    }
+  }
+
+  @objc(requestNotificationAuthorization:rejecter:)
+  func requestNotificationAuthorization(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let center = UNUserNotificationCenter.current()
+    center.requestAuthorization(options: [.alert]) { _, error in
+      if let error {
+        reject("notification_permission_failed", error.localizedDescription, error)
+        return
+      }
+
+      center.getNotificationSettings { settings in
+        resolve(self.string(from: settings.authorizationStatus))
+      }
+    }
+  }
+
+  @objc(scheduleInactivityReminders:resolver:rejecter:)
+  func scheduleInactivityReminders(
+    _ reminders: NSArray,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let center = UNUserNotificationCenter.current()
+    center.getNotificationSettings { settings in
+      guard self.notificationsAreAuthorized(settings.authorizationStatus) else {
+        resolve(false)
+        return
+      }
+
+      let parsedReminders = reminders.compactMap { value -> (String, String, String, Double)? in
+        guard
+          let reminder = value as? NSDictionary,
+          let id = reminder["id"] as? String,
+          let title = reminder["title"] as? String,
+          let body = reminder["body"] as? String,
+          let delaySeconds = (reminder["delaySeconds"] as? NSNumber)?.doubleValue,
+          !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+          !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+          !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+          delaySeconds > 0
+        else {
+          return nil
+        }
+
+        return (id, title, body, delaySeconds)
+      }
+
+      center.removePendingNotificationRequests(
+        withIdentifiers: self.inactivityReminderIdentifiers
+      )
+
+      func addReminder(at index: Int) {
+        guard index < parsedReminders.count else {
+          resolve(true)
+          return
+        }
+
+        let reminder = parsedReminders[index]
+        let content = UNMutableNotificationContent()
+        content.title = reminder.1
+        content.body = reminder.2
+        let trigger = UNTimeIntervalNotificationTrigger(
+          timeInterval: max(60, reminder.3),
+          repeats: false
+        )
+        let request = UNNotificationRequest(
+          identifier: reminder.0,
+          content: content,
+          trigger: trigger
+        )
+
+        center.add(request) { error in
+          if let error {
+            reject("notification_schedule_failed", error.localizedDescription, error)
+            return
+          }
+
+          addReminder(at: index + 1)
+        }
+      }
+
+      addReminder(at: 0)
+    }
+  }
+
+  @objc(cancelInactivityReminders:rejecter:)
+  func cancelInactivityReminders(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let center = UNUserNotificationCenter.current()
+    center.removePendingNotificationRequests(withIdentifiers: inactivityReminderIdentifiers)
+    center.removeDeliveredNotifications(withIdentifiers: inactivityReminderIdentifiers)
+    resolve(nil)
   }
 
   @objc(getAvailableSpeechLocales:rejecter:)
@@ -1690,6 +1799,34 @@ private extension VoxaOfflineModule {
     @unknown default:
       return "restricted"
     }
+  }
+
+  func string(from status: UNAuthorizationStatus) -> String {
+    switch status {
+    case .authorized, .provisional, .ephemeral:
+      return "authorized"
+    case .denied:
+      return "denied"
+    case .notDetermined:
+      return "not_determined"
+    @unknown default:
+      return "denied"
+    }
+  }
+
+  func notificationsAreAuthorized(_ status: UNAuthorizationStatus) -> Bool {
+    switch status {
+    case .authorized, .provisional, .ephemeral:
+      return true
+    case .denied, .notDetermined:
+      return false
+    @unknown default:
+      return false
+    }
+  }
+
+  private var inactivityReminderIdentifiers: [String] {
+    ["voxa-inactivity-1", "voxa-inactivity-2", "voxa-inactivity-3"]
   }
 }
 

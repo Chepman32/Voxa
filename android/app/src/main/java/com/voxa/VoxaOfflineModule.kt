@@ -24,8 +24,11 @@ import android.speech.RecognitionSupport
 import android.speech.RecognitionSupportCallback
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -186,6 +189,97 @@ class VoxaOfflineModule(
   fun requestSpeechAuthorization(promise: Promise) {
     requestRecordAudioPermission { status ->
       promise.resolve(status)
+    }
+  }
+
+  @ReactMethod
+  fun getNotificationAuthorizationStatus(promise: Promise) {
+    promise.resolve(notificationAuthorizationStatus())
+  }
+
+  @ReactMethod
+  fun requestNotificationAuthorization(promise: Promise) {
+    if (notificationAuthorizationStatus() == "authorized" ||
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+      promise.resolve(notificationAuthorizationStatus())
+      return
+    }
+
+    val activity = reactApplicationContext.currentActivity as? PermissionAwareActivity
+    if (activity == null) {
+      promise.resolve(notificationAuthorizationStatus())
+      return
+    }
+
+    preferences.edit().putBoolean(KEY_NOTIFICATIONS_REQUESTED, true).apply()
+    activity.requestPermissions(
+        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+        REQUEST_POST_NOTIFICATIONS,
+        PermissionListener { requestCode, _, _ ->
+          if (requestCode != REQUEST_POST_NOTIFICATIONS) {
+            return@PermissionListener false
+          }
+
+          promise.resolve(notificationAuthorizationStatus())
+          true
+        })
+  }
+
+  @ReactMethod
+  fun scheduleInactivityReminders(reminders: ReadableArray, promise: Promise) {
+    if (notificationAuthorizationStatus() != "authorized") {
+      promise.resolve(false)
+      return
+    }
+
+    val parsedReminders =
+        (0 until reminders.size()).mapNotNull { index ->
+          val reminder = reminders.getMap(index) ?: return@mapNotNull null
+          val id = reminder.getString("id")?.trim().orEmpty()
+          val title = reminder.getString("title")?.trim().orEmpty()
+          val body = reminder.getString("body")?.trim().orEmpty()
+          val delaySeconds =
+              if (reminder.hasKey("delaySeconds")) reminder.getDouble("delaySeconds").toLong()
+              else 0L
+
+          if (id.isBlank() || title.isBlank() || body.isBlank() || delaySeconds <= 0) {
+            null
+          } else {
+            VoxaReminder(id, title, body, delaySeconds)
+          }
+        }
+
+    VoxaReminderScheduler.schedule(reactContext, parsedReminders)
+    promise.resolve(true)
+  }
+
+  @ReactMethod
+  fun cancelInactivityReminders(promise: Promise) {
+    VoxaReminderScheduler.cancel(reactContext)
+    promise.resolve(null)
+  }
+
+  private fun notificationAuthorizationStatus(): String {
+    val notificationsEnabled =
+        NotificationManagerCompat.from(reactContext).areNotificationsEnabled()
+
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+      return if (notificationsEnabled) "authorized" else "denied"
+    }
+
+    val permissionGranted =
+        ContextCompat.checkSelfPermission(
+            reactContext,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+    if (permissionGranted && notificationsEnabled) {
+      return "authorized"
+    }
+
+    return if (preferences.getBoolean(KEY_NOTIFICATIONS_REQUESTED, false)) {
+      "denied"
+    } else {
+      "not_determined"
     }
   }
 
@@ -1684,7 +1778,9 @@ class VoxaOfflineModule(
   companion object {
     const val NAME = "VoxaOfflineModule"
     private const val KEY_RECORD_AUDIO_REQUESTED = "recordAudioRequested"
+    private const val KEY_NOTIFICATIONS_REQUESTED = "notificationsRequested"
     private const val REQUEST_RECORD_AUDIO = 1009
+    private const val REQUEST_POST_NOTIFICATIONS = 1010
     private const val PROJECT_MEDIA_DIRECTORY = "ProjectMedia"
     private const val CODEC_TIMEOUT_US = 10_000L
     private const val DEFAULT_SAMPLE_RATE = 16_000

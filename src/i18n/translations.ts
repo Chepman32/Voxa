@@ -325,7 +325,10 @@ const en: Translations = {
   projectSubtitleBlock: 'subtitle block',
   folderCreate: 'Create New Folder',
   folderCreateHint: 'Create a folder',
-  folderCreateMessage: 'Enter a folder name.',
+  folderCreateMessage:
+    'Give your projects a home. You can move more into this folder anytime.',
+  folderCreateAction: 'Create Folder',
+  folderNamePlaceholder: 'e.g. Social clips',
   folderRename: 'Rename',
   folderRenameMessage: 'Enter a new folder name.',
   folderRemove: 'Remove',
@@ -366,10 +369,24 @@ const en: Translations = {
   settingsHighlightEditedWords: 'Highlight edited words',
   settingsHighlightEditedWordsDescription:
     'Approximate word timing after manual subtitle edits.',
+  settingsNotifications: 'Notifications',
+  settingsEnableNotifications: 'Enable gentle reminders',
+  settingsNotificationsDescription:
+    "We'll only send a few quiet nudges after you haven't opened Voxa for a while.",
   settingsPrivacy: 'Privacy',
   settingsPrivacyBody:
     'Voxa keeps extraction, speech recognition, subtitle editing, and export entirely on-device. Remote media is only used for visual placeholders.',
   settingsReplayOnboarding: 'Replay onboarding',
+
+  notificationReminder1Title: 'Ready when you are',
+  notificationReminder1Body:
+    "Haven't seen you in a while. Want to transcribe something important?",
+  notificationReminder2Title: 'Time to make a little magic?',
+  notificationReminder2Body:
+    'Pick a video and let Voxa bring the words to life.',
+  notificationReminder3Title: 'Your next edit can be easy',
+  notificationReminder3Body:
+    "Drop in a video when inspiration strikes. We'll handle the transcription.",
 
   speechAccessFailedTitle: 'Speech Access Failed',
   speechAccessFailedBody:

@@ -25,6 +25,7 @@ import { haptics } from '../../services/haptics';
 import { emptyStateImage, palette } from '../../theme/tokens';
 import type { Project, ProjectFolder } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
+import { TextPromptModal } from '../common/TextPromptModal';
 import { ProjectCard } from './ProjectCard';
 
 const ALL_PROJECTS_SECTION_ID = 'all-projects';
@@ -76,6 +77,22 @@ interface HomeScreenProps {
   onRenameProject: (projectId: string, title: string) => void;
 }
 
+interface TextPromptRequest {
+  confirmLabel: string;
+  defaultValue: string;
+  icon: string;
+  message: string;
+  onSubmit: (value: string) => void;
+  placeholder?: string;
+  title: string;
+}
+
+interface TextPromptOptions {
+  confirmLabel?: string;
+  icon?: string;
+  placeholder?: string;
+}
+
 function icon(ios: string, android?: string) {
   return Platform.select({
     ios,
@@ -123,6 +140,7 @@ export function HomeScreen({
   >({
     [ALL_PROJECTS_SECTION_ID]: true,
   });
+  const [textPrompt, setTextPrompt] = useState<TextPromptRequest | null>(null);
 
   const deferredProjects = useDeferredValue(sortProjects(projects));
   const cardWidth = (width - 52) / 2;
@@ -216,30 +234,17 @@ export function HomeScreen({
     message: string,
     defaultValue: string,
     onSubmit: (value: string) => void,
+    options: TextPromptOptions = {},
   ) => {
-    if (Platform.OS !== 'ios' || typeof Alert.prompt !== 'function') {
-      Alert.alert(title, message);
-      return;
-    }
-
-    Alert.prompt(
-      title,
-      message,
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('save'),
-          onPress: (value?: string) => {
-            const nextValue = value?.trim() ?? '';
-            if (nextValue.length > 0) {
-              onSubmit(nextValue);
-            }
-          },
-        },
-      ],
-      'plain-text',
+    setTextPrompt({
+      confirmLabel: options.confirmLabel ?? t('save'),
       defaultValue,
-    );
+      icon: options.icon ?? 'edit-3',
+      message,
+      onSubmit,
+      placeholder: options.placeholder,
+      title,
+    });
   };
 
   const confirmDestructive = (
@@ -260,6 +265,11 @@ export function HomeScreen({
       t('folderCreateMessage'),
       '',
       onCreateFolder,
+      {
+        confirmLabel: t('folderCreateAction'),
+        icon: 'folder-plus',
+        placeholder: t('folderNamePlaceholder'),
+      },
     );
   };
 
@@ -320,19 +330,19 @@ export function HomeScreen({
         } satisfies MenuAction),
     );
 
-    const folderAction: MenuAction =
-      folderTargets.length === 0
-        ? {
-            id: CREATE_FOLDER_ACTION_ID,
-            title: t('folderCreate'),
-            image: icon('folder.badge.plus', 'ic_menu_add'),
-          }
-        : {
-            id: 'move-to-folder',
-            title: t('projectMoveToFolder'),
-            image: icon('folder', 'ic_menu_upload'),
-            subactions: folderTargets,
-          };
+    const folderAction: MenuAction = {
+      id: 'move-to-folder',
+      title: t('projectMoveToFolder'),
+      image: icon('folder', 'ic_menu_upload'),
+      subactions: [
+        {
+          id: CREATE_FOLDER_ACTION_ID,
+          title: t('folderCreate'),
+          image: icon('folder.badge.plus', 'ic_menu_add'),
+        },
+        ...folderTargets,
+      ],
+    };
 
     return [
       {
@@ -672,6 +682,19 @@ export function HomeScreen({
           </View>
         ))}
       </Animated.ScrollView>
+
+      <TextPromptModal
+        cancelLabel={t('cancel')}
+        confirmLabel={textPrompt?.confirmLabel ?? t('save')}
+        defaultValue={textPrompt?.defaultValue}
+        icon={textPrompt?.icon}
+        message={textPrompt?.message ?? ''}
+        onClose={() => setTextPrompt(null)}
+        onSubmit={value => textPrompt?.onSubmit(value)}
+        placeholder={textPrompt?.placeholder}
+        title={textPrompt?.title ?? ''}
+        visible={textPrompt !== null}
+      />
     </View>
   );
 }
