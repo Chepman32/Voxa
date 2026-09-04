@@ -2051,22 +2051,26 @@ function TextEditorSection({
   stylePreset: Project['globalStyle'];
 }) {
   const { t } = useTranslation();
-  const [draftText, setDraftText] = useState(selectedSubtitle?.text ?? '');
+  const placeholderSubtitleSelected = isPlaceholderSubtitle(selectedSubtitle);
+  const selectedSubtitleText = placeholderSubtitleSelected
+    ? ''
+    : selectedSubtitle?.text ?? '';
+  const [draftText, setDraftText] = useState(selectedSubtitleText);
   const [activeEditWordIndex, setActiveEditWordIndex] = useState(-1);
 
   useEffect(() => {
-    setDraftText(selectedSubtitle?.text ?? '');
-  }, [selectedSubtitle?.id, selectedSubtitle?.text]);
+    setDraftText(selectedSubtitleText);
+  }, [selectedSubtitle?.id, selectedSubtitleText]);
 
   const commitDraftTextIfChanged = useCallback(() => {
     if (!selectedSubtitle) {
       return;
     }
-    if (isSameEditableSubtitleText(selectedSubtitle.text, draftText)) {
+    if (isSameEditableSubtitleText(selectedSubtitleText, draftText)) {
       return;
     }
     onUpdateText(draftText);
-  }, [draftText, onUpdateText, selectedSubtitle]);
+  }, [draftText, onUpdateText, selectedSubtitle, selectedSubtitleText]);
 
   const textInputRef = useRef<TextInput>(null);
   const captureActiveEditWordIndex = useCallback(() => {
@@ -2193,8 +2197,16 @@ function TextEditorSection({
                   setDraftText(text);
                   onDraftChange(text);
                 }}
-                placeholder={t('rewriteSubtitleText')}
-                placeholderTextColor={palette.textSecondary}
+                placeholder={
+                  placeholderSubtitleSelected
+                    ? t('tapToAddFirstSubtitle')
+                    : t('rewriteSubtitleText')
+                }
+                placeholderTextColor={
+                  placeholderSubtitleSelected
+                    ? palette.textPrimary
+                    : palette.textSecondary
+                }
                 style={[
                   styles.subtitlePreview,
                   styles.textInput,

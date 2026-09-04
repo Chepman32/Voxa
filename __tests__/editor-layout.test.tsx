@@ -187,6 +187,7 @@ const mockAppStoreState = {
   beginProcessing: jest.fn(),
   closeProject: jest.fn(),
   finishProcessing: jest.fn(),
+  uiLocale: 'en',
   settings: {
     preferredExportResolution: '1080p',
     highlightEditedWords: true,
@@ -500,6 +501,7 @@ describe('EditorScreen', () => {
   };
 
   afterEach(() => {
+    mockAppStoreState.uiLocale = 'en';
     mockAppStoreState.settings.highlightEditedWords = true;
     mockGetAvailableSpeechLocales.mockClear();
     mockExportProject.mockReset();
@@ -1328,6 +1330,30 @@ describe('EditorScreen', () => {
       renderer!.root.findByProps({ testID: RETRY_SUBTITLE_BANNER_BUTTON_ID }),
     ).toBeTruthy();
     expect(renderer!.root.findByProps({ children: 'Retry' })).toBeTruthy();
+  });
+
+  it('localizes the first-subtitle placeholder without treating it as saved text', async () => {
+    mockAppStoreState.uiLocale = 'ru';
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={failedProject} />,
+      );
+    });
+
+    const input = renderer!.root.findByProps({
+      placeholder: 'Нажмите, чтобы добавить первый субтитр.',
+    });
+
+    expect(input.props.value).toBe('');
   });
 
   it('opens the locale retry sheet with device locales only', async () => {
