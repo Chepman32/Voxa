@@ -22,7 +22,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { sortProjects } from '../../lib/project';
 import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
-import { emptyStateImage, palette } from '../../theme/tokens';
+import { palette } from '../../theme/tokens';
 import type { Project, ProjectFolder } from '../../types/models';
 import { AtmosphereCanvas } from '../common/AtmosphereCanvas';
 import { TextPromptModal } from '../common/TextPromptModal';
@@ -477,48 +477,8 @@ export function HomeScreen({
     }
   };
 
-  const emptyProject = useMemo<Project>(
-    () => ({
-      id: 'empty-card',
-      title: t('homeEmptyProjectTitle'),
-      sourceFileName: t('homeEmptyProjectFileName'),
-      videoLocalURI: emptyStateImage,
-      thumbnailUri: emptyStateImage,
-      duration: 18000,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      subtitles: [],
-      globalStyle: {
-        fontPresetId: 'display',
-        fontFamily: 'System',
-        fontWeight: '800',
-        fontSize: 32,
-        letterSpacing: 0.3,
-        textColor: '#FFFFFF',
-        backgroundColor: 'rgba(10, 10, 12, 0.62)',
-        accentColor: '#00F0FF',
-        wordHighlightEnabled: true,
-        position: 'bottom',
-        positionOffsetYRatio: 0,
-        casing: 'sentence',
-      },
-      waveform: [],
-      recognitionStatus: 'manual',
-      metrics: { width: 1080, height: 1920 },
-    }),
-    [t],
-  );
-
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <ProjectCard
-        height={278}
-        onDelete={() => {}}
-        onOpen={() => {}}
-        project={emptyProject}
-        swipeEnabled={false}
-        width={Math.min(cardWidth * 2 + 12, width - 40)}
-      />
       <Text style={styles.emptyTitle}>{t('homeEmptyTitle')}</Text>
       <Text style={styles.emptyText}>{t('homeEmptyText')}</Text>
     </View>
@@ -648,19 +608,6 @@ export function HomeScreen({
 
         <View style={styles.headerActions}>
           <Pressable
-            accessibilityHint={t('homeCreateProjectHint')}
-            accessibilityLabel={t('homeCreateProjectLabel')}
-            disabled={processingVisible}
-            onPress={onCreateProject}
-            style={[
-              styles.createButton,
-              processingVisible ? styles.actionButtonDisabled : undefined,
-            ]}
-          >
-            <Feather color={palette.canvas} name="plus" size={20} />
-          </Pressable>
-
-          <Pressable
             accessibilityHint={t('folderCreateHint')}
             accessibilityLabel={t('folderCreate')}
             onPress={promptCreateFolder}
@@ -681,7 +628,10 @@ export function HomeScreen({
       </Animated.View>
 
       <Animated.ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: contentTop }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 100, paddingTop: contentTop },
+        ]}
         onScroll={handleScroll}
         onScrollEndDrag={handleScrollEnd}
         scrollEventThrottle={16}
@@ -694,6 +644,22 @@ export function HomeScreen({
           </View>
         ))}
       </Animated.ScrollView>
+
+      <Pressable
+        accessibilityHint={t('homeCreateProjectHint')}
+        accessibilityLabel={t('homeCreateProjectLabel')}
+        accessibilityRole="button"
+        disabled={processingVisible}
+        onPress={onCreateProject}
+        style={[
+          styles.floatingCreateButton,
+          { bottom: insets.bottom + 20 },
+          processingVisible ? styles.actionButtonDisabled : undefined,
+        ]}
+        testID="home-create-project-fab"
+      >
+        <Feather color={palette.canvas} name="plus" size={26} />
+      </Pressable>
 
       <TextPromptModal
         cancelLabel={t('cancel')}
@@ -748,13 +714,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  createButton: {
-    width: 42,
-    height: 42,
+  floatingCreateButton: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 3,
+    width: 58,
+    height: 58,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: palette.cyan,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.32,
+    shadowRadius: 14,
+    elevation: 8,
   },
   secondaryHeaderButton: {
     width: 42,
@@ -769,7 +743,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
     gap: 18,
   },
   folderSection: {
@@ -824,9 +797,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyState: {
-    paddingTop: 30,
+    paddingTop: 48,
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
   },
   emptyTitle: {
     color: palette.textPrimary,

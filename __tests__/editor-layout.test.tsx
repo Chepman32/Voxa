@@ -9,7 +9,8 @@ jest.mock('../src/components/common/AtmosphereCanvas', () => ({
 }));
 
 jest.mock('../src/components/editor/ExportSheet', () => ({
-  ExportSheet: () => null,
+  ExportSheet: (props: Record<string, unknown>) =>
+    require('react').createElement('ExportSheetMock', props),
 }));
 
 jest.mock('@react-native-community/blur', () => {
@@ -238,6 +239,12 @@ import type { Project } from '../src/types/models';
 
 const mockGetAvailableSpeechLocales = jest.mocked(
   require('../src/services/native-localsub').getAvailableSpeechLocales,
+);
+const mockExportProject = jest.mocked(
+  require('../src/services/native-localsub').exportProject,
+);
+const mockSaveVideoToPhotos = jest.mocked(
+  require('../src/services/native-localsub').saveVideoToPhotos,
 );
 const mockRetryProjectSubtitles = jest.mocked(
   require('../src/services/project-processor').retryProjectSubtitles,
@@ -495,6 +502,8 @@ describe('EditorScreen', () => {
   afterEach(() => {
     mockAppStoreState.settings.highlightEditedWords = true;
     mockGetAvailableSpeechLocales.mockClear();
+    mockExportProject.mockReset();
+    mockSaveVideoToPhotos.mockReset();
     mockRetryProjectSubtitles.mockReset();
     mockRetryProjectSubtitles.mockResolvedValue(mockProject);
     mockVideoSeek.mockClear();
@@ -519,6 +528,37 @@ describe('EditorScreen', () => {
     );
 
     expect(video.props.resizeMode).toBe('contain');
+  });
+
+  it('exports subtitle sizing against the editor preview width', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+    mockExportProject.mockResolvedValue({
+      outputUri: 'file:///tmp/exported.mov',
+    });
+    mockSaveVideoToPhotos.mockResolvedValue({ localIdentifier: 'saved-video' });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    const exportSheet = renderer!.root.findByType('ExportSheetMock' as never);
+    await ReactTestRenderer.act(async () => {
+      await exportSheet.props.onExport();
+    });
+
+    expect(mockExportProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subtitleReferenceWidth: 358,
+      }),
+    );
   });
 
   it('represents playback with an adjustable timeline thumb', async () => {

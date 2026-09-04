@@ -55,6 +55,14 @@ internal fun targetExportDimensions(
       height = evenDimension((sourceHeight * scale).roundToInt()))
 }
 
+internal fun subtitleLayoutScale(videoWidth: Int, referenceWidth: Float): Float {
+  if (videoWidth <= 0 || !referenceWidth.isFinite() || referenceWidth <= 0f) {
+    return 1f
+  }
+
+  return videoWidth.toFloat() / referenceWidth
+}
+
 internal fun activeSubtitleAt(
     subtitles: List<ExportSubtitle>,
     presentationTimeMs: Int
@@ -83,15 +91,16 @@ internal fun subtitleOriginY(
     position: String,
     positionOffsetYRatio: Float,
     videoHeight: Int,
-    layerHeight: Float
+    layerHeight: Float,
+    layoutScale: Float = 1f
 ): Float {
-  val minOriginY = 16f
-  val maxOriginY = max(minOriginY, videoHeight - layerHeight - 16f)
+  val minOriginY = 16f * layoutScale
+  val maxOriginY = max(minOriginY, videoHeight - layerHeight - 16f * layoutScale)
   val anchorY =
       when (position) {
-        "top" -> 20f
+        "top" -> 20f * layoutScale
         "middle" -> videoHeight * 0.42f
-        else -> videoHeight - layerHeight - 18f
+        else -> videoHeight - layerHeight - 18f * layoutScale
       }
   return (anchorY + positionOffsetYRatio * videoHeight).coerceIn(minOriginY, maxOriginY)
 }

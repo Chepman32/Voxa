@@ -55,6 +55,7 @@ internal class LocalSubVideoExporter(private val context: Context) {
       subtitles: List<ExportSubtitle>,
       style: ExportSubtitleStyle,
       resolution: String,
+      subtitleReferenceWidth: Float,
       completion: (Result<File>) -> Unit
   ) {
     mainHandler.post {
@@ -82,7 +83,12 @@ internal class LocalSubVideoExporter(private val context: Context) {
                     outputDimensions.width,
                     outputDimensions.height,
                     Presentation.LAYOUT_SCALE_TO_FIT),
-                OverlayEffect(listOf(SubtitleCanvasOverlay(subtitles, style))))
+                OverlayEffect(
+                    listOf(
+                        SubtitleCanvasOverlay(
+                            subtitles,
+                            style,
+                            subtitleReferenceWidth))))
         val editedMediaItem =
             EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(inputFile)))
                 .setEffects(Effects(emptyList(), videoEffects))
@@ -267,7 +273,8 @@ internal class LocalSubVideoExporter(private val context: Context) {
 
   private class SubtitleCanvasOverlay(
       subtitles: List<ExportSubtitle>,
-      private val style: ExportSubtitleStyle
+      private val style: ExportSubtitleStyle,
+      private val subtitleReferenceWidth: Float
   ) : CanvasOverlay(true) {
     private val subtitles = subtitles.sortedWith(compareBy(ExportSubtitle::startTimeMs, ExportSubtitle::endTimeMs))
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -281,15 +288,22 @@ internal class LocalSubVideoExporter(private val context: Context) {
         return
       }
 
+      val layoutScale = subtitleLayoutScale(canvas.width, subtitleReferenceWidth)
+      val baseFontSize = style.fontSize.coerceAtLeast(1f)
+      val horizontalPadding =
+          max(1, (HORIZONTAL_PADDING_PX * layoutScale).roundToInt())
+      val verticalPadding =
+          max(1, (VERTICAL_PADDING_PX * layoutScale).roundToInt())
+
       val textPaint =
           TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
             color = parseCssColor(this@SubtitleCanvasOverlay.style.textColor, Color.WHITE)
-            textSize = this@SubtitleCanvasOverlay.style.fontSize.coerceAtLeast(1f)
+            textSize = baseFontSize * layoutScale
             typeface =
                 resolveTypeface(
                     this@SubtitleCanvasOverlay.style.fontFamily,
                     this@SubtitleCanvasOverlay.style.fontWeight)
-            letterSpacing = this@SubtitleCanvasOverlay.style.letterSpacing / textSize
+            letterSpacing = this@SubtitleCanvasOverlay.style.letterSpacing / baseFontSize
           }
       val attributedText = highlightedText(text, subtitle, presentationTimeMs, textPaint.color)
       val maxTextWidth = max(1, (canvas.width * MAX_TEXT_WIDTH_RATIO).roundToInt())
@@ -302,18 +316,19 @@ internal class LocalSubVideoExporter(private val context: Context) {
               ?: maxTextWidth
       val maximumContainerWidth = max(1, (canvas.width * MAX_CONTAINER_WIDTH_RATIO).roundToInt())
       val containerWidth =
-          min(maximumContainerWidth, measuredLineWidth + HORIZONTAL_PADDING_PX * 2)
-              .coerceAtLeast(HORIZONTAL_PADDING_PX * 2 + 1)
-      val layoutWidth = max(1, containerWidth - HORIZONTAL_PADDING_PX * 2)
+          min(maximumContainerWidth, measuredLineWidth + horizontalPadding * 2)
+              .coerceAtLeast(horizontalPadding * 2 + 1)
+      val layoutWidth = max(1, containerWidth - horizontalPadding * 2)
       val textLayout = createTextLayout(attributedText, textPaint, layoutWidth)
-      val containerHeight = textLayout.height + VERTICAL_PADDING_PX * 2
+      val containerHeight = textLayout.height + verticalPadding * 2
       val originX = (canvas.width - containerWidth) / 2f
       val originY =
           subtitleOriginY(
               position = style.position,
               positionOffsetYRatio = style.positionOffsetYRatio,
               videoHeight = canvas.height,
-              layerHeight = containerHeight.toFloat())
+              layerHeight = containerHeight.toFloat(),
+              layoutScale = layoutScale)
 
       backgroundPaint.apply {
         color =
@@ -321,22 +336,26 @@ internal class LocalSubVideoExporter(private val context: Context) {
                 this@SubtitleCanvasOverlay.style.backgroundColor,
                 DEFAULT_BACKGROUND_COLOR)
         style = Paint.Style.FILL
-        setShadowLayer(16f, 0f, 8f, Color.argb(71, 0, 0, 0))
+        setShadowLayer(
+            SHADOW_RADIUS_PX * layoutScale,
+            0f,
+            SHADOW_OFFSET_Y_PX * layoutScale,
+            Color.argb(71, 0, 0, 0))
       }
       canvas.drawRoundRect(
           originX,
           originY,
           originX + containerWidth,
           originY + containerHeight,
-          CORNER_RADIUS_PX,
-          CORNER_RADIUS_PX,
+          CORNER_RADIUS_PX * layoutScale,
+          CORNER_RADIUS_PX * layoutScale,
           backgroundPaint)
       backgroundPaint.clearShadowLayer()
 
       canvas.save()
       canvas.translate(
-          originX + HORIZONTAL_PADDING_PX,
-          originY + VERTICAL_PADDING_PX - TEXT_VERTICAL_ADJUSTMENT_PX)
+          originX + horizontalPadding,
+          originY + verticalPadding - TEXT_VERTICAL_ADJUSTMENT_PX * layoutScale)
       textLayout.draw(canvas)
       canvas.restore()
     }
@@ -437,6 +456,8 @@ internal class LocalSubVideoExporter(private val context: Context) {
       private const val VERTICAL_PADDING_PX = 10
       private const val TEXT_VERTICAL_ADJUSTMENT_PX = 2f
       private const val CORNER_RADIUS_PX = 18f
+      private const val SHADOW_RADIUS_PX = 16f
+      private const val SHADOW_OFFSET_Y_PX = 8f
       private val DEFAULT_BACKGROUND_COLOR = Color.argb(158, 10, 10, 12)
       private val HEX_RGB_REGEX = Regex("^#[0-9a-fA-F]{6}$")
       private val HEX_RGBA_REGEX = Regex("^#[0-9a-fA-F]{8}$")

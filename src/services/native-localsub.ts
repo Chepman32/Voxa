@@ -88,6 +88,7 @@ interface LocalSubNativeModule {
     subtitles: NativeSubtitleSegment[];
     style: SubtitleStyle;
     resolution: ExportResolution;
+    subtitleReferenceWidth: number;
   }): Promise<ExportResponse>;
   saveVideoToPhotos(videoURI: string): Promise<SaveResponse>;
 }
@@ -308,6 +309,7 @@ export async function exportProject(payload: {
   subtitles: NativeSubtitleSegment[];
   style: SubtitleStyle;
   resolution: ExportResolution;
+  subtitleReferenceWidth: number;
 }) {
   if (nativeModule?.exportProject) {
     return nativeModule.exportProject(payload);

@@ -54,6 +54,21 @@ class VideoExportSupportTest {
   }
 
   @Test
+  fun subtitleScalePreservesThePreviewFontProportion() {
+    val previewWidth = 358f
+    val exportWidth = 1_080
+    val previewFontSize = 52f
+    val scale = subtitleLayoutScale(exportWidth, previewWidth)
+
+    assertEquals(
+        previewFontSize / previewWidth,
+        previewFontSize * scale / exportWidth,
+        0.0001f)
+    assertEquals(1f, subtitleLayoutScale(exportWidth, 0f), 0f)
+    assertEquals(1f, subtitleLayoutScale(0, previewWidth), 0f)
+  }
+
+  @Test
   fun subtitleTimingUsesAnExclusiveEndBoundary() {
     val first =
         ExportSubtitle(

@@ -104,6 +104,7 @@ const TIMELINE_PROGRESS_ANIMATION_MS = 120;
 const TIMELINE_SCRUB_SEEK_INTERVAL_MS = 48;
 const TIMELINE_VIEWPORT_MARGIN_HORIZONTAL = 12;
 const TIMELINE_THUMB_SIZE = 22;
+const VIDEO_ZONE_MARGIN_HORIZONTAL = 16;
 const SUBTITLE_NAVIGATION_SETTLE_MS = 260;
 const SEEK_PROGRESS_SYNC_WINDOW_MS = 220;
 const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
@@ -839,6 +840,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
         videoURI: project.videoLocalURI,
         resolution: resolution as ExportResolution,
         style: stylePreset,
+        subtitleReferenceWidth: Math.max(
+          1,
+          width - VIDEO_ZONE_MARGIN_HORIZONTAL * 2,
+        ),
         subtitles: project.subtitles
           .filter(subtitle => !isPlaceholderSubtitle(subtitle))
           .map(subtitle => ({

@@ -382,12 +382,16 @@ final class LocalSubOfflineModule: NSObject {
         }
         let style = payload["style"] as? [String: Any] ?? [:]
         let resolution = payload["resolution"] as? String ?? "1080p"
+        let subtitleReferenceWidth = CGFloat(
+          (payload["subtitleReferenceWidth"] as? NSNumber)?.doubleValue ?? 0
+        )
 
         let outputURL = try await self.exportBurnedInVideo(
           videoURI: videoURI,
           subtitles: subtitlesArray,
           style: style,
-          resolution: resolution
+          resolution: resolution,
+          subtitleReferenceWidth: subtitleReferenceWidth
         )
 
         resolve([
@@ -460,7 +464,8 @@ private extension LocalSubOfflineModule {
     videoURI: String,
     subtitles: [[String: Any]],
     style: [String: Any],
-    resolution: String
+    resolution: String,
+    subtitleReferenceWidth: CGFloat
   ) async throws -> URL {
     let videoURL = try normalizedFileURL(from: videoURI)
     let asset = AVURLAsset(url: videoURL)
@@ -526,6 +531,7 @@ private extension LocalSubOfflineModule {
       subtitles: subtitles,
       style: style,
       videoSize: targetSize,
+      subtitleReferenceWidth: subtitleReferenceWidth,
       totalDuration: CMTimeGetSeconds(asset.duration)
     )
     subtitleLayers.forEach(parentLayer.addSublayer)
@@ -556,9 +562,14 @@ private extension LocalSubOfflineModule {
     subtitles: [[String: Any]],
     style: [String: Any],
     videoSize: CGSize,
+    subtitleReferenceWidth: CGFloat,
     totalDuration: Double
   ) -> [CALayer] {
-    let fontSize = CGFloat((style["fontSize"] as? NSNumber)?.doubleValue ?? 34)
+    let layoutScale = subtitleLayoutScale(
+      videoWidth: videoSize.width,
+      referenceWidth: subtitleReferenceWidth
+    )
+    let fontSize = CGFloat((style["fontSize"] as? NSNumber)?.doubleValue ?? 34) * layoutScale
     let font = resolvedFont(
       name: style["fontFamily"] as? String,
       size: fontSize,
@@ -570,7 +581,8 @@ private extension LocalSubOfflineModule {
     let backgroundColor = color(
       from: style["backgroundColor"] as? String ?? "rgba(10, 10, 12, 0.62)"
     )
-    let letterSpacing = CGFloat((style["letterSpacing"] as? NSNumber)?.doubleValue ?? 0.3)
+    let letterSpacing =
+      CGFloat((style["letterSpacing"] as? NSNumber)?.doubleValue ?? 0.3) * layoutScale
     let position = style["position"] as? String ?? "bottom"
     let positionOffsetYRatio = CGFloat(
       (style["positionOffsetYRatio"] as? NSNumber)?.doubleValue ?? 0
@@ -603,15 +615,16 @@ private extension LocalSubOfflineModule {
         context: nil
       ).integral
 
-      let horizontalPadding: CGFloat = 18
-      let verticalPadding: CGFloat = 10
+      let horizontalPadding: CGFloat = 18 * layoutScale
+      let verticalPadding: CGFloat = 10 * layoutScale
       let containerWidth = min(videoSize.width * 0.88, textBounds.width + horizontalPadding * 2)
       let containerHeight = textBounds.height + verticalPadding * 2
       let originY = subtitleOriginY(
         position: position,
         positionOffsetYRatio: positionOffsetYRatio,
         videoSize: videoSize,
-        layerHeight: containerHeight
+        layerHeight: containerHeight,
+        layoutScale: layoutScale
       )
 
       let containerLayer = CALayer()
@@ -622,12 +635,12 @@ private extension LocalSubOfflineModule {
         height: containerHeight
       )
       containerLayer.backgroundColor = backgroundColor.cgColor
-      containerLayer.cornerRadius = 18
+      containerLayer.cornerRadius = 18 * layoutScale
       containerLayer.opacity = 0
       containerLayer.shadowColor = UIColor.black.cgColor
       containerLayer.shadowOpacity = 0.28
-      containerLayer.shadowRadius = 16
-      containerLayer.shadowOffset = CGSize(width: 0, height: 8)
+      containerLayer.shadowRadius = 16 * layoutScale
+      containerLayer.shadowOffset = CGSize(width: 0, height: 8 * layoutScale)
 
       let textLayer = CATextLayer()
       textLayer.contentsScale = UIScreen.main.scale
@@ -635,7 +648,7 @@ private extension LocalSubOfflineModule {
       textLayer.isWrapped = true
       let textFrame = CGRect(
         x: horizontalPadding,
-        y: verticalPadding - 2,
+        y: verticalPadding - 2 * layoutScale,
         width: containerWidth - horizontalPadding * 2,
         height: containerHeight - verticalPadding * 2
       )
@@ -784,20 +797,40 @@ private extension LocalSubOfflineModule {
     return animation
   }
 
-  func subtitleAnchorY(position: String, videoSize: CGSize, layerHeight: CGFloat) -> CGFloat {
+  func subtitleLayoutScale(videoWidth: CGFloat, referenceWidth: CGFloat) -> CGFloat {
+    guard videoWidth > 0, referenceWidth.isFinite, referenceWidth > 0 else {
+      return 1
+    }
+
+    return videoWidth / referenceWidth
+  }
+
+  func subtitleAnchorY(
+    position: String,
+    videoSize: CGSize,
+    layerHeight: CGFloat,
+    layoutScale: CGFloat = 1
+  ) -> CGFloat {
     switch position {
     case "top":
-      return 20
+      return 20 * layoutScale
     case "middle":
       return videoSize.height * 0.42
     default:
-      return videoSize.height - layerHeight - 18
+      return videoSize.height - layerHeight - 18 * layoutScale
     }
   }
 
-  func subtitleVerticalBounds(videoSize: CGSize, layerHeight: CGFloat) -> (min: CGFloat, max: CGFloat) {
-    let minOriginY: CGFloat = 16
-    let maxOriginY = max(minOriginY, videoSize.height - layerHeight - 16)
+  func subtitleVerticalBounds(
+    videoSize: CGSize,
+    layerHeight: CGFloat,
+    layoutScale: CGFloat = 1
+  ) -> (min: CGFloat, max: CGFloat) {
+    let minOriginY: CGFloat = 16 * layoutScale
+    let maxOriginY = max(
+      minOriginY,
+      videoSize.height - layerHeight - 16 * layoutScale
+    )
     return (min: minOriginY, max: maxOriginY)
   }
 
@@ -805,13 +838,19 @@ private extension LocalSubOfflineModule {
     position: String,
     positionOffsetYRatio: CGFloat,
     videoSize: CGSize,
-    layerHeight: CGFloat
+    layerHeight: CGFloat,
+    layoutScale: CGFloat = 1
   ) -> CGFloat {
-    let bounds = subtitleVerticalBounds(videoSize: videoSize, layerHeight: layerHeight)
+    let bounds = subtitleVerticalBounds(
+      videoSize: videoSize,
+      layerHeight: layerHeight,
+      layoutScale: layoutScale
+    )
     let anchorY = subtitleAnchorY(
       position: position,
       videoSize: videoSize,
-      layerHeight: layerHeight
+      layerHeight: layerHeight,
+      layoutScale: layoutScale
     )
     let offsetY = positionOffsetYRatio * videoSize.height
     return min(max(anchorY + offsetY, bounds.min), bounds.max)

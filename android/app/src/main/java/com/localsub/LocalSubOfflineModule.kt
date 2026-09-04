@@ -492,8 +492,19 @@ class LocalSubOfflineModule(
         val subtitles = parseExportSubtitles(payload.optionalArray("subtitles"))
         val style = parseExportSubtitleStyle(payload.optionalMap("style"))
         val resolution = payload.optionalString("resolution") ?: "1080p"
+        val subtitleReferenceWidth =
+            payload.optionalDouble("subtitleReferenceWidth")
+                ?.takeIf(Double::isFinite)
+                ?.toFloat()
+                ?.takeIf { it > 0f }
+                ?: 0f
 
-        videoExporter.export(sourceFile, subtitles, style, resolution) { result ->
+        videoExporter.export(
+            sourceFile,
+            subtitles,
+            style,
+            resolution,
+            subtitleReferenceWidth) { result ->
           result.fold(
               onSuccess = { outputFile ->
                 val response = Arguments.createMap()

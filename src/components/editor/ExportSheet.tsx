@@ -31,6 +31,11 @@ import { exportResolutions, palette, springConfig } from '../../theme/tokens';
 import type { ExportResolution, Project, SubtitleStyle } from '../../types/models';
 import { GlassPanel } from '../common/GlassPanel';
 import { HighlightedSubtitleText } from '../common/HighlightedSubtitleText';
+import {
+  EXPORT_HOLD_BUTTON_HEIGHT,
+  EXPORT_HOLD_DURATION_MS,
+  resolveExportHoldFillTranslateY,
+} from './export-hold-progress';
 
 const EXPORT_PREVIEW_HEIGHT = 236;
 
@@ -90,7 +95,9 @@ export function ExportSheet({
   }));
 
   const fillStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: interpolate(holdProgress.value, [0, 1], [72, 0]) }],
+    transform: [
+      { translateY: resolveExportHoldFillTranslateY(holdProgress.value) },
+    ],
   }));
 
   const closeSheet = () => {
@@ -132,11 +139,15 @@ export function ExportSheet({
     if (working) {
       return;
     }
-    holdProgress.value = withTiming(1, { duration: 1500 }, finished => {
-      if (finished) {
-        runOnJS(handleExport)();
-      }
-    });
+    holdProgress.value = withTiming(
+      1,
+      { duration: EXPORT_HOLD_DURATION_MS },
+      finished => {
+        if (finished) {
+          runOnJS(handleExport)();
+        }
+      },
+    );
   };
 
   const handleHoldEnd = () => {
@@ -377,7 +388,7 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
   },
   holdButton: {
-    height: 144,
+    height: EXPORT_HOLD_BUTTON_HEIGHT,
     borderRadius: 28,
     overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
