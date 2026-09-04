@@ -49,6 +49,7 @@ describe('app store migration', () => {
     expect(migrated.settings).toEqual({
       preferredExportResolution: '4k',
       highlightEditedWords: false,
+      showFolderItemCounts: false,
       transcriptionLanguageMode: 'ask',
       rememberLastTranscriptionLanguage: false,
       lastTranscriptionLocale: 'ru-RU',
@@ -64,6 +65,22 @@ describe('app store migration', () => {
     });
     expect(migrated.projects[0]?.subtitles).toHaveLength(1);
     expect(migrated.projects[0]?.subtitles[0]?.isPlaceholder).toBe(true);
+  });
+
+  it('defaults missing folder item count preferences to hidden', () => {
+    const migrated = migratePersistedAppState();
+
+    expect(migrated.settings.showFolderItemCounts).toBe(false);
+  });
+
+  it('preserves an enabled folder item count preference', () => {
+    const migrated = migratePersistedAppState({
+      settings: {
+        showFolderItemCounts: true,
+      } as any,
+    });
+
+    expect(migrated.settings.showFolderItemCounts).toBe(true);
   });
 
   it('preserves ask-before-transcription during migration', () => {
@@ -105,6 +122,18 @@ describe('app store migration', () => {
     expect(migrated.folders).toHaveLength(1);
     expect(migrated.projects[0]?.folderId).toBe('folder-1');
     expect(migrated.projects[1]?.folderId).toBeUndefined();
+  });
+});
+
+describe('app store folder item count preference', () => {
+  beforeEach(() => {
+    useAppStore.setState({ settings: migratePersistedAppState().settings });
+  });
+
+  it('updates whether folder item counts are shown', () => {
+    useAppStore.getState().setShowFolderItemCounts(true);
+
+    expect(useAppStore.getState().settings.showFolderItemCounts).toBe(true);
   });
 });
 

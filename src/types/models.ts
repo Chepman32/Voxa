@@ -93,6 +93,7 @@ export interface ProcessingState {
 export interface UserSettings {
   preferredExportResolution: ExportResolution;
   highlightEditedWords: boolean;
+  showFolderItemCounts: boolean;
   transcriptionLanguageMode: TranscriptionLanguageMode;
   rememberLastTranscriptionLanguage: boolean;
   lastTranscriptionLocale: string | null;

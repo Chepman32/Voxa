@@ -2,6 +2,8 @@ import React from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
+const mockVideoSeek = jest.fn();
+
 jest.mock('../src/components/common/AtmosphereCanvas', () => ({
   AtmosphereCanvas: () => null,
 }));
@@ -43,7 +45,7 @@ jest.mock('react-native-video', () => {
     __esModule: true,
     default: ReactModule.forwardRef((props: object, ref: React.Ref<any>) => {
       ReactModule.useImperativeHandle(ref, () => ({
-        seek: () => undefined,
+        seek: mockVideoSeek,
       }));
 
       return <View {...props} />;
@@ -52,29 +54,51 @@ jest.mock('react-native-video', () => {
 });
 
 jest.mock('react-native-gesture-handler', () => {
+  const ReactModule = require('react');
   const createGesture = () => {
+    const handlers: Record<string, (...args: any[]) => unknown> = {};
     const gesture = {
+      testHandlers: handlers,
       activeOffsetY: () => gesture,
       failOffsetX: () => gesture,
       numberOfTaps: () => gesture,
-      onBegin: () => gesture,
-      onEnd: () => gesture,
-      onFinalize: () => gesture,
-      onUpdate: () => gesture,
+      onBegin: (handler: (...args: any[]) => unknown) => {
+        handlers.onBegin = handler;
+        return gesture;
+      },
+      onEnd: (handler: (...args: any[]) => unknown) => {
+        handlers.onEnd = handler;
+        return gesture;
+      },
+      onFinalize: (handler: (...args: any[]) => unknown) => {
+        handlers.onFinalize = handler;
+        return gesture;
+      },
+      onUpdate: (handler: (...args: any[]) => unknown) => {
+        handlers.onUpdate = handler;
+        return gesture;
+      },
     };
 
     return gesture;
   };
 
   return {
-    GestureDetector: ({ children }: { children?: React.ReactNode }) => (
-      <>{children}</>
-    ),
+    GestureDetector: ({
+      children,
+      gesture,
+    }: {
+      children?: React.ReactElement;
+      gesture: unknown;
+    }) =>
+      children
+        ? ReactModule.cloneElement(children, { testGesture: gesture } as object)
+        : null,
     Gesture: {
       Pan: createGesture,
       Pinch: createGesture,
       Tap: createGesture,
-      Race: () => createGesture(),
+      Race: (...gestures: unknown[]) => ({ testGestures: gestures }),
     },
   };
 });
@@ -196,9 +220,13 @@ import {
   KEYBOARD_DISMISS_BUTTON_ID,
   OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX,
   RETRY_SUBTITLE_BANNER_BUTTON_ID,
+  TIMELINE_PLAYHEAD_ID,
+  TIMELINE_SCRUBBER_ID,
   TIMELINE_SECTION_ID,
   resolveOverlaySubtitle,
   resolveSubtitlePreviewTop,
+  resolveTimelinePosition,
+  resolveTimelineProgress,
 } from '../src/components/editor/EditorScreen';
 import {
   LOCALE_RETRY_BUTTON_ID,
@@ -394,6 +422,21 @@ describe('EditorScreen drag helpers', () => {
   });
 });
 
+describe('EditorScreen timeline helpers', () => {
+  it('maps playback into a clamped timeline progress', () => {
+    expect(resolveTimelineProgress(3400, 6800)).toBe(0.5);
+    expect(resolveTimelineProgress(-200, 6800)).toBe(0);
+    expect(resolveTimelineProgress(9000, 6800)).toBe(1);
+    expect(resolveTimelineProgress(1000, 0)).toBe(0);
+  });
+
+  it('maps thumb movement into a clamped playback position', () => {
+    expect(resolveTimelinePosition(195, 390, 6800)).toBe(3400);
+    expect(resolveTimelinePosition(-20, 390, 6800)).toBe(0);
+    expect(resolveTimelinePosition(420, 390, 6800)).toBe(6800);
+  });
+});
+
 describe('EditorScreen', () => {
   const mockProject: Project = {
     id: 'project-1',
@@ -454,11 +497,93 @@ describe('EditorScreen', () => {
     mockGetAvailableSpeechLocales.mockClear();
     mockRetryProjectSubtitles.mockReset();
     mockRetryProjectSubtitles.mockResolvedValue(mockProject);
+    mockVideoSeek.mockClear();
     mockAppStoreState.beginProcessing.mockClear();
     mockAppStoreState.finishProcessing.mockClear();
     mockAppStoreState.setProcessingPhase.mockClear();
     mockAppStoreState.upsertProject.mockClear();
     jest.restoreAllMocks();
+  });
+
+  it('contains the full video frame in the editor preview', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    const video = renderer!.root.find(
+      node => typeof node.props.onProgress === 'function',
+    );
+
+    expect(video.props.resizeMode).toBe('contain');
+  });
+
+  it('represents playback with an adjustable timeline thumb', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    let scrubber = renderer!.root.findByProps({
+      testID: TIMELINE_SCRUBBER_ID,
+    });
+    expect(scrubber.props.accessibilityRole).toBe('adjustable');
+    expect(scrubber.props.accessibilityValue).toEqual({
+      min: 0,
+      max: mockProject.duration,
+      now: 0,
+    });
+    expect(
+      renderer!.root.findByProps({ testID: TIMELINE_PLAYHEAD_ID }),
+    ).toBeTruthy();
+
+    const video = renderer!.root.find(
+      node => typeof node.props.onProgress === 'function',
+    );
+    await ReactTestRenderer.act(() => {
+      video.props.onProgress({ currentTime: 1 });
+    });
+
+    scrubber = renderer!.root.findByProps({
+      testID: TIMELINE_SCRUBBER_ID,
+    });
+    expect(scrubber.props.accessibilityValue.now).toBe(1000);
+  });
+
+  it('seeks by dragging the timeline thumb while the waveform stays fixed', async () => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 1,
+    });
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <EditorScreen onClose={jest.fn()} project={mockProject} />,
+      );
+    });
+
+    const scrubber = renderer!.root.findByProps({
+      testID: TIMELINE_SCRUBBER_ID,
+    });
+    const panGesture = scrubber.props.testGesture.testGestures[0];
+
+    await ReactTestRenderer.act(() => {
+      panGesture.testHandlers.onBegin({ x: 183 });
+      panGesture.testHandlers.onFinalize({ x: 366 });
+    });
+
+    expect(mockVideoSeek).toHaveBeenNthCalledWith(1, 3.4);
+    expect(mockVideoSeek).toHaveBeenLastCalledWith(6.8);
   });
 
   it('renders the closed active subtitle section with the computed height', async () => {

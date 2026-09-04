@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { palette, springConfig } from '../../theme/tokens';
-import { GlassPanel } from '../common/GlassPanel';
 import { OnboardingHeader } from './OnboardingHeader';
 
 interface WelcomeScreenProps {
@@ -201,7 +200,8 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: palette.cyan,
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '700',
     letterSpacing: 1.6,
     textTransform: 'uppercase',

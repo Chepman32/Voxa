@@ -71,6 +71,42 @@ describe('LocalSub app identity', () => {
     });
   });
 
+  it('uses LocalSub in the visible splash and native launcher names', () => {
+    const splash = fs.readFileSync(
+      path.join(
+        projectRoot,
+        'src',
+        'components',
+        'splash',
+        'SplashSequence.tsx',
+      ),
+      'utf8',
+    );
+    const androidStrings = fs.readFileSync(
+      path.join(
+        projectRoot,
+        'android',
+        'app',
+        'src',
+        'main',
+        'res',
+        'values',
+        'strings.xml',
+      ),
+      'utf8',
+    );
+    const iosInfo = fs.readFileSync(
+      path.join(projectRoot, 'ios', 'LocalSub', 'Info.plist'),
+      'utf8',
+    );
+
+    expect(splash).toContain('>LOCALSUB</Text>');
+    expect(androidStrings).toContain(
+      '<string name="app_name">LocalSub</string>',
+    );
+    expect(iosInfo).toContain('<string>LocalSub</string>');
+  });
+
   it('uses the LocalSub native application identifiers', () => {
     const androidBuild = fs.readFileSync(
       path.join(projectRoot, 'android', 'app', 'build.gradle'),

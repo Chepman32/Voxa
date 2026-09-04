@@ -365,6 +365,9 @@ const en: Translations = {
   settingsLastUsed: 'Last used',
   settingsRememberLastLanguageDescription:
     'Preselect and reuse the last language you transcribed with.',
+  settingsShowFolderItemCounts: 'Show folder item counts',
+  settingsShowFolderItemCountsDescription:
+    'Display the number of projects beside each folder.',
   settingsSubtitleHighlighting: 'Subtitle Highlighting',
   settingsHighlightEditedWords: 'Highlight edited words',
   settingsHighlightEditedWordsDescription:
@@ -688,6 +691,9 @@ const es: Translations = {
   settingsLastUsed: 'Último usado',
   settingsRememberLastLanguageDescription:
     'Preseleccionar y reutilizar el último idioma con el que transcribiste.',
+  settingsShowFolderItemCounts: 'Mostrar cantidad de elementos por carpeta',
+  settingsShowFolderItemCountsDescription:
+    'Muestra el número de proyectos junto a cada carpeta.',
   settingsSubtitleHighlighting: 'Resaltado de subtítulos',
   settingsHighlightEditedWords: 'Resaltar palabras editadas',
   settingsHighlightEditedWordsDescription:
@@ -997,6 +1003,9 @@ const pt: Translations = {
   settingsLastUsed: 'Último usado',
   settingsRememberLastLanguageDescription:
     'Pré-selecionar e reutilizar o último idioma que você transcreveu.',
+  settingsShowFolderItemCounts: 'Mostrar contagem de itens das pastas',
+  settingsShowFolderItemCountsDescription:
+    'Mostra o número de projetos ao lado de cada pasta.',
   settingsSubtitleHighlighting: 'Destaque de legendas',
   settingsHighlightEditedWords: 'Destacar palavras editadas',
   settingsHighlightEditedWordsDescription:
@@ -1309,6 +1318,9 @@ const fr: Translations = {
   settingsLastUsed: 'Dernière utilisée',
   settingsRememberLastLanguageDescription:
     'Préselectionner et réutiliser la dernière langue transcrite.',
+  settingsShowFolderItemCounts: 'Afficher le nombre d’éléments par dossier',
+  settingsShowFolderItemCountsDescription:
+    'Affiche le nombre de projets à côté de chaque dossier.',
   settingsSubtitleHighlighting: 'Surlignage des sous-titres',
   settingsHighlightEditedWords: 'Surligner les mots modifiés',
   settingsHighlightEditedWordsDescription:
@@ -1620,6 +1632,9 @@ const de: Translations = {
   settingsLastUsed: 'Zuletzt verwendet',
   settingsRememberLastLanguageDescription:
     'Die zuletzt transkribierte Sprache vorauswählen und wiederverwenden.',
+  settingsShowFolderItemCounts: 'Anzahl der Ordnerelemente anzeigen',
+  settingsShowFolderItemCountsDescription:
+    'Zeigt die Anzahl der Projekte neben jedem Ordner an.',
   settingsSubtitleHighlighting: 'Untertitel-Hervorhebung',
   settingsHighlightEditedWords: 'Bearbeitete Wörter hervorheben',
   settingsHighlightEditedWordsDescription:
@@ -1928,6 +1943,9 @@ const it: Translations = {
   settingsLastUsed: 'Ultima usata',
   settingsRememberLastLanguageDescription:
     'Preseleziona e riutilizza l’ultima lingua con cui hai trascritto.',
+  settingsShowFolderItemCounts: 'Mostra il numero di elementi nelle cartelle',
+  settingsShowFolderItemCountsDescription:
+    'Mostra il numero di progetti accanto a ogni cartella.',
   settingsSubtitleHighlighting: 'Evidenziazione sottotitoli',
   settingsHighlightEditedWords: 'Evidenzia parole modificate',
   settingsHighlightEditedWordsDescription:
@@ -2240,6 +2258,9 @@ const ru: Translations = {
   settingsLastUsed: 'Последний',
   settingsRememberLastLanguageDescription:
     'Предвыбирать и повторно использовать последний язык транскрибации.',
+  settingsShowFolderItemCounts: 'Показывать количество объектов в папках',
+  settingsShowFolderItemCountsDescription:
+    'Показывает количество проектов рядом с каждой папкой.',
   settingsSubtitleHighlighting: 'Подсветка субтитров',
   settingsHighlightEditedWords: 'Подсвечивать изменённые слова',
   settingsHighlightEditedWordsDescription:
@@ -2543,6 +2564,9 @@ const ja: Translations = {
   settingsLastUsed: '最後に使用',
   settingsRememberLastLanguageDescription:
     '最後に文字起こしした言語を事前選択して再利用します。',
+  settingsShowFolderItemCounts: 'フォルダ内の項目数を表示',
+  settingsShowFolderItemCountsDescription:
+    '各フォルダの横にプロジェクト数を表示します。',
   settingsSubtitleHighlighting: '字幕のハイライト',
   settingsHighlightEditedWords: '編集した単語をハイライト',
   settingsHighlightEditedWordsDescription:
@@ -2844,6 +2868,9 @@ const ko: Translations = {
   settingsLastUsed: '마지막 사용',
   settingsRememberLastLanguageDescription:
     '마지막으로 전사한 언어를 미리 선택하고 다시 사용합니다.',
+  settingsShowFolderItemCounts: '폴더 항목 수 표시',
+  settingsShowFolderItemCountsDescription:
+    '각 폴더 옆에 프로젝트 수를 표시합니다.',
   settingsSubtitleHighlighting: '자막 강조',
   settingsHighlightEditedWords: '편집한 단어 강조',
   settingsHighlightEditedWordsDescription:
@@ -3135,6 +3162,8 @@ const zh: Translations = {
   settingsRememberLastLanguage: '记住上次使用的语言',
   settingsLastUsed: '上次使用',
   settingsRememberLastLanguageDescription: '预选并复用你上次转写使用的语言。',
+  settingsShowFolderItemCounts: '显示文件夹项目数',
+  settingsShowFolderItemCountsDescription: '在每个文件夹旁显示项目数量。',
   settingsSubtitleHighlighting: '字幕高亮',
   settingsHighlightEditedWords: '高亮编辑过的词',
   settingsHighlightEditedWordsDescription: '手动编辑字幕后近似生成词级时间。',
@@ -3431,6 +3460,9 @@ const ar: Translations = {
   settingsLastUsed: 'آخر استخدام',
   settingsRememberLastLanguageDescription:
     'اختيار آخر لغة فرّغت بها مسبقًا وإعادة استخدامها.',
+  settingsShowFolderItemCounts: 'إظهار عدد عناصر المجلد',
+  settingsShowFolderItemCountsDescription:
+    'يعرض عدد المشاريع بجانب كل مجلد.',
   settingsSubtitleHighlighting: 'تمييز الترجمة',
   settingsHighlightEditedWords: 'تمييز الكلمات المعدلة',
   settingsHighlightEditedWordsDescription:

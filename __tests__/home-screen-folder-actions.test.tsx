@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
 jest.mock('@react-native-menu/menu', () => ({
@@ -72,9 +73,17 @@ const folder: ProjectFolder = {
   updatedAt: 1,
 };
 
+const deletedProject: Project = {
+  ...project,
+  id: 'project-2',
+  deletedAt: 2,
+};
+
 function renderHome(
   folders: ProjectFolder[],
   onCreateFolder = jest.fn(),
+  showFolderItemCounts = false,
+  projects: Project[] = [project],
 ) {
   let renderer: ReactTestRenderer.ReactTestRenderer;
 
@@ -96,7 +105,8 @@ function renderHome(
         onRenameFolder={jest.fn()}
         onRenameProject={jest.fn()}
         processingVisible={false}
-        projects={[project]}
+        projects={projects}
+        showFolderItemCounts={showFolderItemCounts}
       />,
     );
   });
@@ -180,5 +190,35 @@ describe('HomeScreen project folder actions', () => {
 
   it('uses the requested English label', () => {
     expect(translations.en.folderCreate).toBe('Create New Folder');
+  });
+
+  it('hides folder item counts by default', () => {
+    const renderer = renderHome(
+      [folder],
+      jest.fn(),
+      false,
+      [project, deletedProject],
+    );
+    const numericLabels = renderer.root.findAll(
+      node => node.type === Text && typeof node.props.children === 'number',
+    );
+
+    expect(numericLabels).toHaveLength(0);
+  });
+
+  it('shows folder item counts when the preference is enabled', () => {
+    const renderer = renderHome(
+      [folder],
+      jest.fn(),
+      true,
+      [project, deletedProject],
+    );
+    const numericLabels = renderer.root
+      .findAll(
+        node => node.type === Text && typeof node.props.children === 'number',
+      )
+      .map(node => node.props.children);
+
+    expect(numericLabels).toEqual([1, 0, 1]);
   });
 });

@@ -90,6 +90,9 @@ export function AppRoot() {
   const setHighlightEditedWords = useAppStore(
     state => state.setHighlightEditedWords,
   );
+  const setShowFolderItemCounts = useAppStore(
+    state => state.setShowFolderItemCounts,
+  );
   const setRememberLastTranscriptionLanguage = useAppStore(
     state => state.setRememberLastTranscriptionLanguage,
   );
@@ -484,6 +487,7 @@ export function AppRoot() {
             folders={folders}
             processingVisible={processing.visible}
             projects={projects}
+            showFolderItemCounts={settings.showFolderItemCounts}
           />
 
           {route === 'editor' && activeProject ? (
@@ -509,6 +513,7 @@ export function AppRoot() {
                 resetOnboarding();
               }}
               onResolutionChange={setPreferredExportResolution}
+              onShowFolderItemCountsChange={setShowFolderItemCounts}
               onUiLocaleChange={setUiLocale}
               highlightEditedWords={settings.highlightEditedWords}
               lastTranscriptionLanguageLabel={lastTranscriptionLanguageLabel}
@@ -516,6 +521,7 @@ export function AppRoot() {
               rememberLastTranscriptionLanguage={
                 settings.rememberLastTranscriptionLanguage
               }
+              showFolderItemCounts={settings.showFolderItemCounts}
               uiLocale={uiLocale}
             />
           ) : null}

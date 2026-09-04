@@ -74,7 +74,6 @@ import {
   selectedSubtitleAtom,
   selectedSubtitleIdAtom,
   subtitlesAtom,
-  timelineZoomAtom,
 } from '../../store/editor-atoms';
 import {
   palette,
@@ -100,8 +99,11 @@ import { ExportSheet } from './ExportSheet';
 import { calculateEditorVerticalLayout } from './layout';
 import { LocaleRetrySheet } from './LocaleRetrySheet';
 
-const MAX_TIMELINE_SURFACE_WIDTH = 8192;
 const TIMELINE_COLLAPSE_DURATION_MS = 220;
+const TIMELINE_PROGRESS_ANIMATION_MS = 120;
+const TIMELINE_SCRUB_SEEK_INTERVAL_MS = 48;
+const TIMELINE_VIEWPORT_MARGIN_HORIZONTAL = 12;
+const TIMELINE_THUMB_SIZE = 22;
 const SUBTITLE_NAVIGATION_SETTLE_MS = 260;
 const SEEK_PROGRESS_SYNC_WINDOW_MS = 220;
 const WORD_HIGHLIGHT_SWITCH_ID = 'word-highlight-switch';
@@ -120,6 +122,37 @@ export const EDITOR_TOP_BAR_ID = 'editor-top-bar';
 export const KEYBOARD_DISMISS_BUTTON_ID = 'keyboard-dismiss-button';
 export const OVERLAY_SUBTITLE_WORD_TEST_ID_PREFIX = 'overlay-subtitle-word';
 export const RETRY_SUBTITLE_BANNER_BUTTON_ID = 'retry-subtitle-banner-button';
+export const TIMELINE_SCRUBBER_ID = 'timeline-scrubber';
+export const TIMELINE_PLAYHEAD_ID = 'timeline-playhead';
+
+export function resolveTimelineProgress(
+  playbackPosition: number,
+  duration: number,
+) {
+  'worklet';
+
+  if (duration <= 0) {
+    return 0;
+  }
+
+  return Math.min(Math.max(playbackPosition / duration, 0), 1);
+}
+
+export function resolveTimelinePosition(
+  locationX: number,
+  trackWidth: number,
+  duration: number,
+) {
+  'worklet';
+
+  if (trackWidth <= 0 || duration <= 0) {
+    return 0;
+  }
+
+  return Math.round(
+    Math.min(Math.max(locationX / trackWidth, 0), 1) * duration,
+  );
+}
 
 export function resolveSubtitlePreviewTop({
   isDragging,
@@ -182,7 +215,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const videoRef = useRef<VideoRef>(null);
-  const timelineRef = useRef<ScrollView>(null);
   const bottomEditorPagerRef = useRef<ScrollView>(null);
   const lastSeekMs = useRef(0);
   const isScrubbing = useRef(false);
@@ -223,7 +255,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
   );
   const [subtitles, setSubtitles] = useAtom(subtitlesAtom);
   const [stylePresetValue, setStylePreset] = useAtom(globalStyleAtom);
-  const [timelineZoom, setTimelineZoom] = useAtom(timelineZoomAtom);
   const [isTextEditing, setIsTextEditing] = useAtom(isTextEditingAtom);
   const [, setIsStylePanelOpen] = useAtom(isStylePanelOpenAtom);
   const [isExportSheetOpen, setIsExportSheetOpen] = useAtom(
@@ -389,17 +420,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       ? collapsedEditorLayout.bottomEditorTabsHeight
       : editorLayout.bottomEditorTabsHeight);
 
-  const durationMs = Math.max(0, project?.duration ?? 0);
-  const basePixelsPerSecond = 82 * timelineZoom;
-  const basePixelsPerMs = basePixelsPerSecond / 1000;
-  const rawContentWidth = Math.max(width, durationMs * basePixelsPerMs);
-  const timelineScale =
-    rawContentWidth > MAX_TIMELINE_SURFACE_WIDTH
-      ? MAX_TIMELINE_SURFACE_WIDTH / rawContentWidth
-      : 1;
-  const pixelsPerMs = basePixelsPerMs * timelineScale;
-  const contentWidth = Math.max(width, durationMs * pixelsPerMs);
-
   const activeDisplaySubtitle = isTextEditing
     ? selectedSubtitle ?? activeSubtitle
     : activeSubtitle;
@@ -557,16 +577,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     upsertProject,
   ]);
 
-  const syncTimelineToPosition = (timeMs: number, animated = false) => {
-    if (!timelineRef.current) {
-      return;
-    }
-    timelineRef.current.scrollTo({
-      x: Math.max(0, timeMs * pixelsPerMs),
-      animated,
-    });
-  };
-
   const seekTo = (timeMs: number) => {
     const clamped = clamp(timeMs, 0, project?.duration ?? 0);
     pendingSeekSyncRef.current = {
@@ -575,7 +585,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     };
     setPlaybackPosition(clamped);
     videoRef.current?.seek(clamped / 1000);
-    syncTimelineToPosition(clamped);
   };
 
   const updateWordHighlightEnabled = (value: boolean) => {
@@ -742,7 +751,6 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
       pendingSeekSyncRef.current = null;
     }
     setPlayback(currentTimeMs);
-    syncTimelineToPosition(currentTimeMs);
   };
 
   const handleVideoEnd = () => {
@@ -751,17 +759,38 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
     videoRef.current?.seek(0);
   };
 
-  const handleTimelineScroll = (offsetX: number) => {
-    if (!project || !isScrubbing.current) {
+  const seekDuringTimelineScrub = (timeMs: number, force = false) => {
+    if (!project) {
       return;
     }
-    const nextPosition = clamp(offsetX / pixelsPerMs, 0, project.duration);
-    setPlaybackPosition(nextPosition);
+
+    const nextPosition = clamp(timeMs, 0, project.duration);
     const now = Date.now();
-    if (now - lastSeekMs.current > 34) {
-      videoRef.current?.seek(nextPosition / 1000);
-      lastSeekMs.current = now;
+    if (!force && now - lastSeekMs.current < TIMELINE_SCRUB_SEEK_INTERVAL_MS) {
+      return;
     }
+
+    setPlaybackPosition(nextPosition);
+    videoRef.current?.seek(nextPosition / 1000);
+    lastSeekMs.current = now;
+  };
+
+  const handleTimelineScrubStart = (timeMs: number) => {
+    isScrubbing.current = true;
+    setIsPlaying(false);
+    seekDuringTimelineScrub(timeMs, true);
+  };
+
+  const handleTimelineScrubChange = (timeMs: number) => {
+    if (!isScrubbing.current) {
+      return;
+    }
+    seekDuringTimelineScrub(timeMs);
+  };
+
+  const handleTimelineScrubEnd = (timeMs: number) => {
+    seekDuringTimelineScrub(timeMs, true);
+    isScrubbing.current = false;
   };
 
   const togglePlayback = useCallback(() => {
@@ -1099,9 +1128,10 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
                 handleVideoProgress(event.currentTime * 1000)
               }
               paused={!isPlaying}
+              progressUpdateInterval={100}
               ref={videoRef}
               repeat={false}
-              resizeMode="cover"
+              resizeMode="contain"
               source={{ uri: project.videoLocalURI }}
               style={StyleSheet.absoluteFill}
             />
@@ -1210,23 +1240,14 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           testID={TIMELINE_SECTION_ID}
         >
           <TimelineTrackSection
-            contentWidth={contentWidth}
-            onScroll={handleTimelineScroll}
-            pixelsPerMs={pixelsPerMs}
+            duration={project.duration}
+            onScrubChange={handleTimelineScrubChange}
+            onScrubEnd={handleTimelineScrubEnd}
+            onScrubStart={handleTimelineScrubStart}
             playhead={playbackPosition}
-            timelineRef={timelineRef}
             timelineTrackHeight={editorLayout.timelineTrackHeight}
-            timelineZoom={timelineZoom}
-            setTimelineZoom={setTimelineZoom}
             waveform={project.waveform}
             width={width}
-            onScrubEnd={() => {
-              isScrubbing.current = false;
-            }}
-            onScrubStart={() => {
-              isScrubbing.current = true;
-              setIsPlaying(false);
-            }}
           />
         </Animated.View>
 
@@ -1433,110 +1454,193 @@ function TimelineTrackSection({
   width,
   timelineTrackHeight,
   playhead,
-  timelineZoom,
-  pixelsPerMs,
-  contentWidth,
+  duration,
   waveform,
-  onScroll,
   onScrubStart,
+  onScrubChange,
   onScrubEnd,
-  setTimelineZoom,
-  timelineRef,
 }: {
   width: number;
   timelineTrackHeight: number;
   playhead: number;
-  timelineZoom: number;
-  pixelsPerMs: number;
-  contentWidth: number;
+  duration: number;
   waveform: number[];
-  onScroll: (offsetX: number) => void;
-  onScrubStart: () => void;
-  onScrubEnd: () => void;
-  setTimelineZoom: (value: number) => void;
-  timelineRef: React.RefObject<ScrollView | null>;
+  onScrubStart: (timeMs: number) => void;
+  onScrubChange: (timeMs: number) => void;
+  onScrubEnd: (timeMs: number) => void;
 }) {
-  const pinchStartZoom = useRef(1);
+  const trackWidth = Math.max(
+    1,
+    width - TIMELINE_VIEWPORT_MARGIN_HORIZONTAL * 2,
+  );
+  const playheadProgress = useSharedValue(
+    resolveTimelineProgress(playhead, duration),
+  );
+  const scrubActive = useSharedValue(false);
 
-  const pinchGesture = Gesture.Pinch()
-    .onBegin(() => {
-      pinchStartZoom.current = timelineZoom;
+  useEffect(() => {
+    playheadProgress.value = withTiming(
+      resolveTimelineProgress(playhead, duration),
+      { duration: TIMELINE_PROGRESS_ANIMATION_MS },
+    );
+  }, [duration, playhead, playheadProgress]);
+
+  const progressClipStyle = useAnimatedStyle(() => ({
+    width: playheadProgress.value * trackWidth,
+  }));
+  const playheadStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: Math.min(
+          Math.max(
+            playheadProgress.value * trackWidth - TIMELINE_THUMB_SIZE / 2,
+            0,
+          ),
+          Math.max(0, trackWidth - TIMELINE_THUMB_SIZE),
+        ),
+      },
+    ],
+  }));
+
+  const scrubGesture = Gesture.Pan()
+    .onBegin(event => {
+      scrubActive.value = true;
+      const nextPosition = resolveTimelinePosition(
+        event.x,
+        trackWidth,
+        duration,
+      );
+      playheadProgress.value = resolveTimelineProgress(nextPosition, duration);
+      runOnJS(onScrubStart)(nextPosition);
     })
     .onUpdate(event => {
-      runOnJS(setTimelineZoom)(
-        clamp(pinchStartZoom.current * event.scale, 0.75, 2.4),
+      const nextPosition = resolveTimelinePosition(
+        event.x,
+        trackWidth,
+        duration,
       );
+      playheadProgress.value = resolveTimelineProgress(nextPosition, duration);
+      runOnJS(onScrubChange)(nextPosition);
+    })
+    .onFinalize(event => {
+      if (!scrubActive.value) {
+        return;
+      }
+      scrubActive.value = false;
+      const nextPosition = resolveTimelinePosition(
+        event.x,
+        trackWidth,
+        duration,
+      );
+      playheadProgress.value = resolveTimelineProgress(nextPosition, duration);
+      runOnJS(onScrubEnd)(nextPosition);
     });
+  const tapGesture = Gesture.Tap().onEnd((event, success) => {
+    if (!success) {
+      return;
+    }
+    const nextPosition = resolveTimelinePosition(event.x, trackWidth, duration);
+    playheadProgress.value = resolveTimelineProgress(nextPosition, duration);
+    runOnJS(onScrubEnd)(nextPosition);
+  });
+  const timelineGesture = Gesture.Race(scrubGesture, tapGesture);
+
+  const handleAccessibilityAction = (actionName: string) => {
+    const step = actionName === 'increment' ? 1000 : -1000;
+    onScrubEnd(clamp(playhead + step, 0, duration));
+  };
 
   return (
     <View style={styles.timelineZone}>
-      <GestureDetector gesture={pinchGesture}>
-        <View style={styles.timelineViewport}>
+      <GestureDetector gesture={timelineGesture}>
+        <View
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          accessibilityRole="adjustable"
+          accessibilityValue={{ min: 0, max: duration, now: playhead }}
+          onAccessibilityAction={event =>
+            handleAccessibilityAction(event.nativeEvent.actionName)
+          }
+          style={styles.timelineViewport}
+          testID={TIMELINE_SCRUBBER_ID}
+        >
           <View style={[styles.timelineTrack, { height: timelineTrackHeight }]}>
-            <ScrollView
-              contentContainerStyle={{
-                paddingHorizontal: width / 2,
-                height: timelineTrackHeight,
-              }}
-              horizontal
-              onMomentumScrollEnd={onScrubEnd}
-              onScroll={event => onScroll(event.nativeEvent.contentOffset.x)}
-              onScrollBeginDrag={onScrubStart}
-              onScrollEndDrag={onScrubEnd}
-              ref={timelineRef}
-              scrollEventThrottle={16}
-              showsHorizontalScrollIndicator={false}
+            <TimelineWaveform
+              color="rgba(255, 255, 255, 0.16)"
+              height={timelineTrackHeight}
+              waveform={waveform}
+              width={trackWidth}
+            />
+
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.timelineProgressClip, progressClipStyle]}
             >
-              <View
-                style={{ width: contentWidth, height: timelineTrackHeight }}
-              >
-                <View pointerEvents="none" style={styles.waveformLayer}>
-                  {waveform.map((value, index) => {
-                    const barWidth =
-                      contentWidth / Math.max(1, waveform.length);
-                    const minAmplitude = timelineTrackHeight * 0.52;
-                    const maxAmplitude = timelineTrackHeight * 0.92;
-                    const amplitude = clamp(
-                      value * timelineTrackHeight * 1.05,
-                      minAmplitude,
-                      maxAmplitude,
-                    );
-                    const x = index * barWidth;
-                    const y = (timelineTrackHeight - amplitude) / 2;
-                    const barColor =
-                      Math.abs(x / pixelsPerMs - playhead) < 1300
-                        ? 'rgba(0, 240, 255, 0.5)'
-                        : 'rgba(255, 255, 255, 0.16)';
+              <TimelineWaveform
+                color="rgba(0, 240, 255, 0.58)"
+                height={timelineTrackHeight}
+                waveform={waveform}
+                width={trackWidth}
+              />
+            </Animated.View>
 
-                    return (
-                      <View
-                        key={`wave-${index}`}
-                        style={[
-                          styles.waveformBar,
-                          {
-                            left: x,
-                            top: y,
-                            width: Math.max(2, barWidth * 0.68),
-                            height: amplitude,
-                            backgroundColor: barColor,
-                          },
-                        ]}
-                      />
-                    );
-                  })}
-                </View>
-              </View>
-            </ScrollView>
-
-            <View pointerEvents="none" style={styles.playhead}>
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.playhead, playheadStyle]}
+              testID={TIMELINE_PLAYHEAD_ID}
+            >
+              <View style={styles.playheadThumb} />
               <View style={styles.playheadGlow} />
-            </View>
+            </Animated.View>
           </View>
         </View>
       </GestureDetector>
     </View>
   );
 }
+
+const TimelineWaveform = React.memo(function TimelineWaveform({
+  color,
+  height,
+  waveform,
+  width,
+}: {
+  color: string;
+  height: number;
+  waveform: number[];
+  width: number;
+}) {
+  const barWidth = width / Math.max(1, waveform.length);
+
+  return (
+    <View pointerEvents="none" style={[styles.waveformLayer, { width }]}>
+      {waveform.map((value, index) => {
+        const minAmplitude = height * 0.38;
+        const maxAmplitude = height * 0.78;
+        const amplitude = clamp(
+          value * height * 0.92,
+          minAmplitude,
+          maxAmplitude,
+        );
+
+        return (
+          <View
+            key={`wave-${index}`}
+            style={[
+              styles.waveformBar,
+              {
+                left: index * barWidth,
+                top: (height - amplitude) / 2,
+                width: Math.max(2, barWidth * 0.68),
+                height: amplitude,
+                backgroundColor: color,
+              },
+            ]}
+          />
+        );
+      })}
+    </View>
+  );
+});
 
 function TimelineControlsPanel({
   wordHighlightEnabled,
@@ -2552,18 +2656,43 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   waveformLayer: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
   },
   waveformBar: {
     position: 'absolute',
     borderRadius: 999,
   },
+  timelineProgressClip: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
   playhead: {
-    ...StyleSheet.absoluteFillObject,
-    left: '50%',
-    marginLeft: -1,
-    width: 2,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: TIMELINE_THUMB_SIZE,
     alignItems: 'center',
+  },
+  playheadThumb: {
+    width: 18,
+    height: 10,
+    marginTop: 3,
+    marginBottom: 1,
+    borderRadius: 999,
+    backgroundColor: palette.cyan,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.88)',
+    shadowColor: palette.cyan,
+    shadowOpacity: 0.95,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 0 },
   },
   playheadGlow: {
     width: 2,

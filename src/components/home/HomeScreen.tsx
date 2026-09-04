@@ -62,6 +62,7 @@ interface HomeScreenProps {
   projects: Project[];
   folders: ProjectFolder[];
   processingVisible: boolean;
+  showFolderItemCounts: boolean;
   onCleanTrash: () => void;
   onCreateFolder: (title: string) => void;
   onCreateProject: () => void;
@@ -115,6 +116,7 @@ export function HomeScreen({
   projects,
   folders,
   processingVisible,
+  showFolderItemCounts,
   onCleanTrash,
   onCreateFolder,
   onCreateProject,
@@ -603,7 +605,9 @@ export function HomeScreen({
             {section.title}
           </Text>
         </View>
-        <Text style={styles.folderCount}>{section.projects.length}</Text>
+        {showFolderItemCounts ? (
+          <Text style={styles.folderCount}>{section.projects.length}</Text>
+        ) : null}
       </Pressable>
     );
 

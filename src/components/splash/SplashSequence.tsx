@@ -151,9 +151,9 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: palette.textPrimary,
-    fontSize: 58,
+    fontSize: 46,
     fontWeight: '900',
-    letterSpacing: 8,
+    letterSpacing: 5,
     textShadowColor: 'rgba(0, 240, 255, 0.24)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 30,

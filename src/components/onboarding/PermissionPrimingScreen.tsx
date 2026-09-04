@@ -252,7 +252,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: palette.amber,
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '600',
     textTransform: 'capitalize',
   },

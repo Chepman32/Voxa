@@ -48,6 +48,7 @@ interface AppState {
     resolution: UserSettings['preferredExportResolution'],
   ) => void;
   setHighlightEditedWords: (value: boolean) => void;
+  setShowFolderItemCounts: (value: boolean) => void;
   setTranscriptionLanguageMode: (
     mode: UserSettings['transcriptionLanguageMode'],
   ) => void;
@@ -84,6 +85,7 @@ type PersistedAppState = Partial<
 const defaultSettings: UserSettings = {
   preferredExportResolution: '1080p',
   highlightEditedWords: true,
+  showFolderItemCounts: false,
   transcriptionLanguageMode: 'ask',
   rememberLastTranscriptionLanguage: false,
   lastTranscriptionLocale: null,
@@ -233,6 +235,9 @@ export function migratePersistedAppState(
       highlightEditedWords:
         state.settings?.highlightEditedWords ??
         defaultSettings.highlightEditedWords,
+      showFolderItemCounts:
+        state.settings?.showFolderItemCounts ??
+        defaultSettings.showFolderItemCounts,
       transcriptionLanguageMode: normalizeTranscriptionLanguageMode(
         state.settings?.transcriptionLanguageMode,
       ),
@@ -310,6 +315,10 @@ export const useAppStore = create<AppState>()(
       setHighlightEditedWords: highlightEditedWords =>
         set(state => ({
           settings: { ...state.settings, highlightEditedWords },
+        })),
+      setShowFolderItemCounts: showFolderItemCounts =>
+        set(state => ({
+          settings: { ...state.settings, showFolderItemCounts },
         })),
       setTranscriptionLanguageMode: transcriptionLanguageMode =>
         set(state => ({
@@ -504,7 +513,7 @@ export const useAppStore = create<AppState>()(
       onRehydrateStorage: () => state => {
         state?.setHydrated(true);
       },
-      version: 10,
+      version: 11,
     },
   ),
 );

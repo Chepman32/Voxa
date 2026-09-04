@@ -69,6 +69,7 @@ describe('SettingsScreen', () => {
   function renderSettings(notificationsAuthorized: boolean) {
     const onRequestNotificationPermission = jest.fn();
     const onResolutionChange = jest.fn();
+    const onShowFolderItemCountsChange = jest.fn();
     const onUiLocaleChange = jest.fn();
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
@@ -84,9 +85,11 @@ describe('SettingsScreen', () => {
           onRequestNotificationPermission={onRequestNotificationPermission}
           onResetOnboarding={jest.fn()}
           onResolutionChange={onResolutionChange}
+          onShowFolderItemCountsChange={onShowFolderItemCountsChange}
           onUiLocaleChange={onUiLocaleChange}
           preferredExportResolution="1080p"
           rememberLastTranscriptionLanguage={false}
+          showFolderItemCounts={false}
           uiLocale="en"
         />,
       );
@@ -95,6 +98,7 @@ describe('SettingsScreen', () => {
     return {
       onRequestNotificationPermission,
       onResolutionChange,
+      onShowFolderItemCountsChange,
       onUiLocaleChange,
       renderer: renderer!,
     };
@@ -286,6 +290,23 @@ describe('SettingsScreen', () => {
     });
 
     expect(onResolutionChange).toHaveBeenCalledWith('4k');
+  });
+
+  it('shows a disabled-by-default switch for folder item counts', () => {
+    const { onShowFolderItemCountsChange, renderer } = renderSettings(false);
+    const folderCountSwitch = renderer.root.findAllByType(Switch).find(
+      node =>
+        node.props.accessibilityLabel === 'settingsShowFolderItemCounts',
+    );
+
+    expect(folderCountSwitch).toBeDefined();
+    expect(folderCountSwitch!.props.value).toBe(false);
+
+    ReactTestRenderer.act(() => {
+      folderCountSwitch!.props.onValueChange(true);
+    });
+
+    expect(onShowFolderItemCountsChange).toHaveBeenCalledWith(true);
   });
 
   it('shows a switch that requests access when notifications are not authorized', () => {

@@ -202,7 +202,8 @@ const styles = StyleSheet.create({
   },
   tag: {
     color: palette.textSecondary,
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '500',
   },
   stars: {

@@ -156,9 +156,7 @@ export function PreferenceConfigScreen({
                   isSelected && styles.gridItemSelected,
                 ]}>
                 <Text
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.75}
-                  numberOfLines={1}
+                  numberOfLines={2}
                   style={[
                     styles.gridItemText,
                     { fontFamily: font.fontFamily, fontWeight: font.fontWeight as any },
@@ -212,9 +210,7 @@ export function PreferenceConfigScreen({
                   isSelected && styles.gridItemSelected,
                 ]}>
                 <Text
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.75}
-                  numberOfLines={1}
+                  numberOfLines={2}
                   style={[
                     styles.gridItemText,
                     isSelected && styles.gridItemTextSelected,
@@ -275,7 +271,8 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: palette.textSecondary,
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '700',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
@@ -284,11 +281,13 @@ const styles = StyleSheet.create({
   },
   grid: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 10,
     marginBottom: 16,
   },
   gridItem: {
-    flex: 1,
+    flexBasis: '48%',
+    flexGrow: 1,
     minHeight: 64,
     paddingHorizontal: 6,
     paddingVertical: 12,
@@ -304,8 +303,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 240, 255, 0.08)',
   },
   gridItemText: {
+    width: '100%',
     color: palette.textPrimary,
-    fontSize: 14,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
