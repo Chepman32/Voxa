@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -32,11 +32,12 @@ export function ProcessingMomentScreen({
   progress,
 }: ProcessingMomentScreenProps) {
   const { t } = useTranslation();
-  const PHASES = usePhases(t);
+  const phases = usePhases(t);
+  const phaseCount = phases.length;
   const insets = useSafeAreaInsets();
   const rotation = useSharedValue(0);
   const pulse = useSharedValue(1);
-  const phaseIndex = useSharedValue(0);
+  const [phaseIndex, setPhaseIndex] = useState(0);
 
   useEffect(() => {
     rotation.value = withRepeat(
@@ -51,7 +52,7 @@ export function ProcessingMomentScreen({
     );
 
     const phaseTimer = setInterval(() => {
-      phaseIndex.value = (phaseIndex.value + 1) % PHASES.length;
+      setPhaseIndex(current => (current + 1) % phaseCount);
     }, 900);
 
     const completeTimer = setTimeout(() => {
@@ -62,7 +63,7 @@ export function ProcessingMomentScreen({
       clearInterval(phaseTimer);
       clearTimeout(completeTimer);
     };
-  }, [onComplete, phaseIndex, pulse, rotation]);
+  }, [onComplete, phaseCount, pulse, rotation]);
 
   const ringStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
@@ -90,9 +91,7 @@ export function ProcessingMomentScreen({
         </View>
 
         <Text style={styles.title}>{t('procTitle')}</Text>
-        <Text style={styles.subtitle}>
-          {PHASES[0].label}
-        </Text>
+        <Text style={styles.subtitle}>{phases[phaseIndex]?.label}</Text>
       </View>
     </View>
   );

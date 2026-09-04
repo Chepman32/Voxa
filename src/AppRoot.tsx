@@ -49,6 +49,7 @@ import { TranscriptionLanguageSheet } from './components/home/TranscriptionLangu
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
 import { ProcessingOverlay } from './components/processing/ProcessingOverlay';
 import { SplashSequence } from './components/splash/SplashSequence';
+import { useAndroidBackNavigation } from './hooks/useAndroidBackNavigation';
 import type { PermissionSummary, SpeechLocaleOption } from './types/models';
 
 export function AppRoot() {
@@ -68,6 +69,7 @@ export function AppRoot() {
 
   const resetOnboarding = useAppStore(state => state.resetOnboarding);
   const openProject = useAppStore(state => state.openProject);
+  const closeProject = useAppStore(state => state.closeProject);
   const addProject = useAppStore(state => state.addProject);
   const deleteProject = useAppStore(state => state.deleteProject);
   const renameProject = useAppStore(state => state.renameProject);
@@ -100,6 +102,12 @@ export function AppRoot() {
     state => state.setLastTranscriptionLocale,
   );
   const replaceProject = useAppStore(state => state.replaceProject);
+
+  useAndroidBackNavigation({
+    route,
+    onCloseEditor: closeProject,
+    onCloseSettings: closeSettings,
+  });
 
   const [showSplash, setShowSplash] = useState(true);
   const [notificationPermissionStatus, setNotificationPermissionStatus] =

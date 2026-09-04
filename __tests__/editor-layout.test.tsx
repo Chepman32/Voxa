@@ -517,7 +517,7 @@ describe('EditorScreen', () => {
   it('contains the full video frame in the editor preview', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -543,7 +543,7 @@ describe('EditorScreen', () => {
     mockSaveVideoToPhotos.mockResolvedValue({ localIdentifier: 'saved-video' });
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -564,7 +564,7 @@ describe('EditorScreen', () => {
   it('represents playback with an adjustable timeline thumb', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -606,7 +606,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -643,7 +643,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -722,7 +722,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -871,7 +871,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -941,7 +941,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1001,7 +1001,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1038,7 +1038,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1085,7 +1085,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1141,7 +1141,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1174,7 +1174,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1219,7 +1219,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1273,7 +1273,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={mockProject} />,
       );
@@ -1318,7 +1318,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={failedProject} />,
       );
@@ -1340,7 +1340,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={failedProject} />,
       );
@@ -1381,7 +1381,7 @@ describe('EditorScreen', () => {
 
     let renderer: ReactTestRenderer.ReactTestRenderer;
 
-    await ReactTestRenderer.act(() => {
+    await ReactTestRenderer.act(async () => {
       renderer = ReactTestRenderer.create(
         <EditorScreen onClose={jest.fn()} project={failedProject} />,
       );

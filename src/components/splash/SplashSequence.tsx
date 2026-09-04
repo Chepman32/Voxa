@@ -79,27 +79,32 @@ export function SplashSequence({ onComplete }: SplashSequenceProps) {
   }));
 
   return (
-    <Animated.View exiting={FadeOut.duration(220)} style={[styles.root, shellStyle]}>
-      <AtmosphereCanvas intensity={1.15} />
-      <View style={styles.vignette} />
+    <Animated.View
+      exiting={FadeOut.duration(220)}
+      style={styles.transitionRoot}
+    >
+      <Animated.View style={[styles.root, shellStyle]}>
+        <AtmosphereCanvas intensity={1.15} />
+        <View style={styles.vignette} />
 
-      {SPLASH_PARTICLES.map(particle => (
-        <SplashParticle
-          key={particle.id}
-          delay={particle.delay}
-          distance={particle.distance}
-          drift={particle.drift}
-          left={particle.left}
-          particleProgress={particleProgress}
-          top={particle.top}
-        />
-      ))}
+        {SPLASH_PARTICLES.map(particle => (
+          <SplashParticle
+            key={particle.id}
+            delay={particle.delay}
+            distance={particle.distance}
+            drift={particle.drift}
+            left={particle.left}
+            particleProgress={particleProgress}
+            top={particle.top}
+          />
+        ))}
 
-      <Animated.View style={[styles.logoWrap, logoStyle]}>
-        <Text style={styles.logo}>LOCALSUB</Text>
-        <View style={styles.logoGlow} />
+        <Animated.View style={[styles.logoWrap, logoStyle]}>
+          <Text style={styles.logo}>LOCALSUB</Text>
+          <View style={styles.logoGlow} />
+        </Animated.View>
+        <Text style={styles.caption}>{t('splashCaption')}</Text>
       </Animated.View>
-      <Text style={styles.caption}>{t('splashCaption')}</Text>
     </Animated.View>
   );
 }
@@ -131,16 +136,21 @@ function SplashParticle({
     };
   });
 
-  return <Animated.View style={[styles.particle, { left, top }, animatedStyle]} />;
+  return (
+    <Animated.View style={[styles.particle, { left, top }, animatedStyle]} />
+  );
 }
 
 const styles = StyleSheet.create({
+  transitionRoot: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 20,
+  },
   root: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: palette.canvas,
-    zIndex: 20,
   },
   vignette: {
     ...StyleSheet.absoluteFillObject,

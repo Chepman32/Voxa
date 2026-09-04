@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -16,7 +11,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import { useTranslation } from '../../i18n/useTranslation';
 import { haptics } from '../../services/haptics';
 import { palette, springConfig } from '../../theme/tokens';
-import { GlassPanel } from '../common/GlassPanel';
 import { OnboardingHeader } from './OnboardingHeader';
 
 interface GoalQuestionScreenProps {
@@ -68,22 +62,16 @@ export function GoalQuestionScreen({
 
       <View style={styles.content}>
         <Text style={styles.headline}>{t('goalHeadline')}</Text>
-        <Text style={styles.subheadline}>
-          {t('goalSubheadline')}
-        </Text>
+        <Text style={styles.subheadline}>{t('goalSubheadline')}</Text>
 
         <View style={styles.options}>
           {GOALS.map(goal => {
             const isSelected = selected === goal.id;
             return (
-              <Pressable
-                key={goal.id}
-                onPress={() => handleSelect(goal.id)}>
+              <Pressable key={goal.id} onPress={() => handleSelect(goal.id)}>
                 <Animated.View
-                  style={[
-                    styles.option,
-                    isSelected && styles.optionSelected,
-                  ]}>
+                  style={[styles.option, isSelected && styles.optionSelected]}
+                >
                   <Feather
                     color={isSelected ? palette.cyan : palette.textSecondary}
                     name={goal.icon as any}
@@ -93,7 +81,8 @@ export function GoalQuestionScreen({
                     style={[
                       styles.optionLabel,
                       isSelected && styles.optionLabelSelected,
-                    ]}>
+                    ]}
+                  >
                     {goal.label}
                   </Text>
                   {isSelected && (
@@ -119,7 +108,8 @@ export function GoalQuestionScreen({
             style={[
               styles.primaryButton,
               !selected && styles.primaryButtonDisabled,
-            ]}>
+            ]}
+          >
             <Text style={styles.primaryButtonText}>{t('goalCta')}</Text>
           </Pressable>
         </Animated.View>

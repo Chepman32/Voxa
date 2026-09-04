@@ -1,6 +1,16 @@
-import React from 'react';
-import { MenuView, type MenuAction } from '@react-native-menu/menu';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import {
+  MenuView,
+  type MenuAction,
+  type MenuComponentRef,
+} from '@react-native-menu/menu';
+import {
+  ImageBackground,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -44,11 +54,18 @@ export function ProjectCard({
   swipeEnabled = true,
 }: ProjectCardProps) {
   const { t } = useTranslation();
+  const androidMenuRef = useRef<MenuComponentRef>(null);
   const translateX = useSharedValue(0);
   const subtitleCount = countRenderableSubtitles(project.subtitles);
+  const hasContextMenu =
+    contextMenuActions.length > 0 && Boolean(onContextMenuAction);
   const displayTitle =
     project.title === 'Untitled Cut' ? t('untitledCut') : project.title;
   const resolvedRemoveLabel = removeLabel ?? t('projectRemove');
+
+  const showAndroidContextMenu = useCallback(() => {
+    androidMenuRef.current?.show();
+  }, []);
 
   const panGesture = Gesture.Pan()
     .enabled(swipeEnabled)
@@ -83,6 +100,19 @@ export function ProjectCard({
     runOnJS(onOpen)(project.id);
   });
 
+  const longPressGesture = Gesture.LongPress()
+    .enabled(Platform.OS === 'android' && hasContextMenu)
+    .onStart(() => {
+      runOnJS(haptics.medium)();
+      runOnJS(showAndroidContextMenu)();
+    });
+
+  const panAndTapGesture = Gesture.Simultaneous(panGesture, tapGesture);
+  const cardGesture =
+    Platform.OS === 'android' && hasContextMenu
+      ? Gesture.Exclusive(longPressGesture, panAndTapGesture)
+      : panAndTapGesture;
+
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
@@ -96,7 +126,7 @@ export function ProjectCard({
   }));
 
   const card = (
-    <GestureDetector gesture={Gesture.Simultaneous(panGesture, tapGesture)}>
+    <GestureDetector gesture={cardGesture}>
       <Animated.View style={[styles.cardWrap, cardStyle]}>
         <GlassPanel style={styles.card}>
           <ImageBackground
@@ -149,11 +179,11 @@ export function ProjectCard({
         </Animated.View>
       ) : null}
 
-      {contextMenuActions.length > 0 && onContextMenuAction ? (
+      {hasContextMenu && Platform.OS !== 'android' ? (
         <MenuView
           actions={contextMenuActions}
           onPressAction={({ nativeEvent }) => {
-            onContextMenuAction(nativeEvent.event, project.id);
+            onContextMenuAction?.(nativeEvent.event, project.id);
           }}
           shouldOpenOnLongPress
           style={styles.menuHost}
@@ -164,11 +194,38 @@ export function ProjectCard({
       ) : (
         card
       )}
+
+      {hasContextMenu && Platform.OS === 'android' ? (
+        <View
+          pointerEvents="none"
+          style={styles.androidMenuAnchor}
+          testID="project-card-android-menu-anchor"
+        >
+          <MenuView
+            actions={contextMenuActions}
+            onPressAction={({ nativeEvent }) => {
+              onContextMenuAction?.(nativeEvent.event, project.id);
+            }}
+            ref={androidMenuRef}
+            shouldOpenOnLongPress
+            style={styles.androidMenuAnchorContent}
+            title={contextMenuTitle ?? displayTitle}
+          >
+            <View style={styles.androidMenuAnchorContent} />
+          </MenuView>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  androidMenuAnchor: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  androidMenuAnchorContent: {
+    flex: 1,
+  },
   menuHost: {
     flex: 1,
   },

@@ -1,17 +1,16 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
-import { palette, springConfig } from '../../theme/tokens';
+import { palette } from '../../theme/tokens';
 
 interface OnboardingProgressBarProps {
   progress: number;
 }
 
-export function OnboardingProgressBar({ progress }: OnboardingProgressBarProps) {
+export function OnboardingProgressBar({
+  progress,
+}: OnboardingProgressBarProps) {
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${Math.min(Math.max(progress * 100, 0), 100)}%`,
   }));

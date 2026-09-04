@@ -1381,7 +1381,7 @@ function EditorScreenContent({ onClose }: { onClose: () => void }) {
           exiting={FadeOut.duration(150)}
           style={[
             styles.floatingRegenerateButton,
-            { bottom: bottomInset + 24, right: 16 },
+            { bottom: bottomInset + 24 },
           ]}
         >
           <Pressable
@@ -3021,6 +3021,7 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
   },
   floatingRegenerateButton: {
+    right: 16,
     position: 'absolute',
     zIndex: 10,
   },

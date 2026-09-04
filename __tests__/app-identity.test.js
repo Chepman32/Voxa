@@ -34,6 +34,7 @@ const ignoredDirectories = new Set([
   '.git',
   '.gradle',
   '.kotlin',
+  '.qa',
   '.yarn',
   'Pods',
   'build',
@@ -113,12 +114,7 @@ describe('LocalSub app identity', () => {
       'utf8',
     );
     const iosProject = fs.readFileSync(
-      path.join(
-        projectRoot,
-        'ios',
-        'LocalSub.xcodeproj',
-        'project.pbxproj',
-      ),
+      path.join(projectRoot, 'ios', 'LocalSub.xcodeproj', 'project.pbxproj'),
       'utf8',
     );
 
