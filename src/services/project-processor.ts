@@ -3,12 +3,12 @@ import type { Asset } from 'react-native-image-picker';
 import { createId } from '../lib/id';
 import {
   buildProjectDefaults,
-  deriveProjectTitle,
   ensureSubtitles,
   expandCoarseSubtitleSegments,
   mergeSegmentsIntoBlocks,
   normalizeVideoUri,
 } from '../lib/project';
+import { deriveProjectTitle } from '../lib/project-title';
 import { normalizeSpeechLocale } from '../lib/speech-locale';
 import { defaultSubtitleStyle } from '../theme/tokens';
 import {
@@ -144,18 +144,19 @@ export async function buildProjectFromAsset(
     onPhaseChange,
     videoURI: uri,
   });
+  const now = Date.now();
 
   return {
     id: createId('project'),
-    title: deriveProjectTitle(asset.fileName),
+    title: deriveProjectTitle(result.mergedSubtitles, now),
     sourceFileName: asset.fileName ?? 'Imported video',
     videoLocalURI: result.videoUri ?? uri,
     videoFileName: result.videoFileName,
     thumbnailUri: result.thumbnailUri,
     thumbnailFileName: result.thumbnailFileName,
     duration: result.duration || fallbackDuration,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: now,
+    updatedAt: now,
     subtitles: result.mergedSubtitles,
     globalStyle: defaultSubtitleStyle,
     waveform:
@@ -218,17 +219,19 @@ export function buildManualFallbackProject(asset: Asset, error: unknown) {
   const message =
     error instanceof Error ? error.message : 'Subtitle generation failed.';
   const videoUri = getAssetVideoUri(asset);
+  const now = Date.now();
+  const subtitles = ensureSubtitles([], duration);
 
   return {
     id: createId('project'),
-    title: deriveProjectTitle(asset.fileName),
+    title: deriveProjectTitle(subtitles, now),
     sourceFileName: asset.fileName ?? 'Imported video',
     videoLocalURI: videoUri,
     thumbnailUri: undefined,
     duration,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    subtitles: ensureSubtitles([], duration),
+    createdAt: now,
+    updatedAt: now,
+    subtitles,
     globalStyle: defaultSubtitleStyle,
     waveform: defaults.waveform,
     recognitionStatus: 'failed' as RecognitionStatus,

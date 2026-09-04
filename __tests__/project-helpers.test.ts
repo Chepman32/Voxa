@@ -13,9 +13,60 @@ import {
   setSubtitlePositionPreset,
   snapSubtitleRange,
 } from '../src/lib/project';
+import { deriveProjectTitle } from '../src/lib/project-title';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
 
 describe('project helpers', () => {
+  it('uses the first five subtitle words as the project title', () => {
+    const title = deriveProjectTitle(
+      [
+        {
+          id: 'later',
+          startTime: 900,
+          endTime: 1600,
+          text: 'today and welcome',
+        },
+        {
+          id: 'placeholder',
+          startTime: 0,
+          endTime: 800,
+          text: 'Tap to add your first subtitle.',
+          isPlaceholder: true,
+        },
+        {
+          id: 'first',
+          startTime: 100,
+          endTime: 850,
+          text: '  Hey   everyone, I’m really  ',
+        },
+      ],
+      new Date(2026, 8, 4, 12).getTime(),
+      'en-US',
+    );
+
+    expect(title).toBe('Hey everyone, I’m really today');
+  });
+
+  it('uses the localized creation date when no subtitles exist', () => {
+    const title = deriveProjectTitle(
+      [],
+      new Date(2026, 8, 4, 12).getTime(),
+      'en-US',
+    );
+
+    expect(title).toBe('Sep 4, 2026');
+  });
+
+  it('uses the creation date when only a placeholder subtitle exists', () => {
+    const title = deriveProjectTitle(
+      [createPlaceholderSubtitle(2400)],
+      new Date(2026, 8, 4, 12).getTime(),
+      'en-US',
+    );
+
+    expect(title).toBe('Sep 4, 2026');
+  });
+
   it('merges tightly grouped transcript segments into readable subtitle blocks', () => {
     const blocks = mergeSegmentsIntoBlocks([
       {

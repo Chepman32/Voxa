@@ -12,6 +12,7 @@ import {
   repairProjectMedia,
   retryProjectSubtitles,
 } from '../src/services/project-processor';
+import { formatProjectCreationDate } from '../src/lib/project-title';
 import { defaultSubtitleStyle } from '../src/theme/tokens';
 import type { Project } from '../src/types/models';
 import type { SpeechModelDownloadEvent } from '../src/services/native-localsub';
@@ -84,6 +85,7 @@ describe('project processor', () => {
     );
     expect(project.videoFileName).toBe('detect-language.mov');
     expect(project.thumbnailFileName).toBe('thumb.jpg');
+    expect(project.title).toBe('hello');
     expect(project.subtitles[0]).toMatchObject({
       text: 'hello',
       startTime: 0,
@@ -116,6 +118,7 @@ describe('project processor', () => {
     );
     expect(project.subtitles).toHaveLength(1);
     expect(project.subtitles[0]?.isPlaceholder).toBe(true);
+    expect(project.title).toBe(formatProjectCreationDate(project.createdAt));
   });
 
   it('persists a manual fallback project video before storing it', async () => {
@@ -137,6 +140,7 @@ describe('project processor', () => {
     );
     expect(project.videoFileName).toBe('manual.mov');
     expect(project.recognitionStatus).toBe('failed');
+    expect(project.title).toBe(formatProjectCreationDate(project.createdAt));
   });
 
   it('repairs stale project media paths from stable stored file names', async () => {

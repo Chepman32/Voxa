@@ -44,19 +44,6 @@ export function formatDuration(durationMs: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-export function deriveProjectTitle(fileName?: string) {
-  if (!fileName) {
-    return 'Untitled Cut';
-  }
-
-  const withoutExtension = fileName.replace(/\.[^/.]+$/, '');
-  return withoutExtension
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, letter => letter.toUpperCase());
-}
-
 export function getGreeting(date = new Date()) {
   const hour = date.getHours();
   if (hour < 12) {
